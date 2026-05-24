@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-charcoal: #333333;
+  --color-brand-charcoal-light: #666666;
+  --color-brand-charcoal-dark: #111111;
+  
+  --color-brand-copper: #c27a42;
+  --color-brand-copper-light: #d18f5c;
+  --color-brand-copper-dark: #a1622b;
+
+  --color-brand-sand: #ffffff;
+  --color-brand-sand-dark: #f8f8f8;
+}
+
+@layer base {
+  body {
+    @apply bg-white text-brand-charcoal-dark font-sans antialiased;
+  }
+}
+
