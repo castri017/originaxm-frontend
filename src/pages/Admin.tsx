@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { API } from '../config/api';
-import { Settings, Tag, Users, Package, TrendingUp, Plus, Edit, Trash2, ClipboardList, Eye, ArrowLeft, X, ShieldCheck, Lock, Mail, Loader2, AlertCircle, LogOut, BarChart3, ArrowDownCircle, ArrowUpCircle, AlertTriangle, DollarSign, RefreshCw, ChevronLeft, Truck, FileBarChart2, Star } from 'lucide-react';
+import { Settings, Tag, Users, Package, TrendingUp, Plus, Edit, Trash2, ClipboardList, Eye, ArrowLeft, X, ShieldCheck, Lock, Mail, Loader2, AlertCircle, LogOut, BarChart3, DollarSign, RefreshCw, ChevronLeft, Truck, FileBarChart2, Star } from 'lucide-react';
 import { useAdminAuthStore } from '../store/useAdminAuthStore';
 import { useCatalogStore } from '../store/useCatalogStore';
 
@@ -54,24 +54,6 @@ interface ApiOrder {
   items: ApiOrderItem[];
 }
 
-const INITIAL_CATEGORIES = [
-  { 
-    id: 'cat-1', 
-    name: 'Termo', 
-    description: 'Categoría principal de recipientes térmicos', 
-    brands: [
-      { 
-        id: 'brand-1', 
-        name: 'Stanley', 
-        types: [
-          { id: 'type-1', name: 'Vaso' },
-          { id: 'type-2', name: 'Botella' },
-          { id: 'type-3', name: 'Mug' }
-        ] 
-      }
-    ] 
-  },
-];
 
 interface ApiCustomer {
   id: string;
@@ -1285,7 +1267,7 @@ function AdminPanel() {
                         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                           <h3 className="text-lg font-bold text-black">Productos</h3>
                           <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
-                            {selectedOrder.items.reduce((s, i) => s + i.quantity, 0)} unidades
+                            {selectedOrder.items.reduce((s: number, i: ApiOrderItem) => s + i.quantity, 0)} unidades
                           </span>
                         </div>
                         <table className="w-full text-sm">
@@ -1317,13 +1299,13 @@ function AdminPanel() {
                         <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 space-y-2">
                           <div className="flex justify-between text-sm text-gray-600">
                             <span>Subtotal productos</span>
-                            <span>${selectedOrder.items.reduce((s, i) => s + i.subtotal, 0).toLocaleString('es-CL')}</span>
+                            <span>${selectedOrder.items.reduce((s: number, i: ApiOrderItem) => s + i.subtotal, 0).toLocaleString('es-CL')}</span>
                           </div>
                           <div className="flex justify-between text-sm text-gray-600">
                             <span>Envío</span>
-                            {selectedOrder.totalAmount - selectedOrder.items.reduce((s, i) => s + i.subtotal, 0) === 0
+                            {selectedOrder.totalAmount - selectedOrder.items.reduce((s: number, i: ApiOrderItem) => s + i.subtotal, 0) === 0
                               ? <span className="text-green-600 font-bold">Gratis</span>
-                              : <span>${(selectedOrder.totalAmount - selectedOrder.items.reduce((s, i) => s + i.subtotal, 0)).toLocaleString('es-CL')}</span>
+                              : <span>${(selectedOrder.totalAmount - selectedOrder.items.reduce((s: number, i: ApiOrderItem) => s + i.subtotal, 0)).toLocaleString('es-CL')}</span>
                             }
                           </div>
                           <div className="flex justify-between font-extrabold text-lg text-black pt-2 border-t border-gray-200">

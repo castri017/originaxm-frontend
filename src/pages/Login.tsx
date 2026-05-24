@@ -101,26 +101,6 @@ export default function Login() {
     }
   }
 
-  const field = (
-    label: string, value: string, onChange: (v: string) => void,
-    opts?: { type?: string; placeholder?: string; icon?: React.ReactNode; error?: string; colSpan?: boolean }
-  ) => (
-    <div className={opts?.colSpan ? 'col-span-2' : ''}>
-      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">{label}</label>
-      <div className="relative">
-        {opts?.icon && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{opts.icon}</span>}
-        <input
-          type={opts?.type ?? 'text'}
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          placeholder={opts?.placeholder ?? ''}
-          className={`w-full ${opts?.icon ? 'pl-9' : 'px-3'} pr-3 py-2.5 border rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-black ${opts?.error ? 'border-red-400' : 'border-gray-200'}`}
-        />
-      </div>
-      {opts?.error && <p className="text-xs text-red-500 mt-0.5">{opts.error}</p>}
-    </div>
-  );
-
   return (
     <div className="min-h-[80vh] flex items-center justify-center bg-gray-50 py-12 px-4">
       <div className="w-full max-w-md">
