@@ -76,6 +76,8 @@ export default function Catalog() {
   const [products,   setProducts]   = useState<ApiProduct[]>([]);
   const [categories, setCategories] = useState<ApiCategory[]>([]);
   const [loading,    setLoading]    = useState(true);
+  const [imgErrors,  setImgErrors]  = useState<Set<string>>(new Set());
+  const onImgError = (id: string) => setImgErrors(s => new Set(s).add(id));
 
   const [activeCat,      setActiveCat]      = useState(searchParams.get('category') || '');
   const [activeType,     setActiveType]     = useState('');
@@ -160,7 +162,10 @@ export default function Catalog() {
 
   const clearAll = () => { setActiveCat(''); setActiveType(''); setActiveSubType(''); setSortOrder(''); setPriceMin(''); setPriceMax(''); setSearchParams({}); };
 
-  const getImage = (p: ApiProduct) => p.images?.[0] ? `http://localhost:5173${p.images[0]}` : null;
+  const getImage = (p: ApiProduct) =>
+    p.images?.[0]
+      ? (p.images[0].startsWith('http') ? p.images[0] : `http://localhost:5173${p.images[0]}`)
+      : null;
 
   const catLabel  = activeCat    ? (categories.find(c => c.id === activeCat)?.name   ?? 'Categoría') : 'Categoría';
   const typeLabel = activeType   ? (availableTypes.find(t => t.id === activeType)?.name ?? 'Tipo')   : 'Tipo';
@@ -315,8 +320,8 @@ export default function Catalog() {
 
                 {/* Imagen portrait */}
                 <div className="relative aspect-[3/4] overflow-hidden bg-[#f4f4f4] flex items-center justify-center">
-                  {img
-                    ? <img src={img} alt={product.name} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500 ease-out" />
+                  {img && !imgErrors.has(product.id)
+                    ? <img src={img} alt={product.name} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500 ease-out" onError={() => onImgError(product.id)} />
                     : <Package className="w-12 h-12 text-gray-300" />
                   }
                   {!outOfStock && disc > 0 && (

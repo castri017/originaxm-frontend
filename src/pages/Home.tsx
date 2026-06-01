@@ -24,6 +24,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [recommended, setRecommended] = useState<ApiProduct[]>([]);
   const [recLoading, setRecLoading] = useState(true);
+  const [imgErrors, setImgErrors] = useState<Set<string>>(new Set());
+  const onImgError = (id: string) => setImgErrors(s => new Set(s).add(id));
   const catalogVersion = useCatalogStore((s) => s.version);
 
   const loadProducts = () =>
@@ -56,7 +58,9 @@ export default function Home() {
   };
 
   const getImage = (p: ApiProduct) =>
-    p.images?.[0] ? `http://localhost:5173${p.images[0]}` : null;
+    p.images?.[0]
+      ? (p.images[0].startsWith('http') ? p.images[0] : `http://localhost:5173${p.images[0]}`)
+      : null;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -115,8 +119,8 @@ export default function Home() {
                   return (
                     <Link key={product.id} to={`/product/${product.id}`} className="group cursor-pointer flex flex-col">
                       <div className="relative aspect-[3/4] overflow-hidden bg-white mb-3 border border-gray-100 flex items-center justify-center p-3">
-                        {img ? (
-                          <img src={img} alt={product.name} className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105" />
+                        {img && !imgErrors.has(`rec-${product.id}`) ? (
+                          <img src={img} alt={product.name} className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105" onError={() => onImgError(`rec-${product.id}`)} />
                         ) : (
                           <Package className="w-14 h-14 text-gray-200" />
                         )}
@@ -199,8 +203,8 @@ export default function Home() {
                     className="group relative flex-shrink-0 w-64 snap-start flex flex-col"
                   >
                     <div className="relative aspect-[4/5] overflow-hidden bg-gray-50 mb-4 border border-gray-100 p-2 flex items-center justify-center">
-                      {img ? (
-                        <img src={img} alt={product.name} className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105" />
+                      {img && !imgErrors.has(`slider-${product.id}`) ? (
+                        <img src={img} alt={product.name} className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105" onError={() => onImgError(`slider-${product.id}`)} />
                       ) : (
                         <Package className="w-12 h-12 text-gray-200" />
                       )}
@@ -264,8 +268,8 @@ export default function Home() {
                 return (
                   <Link key={product.id} to={`/product/${product.id}`} className="group cursor-pointer flex flex-col">
                     <div className="relative aspect-[3/4] overflow-hidden bg-white mb-4 border border-gray-100 flex items-center justify-center p-4">
-                      {img ? (
-                        <img src={img} alt={product.name} className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105" />
+                      {img && !imgErrors.has(`grid-${product.id}`) ? (
+                        <img src={img} alt={product.name} className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105" onError={() => onImgError(`grid-${product.id}`)} />
                       ) : (
                         <Package className="w-16 h-16 text-gray-200" />
                       )}
