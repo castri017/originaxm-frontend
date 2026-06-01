@@ -789,7 +789,7 @@ function AdminPanel() {
           images: finalImages,
         }),
       });
-      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.message || 'Error al actualizar.'); }
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || d.inner || d.message || 'Error al actualizar.'); }
       const updated = await res.json();
       setProducts(prev => prev.map(p => p.id === updated.id ? updated : p));
 
