@@ -694,6 +694,9 @@ function AdminPanel() {
   const [editSubTypeId, setEditSubTypeId] = useState('');
   const [editSaving,    setEditSaving]    = useState(false);
   const [editError,     setEditError]     = useState('');
+  const [editExistingImages, setEditExistingImages] = useState<string[]>([]);
+  const [editImageFiles,    setEditImageFiles]    = useState<File[]>([]);
+  const [editImagePreviews, setEditImagePreviews] = useState<string[]>([]);
   const [editProductPLItems, setEditProductPLItems] = useState<ProductPriceListItem[]>([]);
   const [editProductPLForms, setEditProductPLForms] = useState<Record<string, { purchasePrice: string; sellingPrice: string; discountPercent: string }>>({});
   const [editProductPLLoading, setEditProductPLLoading] = useState(false);
@@ -720,10 +723,18 @@ function AdminPanel() {
     setEditBrandId(p.brandId ?? '');
     setEditTypeId(p.typeId ?? '');
     setEditSubTypeId((p as any).subTypeId ?? '');
+    setEditExistingImages(p.images ?? []);
+    setEditImageFiles([]);
+    setEditImagePreviews([]);
     setEditError('');
     setEditProductPLItems([]);
     setEditProductPLForms({});
     setEditProductPLLoading(true);
+    // Cargar imágenes frescas desde la API (bypass caché del listado)
+    fetch(`${API}/api/products/${p.id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(fresh => { if (fresh?.images) setEditExistingImages(fresh.images); })
+      .catch(() => {});
     try {
       const res = await fetch(`${API}/api/pricelists/product/${p.id}`);
       if (res.ok) {
@@ -753,6 +764,17 @@ function AdminPanel() {
     if (!editingProduct) return;
     setEditSaving(true); setEditError('');
     try {
+      let newUrls: string[] = [];
+      if (editImageFiles.length > 0) {
+        const fd = new FormData();
+        editImageFiles.forEach(f => fd.append('files', f));
+        const upRes = await fetch(`${API}/api/uploads/products`, { method: 'POST', body: fd });
+        if (!upRes.ok) throw new Error('Error al subir imágenes.');
+        const upData = await upRes.json();
+        newUrls = upData.paths as string[];
+      }
+      const finalImages = [...editExistingImages, ...newUrls];
+
       const res = await fetch(`${API}/api/products/${editingProduct.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -764,7 +786,7 @@ function AdminPanel() {
           brandId: editBrandId || null,
           typeId: editTypeId || null,
           subTypeId: editSubTypeId || null,
-          images: editingProduct.images ?? [],
+          images: finalImages,
         }),
       });
       if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.message || 'Error al actualizar.'); }
@@ -789,6 +811,10 @@ function AdminPanel() {
         })
       );
 
+      editImagePreviews.forEach(url => URL.revokeObjectURL(url));
+      setEditImageFiles([]);
+      setEditImagePreviews([]);
+      setEditExistingImages([]);
       setEditingProduct(null);
       fetchProducts();
       invalidateCatalog();
@@ -3797,7 +3823,7 @@ function AdminPanel() {
                   </span>
                 )}
               </div>
-              <button onClick={() => setEditingProduct(null)} className="text-gray-400 hover:text-black"><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => { editImagePreviews.forEach(u => URL.revokeObjectURL(u)); setEditImageFiles([]); setEditImagePreviews([]); setEditExistingImages([]); setEditingProduct(null); }} className="text-gray-400 hover:text-black"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleUpdateProduct} className="overflow-y-auto flex-1 flex flex-col">
               <div className="p-6 space-y-6 flex-1">
@@ -3891,6 +3917,64 @@ function AdminPanel() {
                         <option value="">— Selecciona —</option>
                         {editSubTypes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                       </select>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 pb-2 border-b border-slate-100">Imágenes</h4>
+                  <div className="space-y-3">
+                    {editExistingImages.length > 0 && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-2">Imágenes actuales (hover para eliminar)</p>
+                        <div className="flex flex-wrap gap-2">
+                          {editExistingImages.map((src, i) => (
+                            <div key={i} className="relative w-20 h-[5.5rem] border border-gray-200 rounded-sm overflow-hidden bg-gray-50 group">
+                              <img src={src.startsWith('http') ? src : `http://localhost:5173${src}`}
+                                alt={`img-${i+1}`} className="w-full h-full object-contain p-1" />
+                              <button type="button"
+                                onClick={() => setEditExistingImages(prev => prev.filter((_, j) => j !== i))}
+                                className="absolute top-0.5 right-0.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-xs text-gray-500 mb-2">Agregar nuevas imágenes</p>
+                      <div className="flex flex-wrap gap-2">
+                        {editImagePreviews.map((src, i) => (
+                          <div key={i} className="relative w-20 h-[5.5rem] border border-gray-200 rounded-sm overflow-hidden bg-gray-50 group">
+                            <img src={src} alt={`nueva-${i+1}`} className="w-full h-full object-contain p-1" />
+                            <button type="button"
+                              onClick={() => {
+                                URL.revokeObjectURL(editImagePreviews[i]);
+                                const nextFiles = editImageFiles.filter((_, j) => j !== i);
+                                setEditImageFiles(nextFiles);
+                                setEditImagePreviews(nextFiles.map(f => URL.createObjectURL(f)));
+                              }}
+                              className="absolute top-0.5 right-0.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                        {(editExistingImages.length + editImagePreviews.length) < 5 && (
+                          <label className="w-20 h-[5.5rem] border-2 border-dashed border-gray-300 rounded-sm flex items-center justify-center cursor-pointer hover:border-black hover:bg-gray-50 transition-colors">
+                            <Plus className="w-5 h-5 text-gray-400" />
+                            <input type="file" accept="image/*" multiple className="hidden"
+                              onChange={e => {
+                                const files = Array.from(e.target.files ?? []);
+                                const remaining = 5 - editExistingImages.length - editImageFiles.length;
+                                const combined = [...editImageFiles, ...files].slice(0, remaining);
+                                setEditImageFiles(combined);
+                                setEditImagePreviews(combined.map(f => URL.createObjectURL(f)));
+                                e.target.value = '';
+                              }} />
+                          </label>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">Máx. 5 imágenes en total.</p>
                     </div>
                   </div>
                 </div>
@@ -3999,7 +4083,7 @@ function AdminPanel() {
                   </div>
                 )}
                 <div className="flex justify-end gap-3">
-                  <button type="button" onClick={() => setEditingProduct(null)}
+                  <button type="button" onClick={() => { editImagePreviews.forEach(u => URL.revokeObjectURL(u)); setEditImageFiles([]); setEditImagePreviews([]); setEditExistingImages([]); setEditingProduct(null); }}
                     className="px-6 py-2.5 font-bold text-sm text-gray-600 hover:bg-gray-100 rounded-sm uppercase tracking-wider">Cancelar</button>
                   <button type="submit" disabled={editSaving}
                     className="flex items-center gap-2 px-6 py-2.5 font-bold text-sm text-white bg-black hover:bg-gray-800 disabled:bg-gray-400 rounded-sm uppercase tracking-wider">
