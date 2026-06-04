@@ -413,7 +413,7 @@ export default function Checkout() {
                   <input
                     type="text"
                     value={nombre}
-                    onChange={e => setNombre(e.target.value)}
+                    onChange={e => setNombre(e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]/g, ''))}
                     className={fieldCls('nombre')}
                     placeholder="Ingresa tu nombre"
                   />
@@ -424,7 +424,7 @@ export default function Checkout() {
                   <input
                     type="text"
                     value={apellidos}
-                    onChange={e => setApellidos(e.target.value)}
+                    onChange={e => setApellidos(e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]/g, ''))}
                     className={fieldCls('apellidos')}
                     placeholder="Ingresa tus apellidos"
                   />
@@ -457,10 +457,11 @@ export default function Checkout() {
                   <input
                     type="tel"
                     value={telefono}
-                    onChange={e => setTelefono(e.target.value.replace(/\D/g, ''))}
+                    onChange={e => setTelefono(e.target.value.replace(/\D/g, '').slice(0, 10))}
                     className={fieldCls('telefono')}
                     placeholder="3001234567"
                     inputMode="numeric"
+                    maxLength={10}
                   />
                   {errors.telefono && <p className="text-red-500 text-xs mt-1">{errors.telefono}</p>}
                 </div>
