@@ -4,6 +4,7 @@ import { ShoppingCart, User, Search, Menu, LogOut, ShieldCheck, X, ChevronDown, 
 import { useCartStore } from '../../store/useCartStore';
 import { useAdminAuthStore } from '../../store/useAdminAuthStore';
 import { useCustomerAuthStore } from '../../store/useCustomerAuthStore';
+import { useUIStore } from '../../store/useUIStore';
 import { useEffect, useState, useRef } from 'react';
 
 interface ProdType  { id: string; name: string; }
@@ -20,10 +21,13 @@ export default function Navbar() {
   const isCustomerAuth = useCustomerAuthStore((s) => s.isAuthenticated);
   const customerLogout = useCustomerAuthStore((s) => s.logout);
 
+  const searchOpen  = useUIStore((s) => s.searchOpen);
+  const openSearch  = useUIStore((s) => s.openSearch);
+  const closeSearch = useUIStore((s) => s.closeSearch);
+
   const [categories,   setCategories]   = useState<NavCategory[]>([]);
   const [activeMenu,   setActiveMenu]   = useState<string | null>(null);
   const [drawerOpen,   setDrawerOpen]   = useState(false);
-  const [searchOpen,   setSearchOpen]   = useState(false);
   const [searchQuery,  setSearchQuery]  = useState('');
   const [drawerCat,    setDrawerCat]    = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -40,6 +44,8 @@ export default function Navbar() {
     if (searchOpen) setTimeout(() => searchRef.current?.focus(), 50);
   }, [searchOpen]);
 
+  const handleCloseSearch = () => { closeSearch(); setSearchQuery(''); };
+
   useEffect(() => { setDrawerOpen(false); setActiveMenu(null); }, [location.pathname]);
 
   const handleMouseEnter = (id: string) => {
@@ -54,8 +60,7 @@ export default function Navbar() {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/catalog?search=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchOpen(false);
-      setSearchQuery('');
+      handleCloseSearch();
     }
   };
 
@@ -132,12 +137,12 @@ export default function Navbar() {
                 placeholder="Buscar productos…"
                 className="flex-1 text-base outline-none text-black placeholder-gray-400"
               />
-              <button type="button" onClick={() => { setSearchOpen(false); setSearchQuery(''); }} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
+              <button type="button" onClick={handleCloseSearch} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </form>
             <div className="border-t border-gray-100 px-5 py-3">
-              <p className="text-xs text-gray-400">Presiona Enter para buscar o <button onClick={() => { setSearchOpen(false); setSearchQuery(''); }} className="text-black font-bold hover:underline">cancelar</button></p>
+              <p className="text-xs text-gray-400">Presiona Enter para buscar o <button onClick={handleCloseSearch} className="text-black font-bold hover:underline">cancelar</button></p>
             </div>
           </div>
         </div>
@@ -214,13 +219,13 @@ export default function Navbar() {
       )}
 
       <header className="bg-white sticky top-0 z-40 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-32">
+        <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
 
             {/* Logo + Nav grouped left */}
             <div className="flex items-center gap-6">
               <Link to="/" className="flex-shrink-0">
-                <img src="/logo.png" alt="OrigenAXM" className="h-28 w-auto object-contain" />
+                <img src="/logo.png" alt="OrigenAXM" className="h-9 sm:h-11 lg:h-14 w-auto object-contain" />
               </Link>
 
             {/* Desktop nav */}
@@ -297,7 +302,7 @@ export default function Navbar() {
             {/* Actions */}
             <div className="flex items-center gap-1">
               <button
-                onClick={() => setSearchOpen(true)}
+                onClick={openSearch}
                 className="p-2.5 hover:bg-gray-100 rounded-full transition-colors"
                 aria-label="Buscar"
               >
@@ -306,7 +311,7 @@ export default function Navbar() {
               <Link to="/cart" className="p-2.5 hover:bg-gray-100 rounded-full transition-colors relative flex items-center">
                 <ShoppingCart className="w-5 h-5 stroke-[1.5]" />
                 {itemsCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-black text-white text-[9px] font-extrabold w-4 h-4 flex items-center justify-center rounded-full">
+                  <span className="absolute -top-0.5 -right-0.5 bg-black text-white text-[10px] font-extrabold w-4 h-4 flex items-center justify-center rounded-full">
                     {itemsCount > 9 ? '9+' : itemsCount}
                   </span>
                 )}

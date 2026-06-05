@@ -15,7 +15,13 @@
 
 @layer base {
   body {
-    @apply bg-white text-brand-charcoal-dark font-sans antialiased;
+    @apply bg-white text-brand-charcoal-dark font-sans antialiased overflow-x-hidden;
+  }
+
+  :root {
+    --navbar-height-mobile: 56px;   /* h-14 */
+    --navbar-height-sm: 64px;       /* sm:h-16 */
+    --navbar-height-lg: 80px;       /* lg:h-20 */
   }
 }
 

@@ -29,11 +29,11 @@ export default function Cart() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <h1 className="text-3xl font-extrabold text-brand-charcoal-dark mb-8">Carrito de Compras</h1>
       
-      <div className="flex flex-col lg:flex-row gap-12">
-        <div className="w-full lg:w-2/3">
+      <div className="flex flex-col md:flex-row gap-8 lg:gap-12">
+        <div className="w-full md:w-2/3">
           <div className="bg-white rounded-sm shadow-sm border border-gray-100 overflow-hidden">
             <div className="hidden sm:grid grid-cols-12 gap-4 p-4 bg-gray-50 font-semibold text-brand-charcoal-light text-sm tracking-wider uppercase">
               <div className="col-span-6">Producto</div>
@@ -97,8 +97,8 @@ export default function Cart() {
           </div>
         </div>
 
-        <div className="w-full lg:w-1/3">
-          <div className="bg-gray-50 border border-gray-100 p-6 rounded-sm sticky top-24">
+        <div className="w-full md:w-1/3">
+          <div className="bg-gray-50 border border-gray-100 p-6 rounded-sm sticky top-14 sm:top-16 lg:top-20">
             <h2 className="text-xl font-bold text-brand-charcoal-dark mb-6">Resumen del Pedido</h2>
             
             <div className="mb-6 pb-6 border-b border-gray-200">

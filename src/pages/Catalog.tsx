@@ -3,6 +3,7 @@ import { API } from '../config/api';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Package, X, ChevronDown } from 'lucide-react';
 import { useCatalogStore } from '../store/useCatalogStore';
+import FloatingCartButton from '../components/layout/FloatingCartButton';
 
 /* ── Types ────────────────────────────────────────────────── */
 interface ApiProduct {
@@ -174,7 +175,7 @@ export default function Catalog() {
   const priceLabel = (priceMin || priceMax) ? `$${priceMin||'0'} – $${priceMax||'∞'}` : 'Precio';
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
       {/* Header */}
       <div className="mb-8">
@@ -185,7 +186,7 @@ export default function Catalog() {
       </div>
 
       {/* ── Filter bar ─────────────────────────────────────── */}
-      <div className="sticky top-16 z-20 bg-white/95 backdrop-blur-sm border-b border-gray-100 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 mb-8">
+      <div className="sticky top-14 sm:top-16 lg:top-20 z-20 bg-white/95 backdrop-blur-sm border-b border-gray-100 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 mb-8">
         <div className="flex items-center gap-2 flex-wrap">
 
           {/* Categoría */}
@@ -286,7 +287,7 @@ export default function Catalog() {
 
       {/* ── Product grid ─────────────────────────────────────── */}
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-x-4 gap-y-8">
           {[...Array(8)].map((_, i) => (
             <div key={i} className="animate-pulse">
               <div className="aspect-[3/4] bg-gray-100" />
@@ -307,7 +308,7 @@ export default function Catalog() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-x-4 gap-y-8">
           {filteredProducts.map(product => {
             const img = getImage(product);
             const outOfStock = product.stock <= 0;
@@ -360,6 +361,7 @@ export default function Catalog() {
           })}
         </div>
       )}
+      <FloatingCartButton />
     </div>
   );
 }

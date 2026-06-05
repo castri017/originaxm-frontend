@@ -394,14 +394,14 @@ export default function Checkout() {
   }
 
   const fieldCls = (name: string) =>
-    `w-full px-4 py-2 border rounded-sm outline-none transition-all focus:ring-1 focus:ring-black focus:border-black ${errors[name] ? 'border-red-400 bg-red-50' : 'border-gray-200'}`;
+    `w-full px-4 py-3 text-base border rounded-sm outline-none transition-all focus:ring-1 focus:ring-black focus:border-black ${errors[name] ? 'border-red-400 bg-red-50' : 'border-gray-200'}`;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <h1 className="text-3xl font-extrabold text-black mb-8">Finalizar Compra</h1>
 
-      <div className="flex flex-col lg:flex-row gap-12">
-        <div className="w-full lg:w-2/3">
+      <div className="flex flex-col md:flex-row gap-8 lg:gap-12">
+        <div className="w-full md:w-2/3">
           <form id="checkout-form" onSubmit={handleCheckout} noValidate className="space-y-8">
 
             {/* Contact Info */}
@@ -517,7 +517,7 @@ export default function Checkout() {
                   <textarea
                     value={notes}
                     onChange={e => setNotes(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-sm focus:ring-1 focus:ring-black focus:border-black outline-none transition-all h-20 resize-none"
+                    className="w-full px-4 py-3 text-base border border-gray-200 rounded-sm focus:ring-1 focus:ring-black focus:border-black outline-none transition-all h-20 resize-none"
                     placeholder="Instrucciones adicionales para la entrega"
                   />
                 </div>
@@ -557,7 +557,7 @@ export default function Checkout() {
                     <select
                       value={docType}
                       onChange={e => setDocType(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-sm bg-white outline-none focus:ring-1 focus:ring-black focus:border-black"
+                      className="w-full px-4 py-3 text-base border border-gray-200 rounded-sm bg-white outline-none focus:ring-1 focus:ring-black focus:border-black"
                     >
                       <option value="CC">Cédula de Ciudadanía (CC)</option>
                       <option value="TI">Tarjeta de Identidad (TI)</option>
@@ -597,8 +597,8 @@ export default function Checkout() {
         </div>
 
         {/* Order Summary */}
-        <div className="w-full lg:w-1/3">
-          <div className="bg-gray-50 border border-gray-100 p-6 rounded-sm sticky top-24">
+        <div className="w-full md:w-1/3">
+          <div className="bg-gray-50 border border-gray-100 p-6 rounded-sm sticky top-14 sm:top-16 lg:top-20">
             <h2 className="text-xl font-bold text-black mb-6">Tu Pedido</h2>
 
             <div className="space-y-4 mb-6 max-h-64 overflow-y-auto pr-2">

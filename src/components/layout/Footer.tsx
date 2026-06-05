@@ -3,10 +3,10 @@ import { Instagram, MessageCircle } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer className="bg-brand-charcoal-dark text-brand-sand pt-6 pb-4 border-t-4 border-brand-copper">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-          <div className="md:col-span-1">
+    <footer className="bg-brand-charcoal-dark text-brand-sand pt-6 pb-4 border-t-4 border-brand-copper" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+      <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+          <div className="col-span-2 md:col-span-1">
             <h3 className="font-bold text-base tracking-wider text-brand-copper-light mb-2">OrigenAXM</h3>
             <p className="text-xs text-gray-300 leading-relaxed">
               Transformando tu estilo con la fuerza del águila. Ropa, accesorios y el espíritu de Alexander & Maria.

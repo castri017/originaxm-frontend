@@ -171,7 +171,7 @@ export default function ProductDetails() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-36 sm:pb-10">
 
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-gray-400 mb-8">
@@ -179,7 +179,7 @@ export default function ProductDetails() {
         <span>/</span>
         <Link to="/catalog" className="hover:text-black transition-colors">Catálogo</Link>
         <span>/</span>
-        <span className="text-black font-medium truncate max-w-[200px]">{product.name}</span>
+        <span className="text-black font-medium truncate max-w-[40vw] sm:max-w-xs">{product.name}</span>
       </nav>
 
       <div className="flex flex-col md:flex-row gap-10 lg:gap-16">
@@ -202,7 +202,7 @@ export default function ProductDetails() {
             </div>
           )}
 
-          <div className="relative flex-1 aspect-[3/4] border border-gray-100 rounded-sm overflow-hidden bg-gray-50 flex items-center justify-center sticky top-24">
+          <div className="relative flex-1 aspect-[3/4] border border-gray-100 rounded-sm overflow-hidden bg-gray-50 flex items-center justify-center sticky top-14 sm:top-16 lg:top-20">
             {images.length > 0 ? (
               <img
                 src={imgUrl(images[activeImg])}
@@ -401,6 +401,36 @@ export default function ProductDetails() {
             <ArrowLeft className="w-3.5 h-3.5" /> Volver al catálogo
           </Link>
         </div>
+      </div>
+
+      {/* Mobile sticky CTA — fixed above bottom nav, inside wrapper so JSX stays valid */}
+      <div className="sm:hidden fixed bottom-16 left-0 right-0 z-30 bg-white border-t border-gray-200 px-4 py-3 flex items-center gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}>
+        {product.sellingPrice > 0 && (
+          <div className="flex flex-col min-w-0">
+            <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold leading-none">Precio</span>
+            <span className="text-lg font-black text-black leading-tight">${finalPrice.toLocaleString('es-CL')}</span>
+            {product.discountPercentage > 0 && (
+              <span className="text-[10px] text-gray-400 line-through">${product.sellingPrice.toLocaleString('es-CL')}</span>
+            )}
+          </div>
+        )}
+        {outOfStock ? (
+          <a
+            href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`¡Hola! Quisiera realizar un pedido del producto: ${product.name}`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 bg-[#25D366] text-white text-sm font-bold uppercase tracking-wider py-3 rounded-full flex items-center justify-center gap-2"
+          >
+            {WA_ICON} Pedir por WhatsApp
+          </a>
+        ) : (
+          <button
+            onClick={handleAddToCart}
+            className={`flex-1 text-sm font-bold uppercase tracking-wider py-3 rounded-full transition-all ${added ? 'bg-green-600 text-white' : 'bg-black text-white hover:bg-gray-800'}`}
+          >
+            {added ? '✓ Añadido' : 'Añadir al Carrito'}
+          </button>
+        )}
       </div>
     </div>
   );

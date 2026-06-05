@@ -3,6 +3,7 @@ import { API } from '../config/api';
 import { useRef, useEffect, useState } from 'react';
 import { ArrowRight, ShoppingBag, ChevronLeft, ChevronRight, Package, Star } from 'lucide-react';
 import { useCatalogStore } from '../store/useCatalogStore';
+import FloatingCartButton from '../components/layout/FloatingCartButton';
 
 interface ApiProduct {
   id: string;
@@ -65,7 +66,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero */}
-      <section className="relative h-[35vh] bg-gray-100 overflow-hidden">
+      <section className="relative h-[35vh] 2xl:h-[45vh] bg-gray-100 overflow-hidden">
         <div className="absolute inset-0">
           <img
             src="https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?auto=format&fit=crop&q=80&w=2000"
@@ -73,9 +74,9 @@ export default function Home() {
             className="w-full h-full object-cover opacity-30"
           />
         </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
+        <div className="relative z-10 max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
           <div className="max-w-2xl">
-            <h1 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight mb-4 drop-shadow-md">
+            <h1 className="text-4xl md:text-6xl 2xl:text-7xl font-extrabold text-white tracking-tight mb-4 drop-shadow-md">
               Mantén el calor <br />
               <span className="text-white">en cada aventura.</span>
             </h1>
@@ -96,14 +97,14 @@ export default function Home() {
       {/* Productos Recomendados */}
       {(recLoading || recommended.length > 0) && (
         <section className="py-14 bg-gray-50 border-b border-gray-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3 mb-10">
               <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
               <h2 className="text-xl font-bold uppercase tracking-[0.2em] text-black">Productos Recomendados</h2>
             </div>
 
             {recLoading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-6">
                 {[...Array(4)].map((_, i) => (
                   <div key={i} className="animate-pulse">
                     <div className="aspect-[4/5] bg-gray-200 mb-3 rounded-sm" />
@@ -113,7 +114,7 @@ export default function Home() {
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-x-6 gap-y-10">
                 {recommended.map((product) => {
                   const img = getImage(product);
                   return (
@@ -140,7 +141,7 @@ export default function Home() {
                           <div className="mb-2">
                             <div className="flex items-center gap-1.5">
                               <p className="text-base font-bold text-black">${fp.toLocaleString('es-CL')}</p>
-                              {product.discountPercentage > 0 && <span className="bg-red-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full">-{product.discountPercentage}%</span>}
+                              {product.discountPercentage > 0 && <span className="bg-red-500 text-white text-[11px] font-extrabold px-1.5 py-0.5 rounded-full">-{product.discountPercentage}%</span>}
                             </div>
                             {product.discountPercentage > 0 && <p className="text-[10px] text-gray-400 line-through">${product.sellingPrice.toLocaleString('es-CL')}</p>}
                           </div>
@@ -221,7 +222,7 @@ export default function Home() {
                         <div>
                           <div className="flex items-center gap-1.5">
                             <p className="text-sm font-bold text-black">${fp.toLocaleString('es-CL')}</p>
-                            {product.discountPercentage > 0 && <span className="bg-red-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full">-{product.discountPercentage}%</span>}
+                            {product.discountPercentage > 0 && <span className="bg-red-500 text-white text-[11px] font-extrabold px-1.5 py-0.5 rounded-full">-{product.discountPercentage}%</span>}
                           </div>
                           {product.discountPercentage > 0 && <p className="text-[10px] text-gray-400 line-through">${product.sellingPrice.toLocaleString('es-CL')}</p>}
                         </div>
@@ -252,7 +253,7 @@ export default function Home() {
       {/* Grid de productos */}
       {!loading && products.length > 0 && (
         <section className="py-20 bg-white border-t border-gray-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-end mb-12">
               <h2 className="text-2xl md:text-3xl font-bold uppercase tracking-widest text-black">
                 A los clientes les encanta
@@ -262,7 +263,7 @@ export default function Home() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 gap-x-8 gap-y-12">
               {products.slice(0, 8).map((product) => {
                 const img = getImage(product);
                 return (
@@ -293,7 +294,7 @@ export default function Home() {
                         <div className="mb-2">
                           <div className="flex items-center gap-1.5">
                             <p className="text-base font-bold text-black">${fp.toLocaleString('es-CL')}</p>
-                            {product.discountPercentage > 0 && <span className="bg-red-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full">-{product.discountPercentage}%</span>}
+                            {product.discountPercentage > 0 && <span className="bg-red-500 text-white text-[11px] font-extrabold px-1.5 py-0.5 rounded-full">-{product.discountPercentage}%</span>}
                           </div>
                           {product.discountPercentage > 0 && <p className="text-[10px] text-gray-400 line-through">${product.sellingPrice.toLocaleString('es-CL')}</p>}
                         </div>
@@ -330,6 +331,7 @@ export default function Home() {
           </div>
         </section>
       )}
+      <FloatingCartButton />
     </div>
   );
 }

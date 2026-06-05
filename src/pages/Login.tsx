@@ -137,7 +137,7 @@ export default function Login() {
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input type="text" value={username} onChange={e => setUsername(e.target.value)}
                     placeholder="tu_usuario"
-                    className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-black" />
+                    className="w-full pl-9 pr-3 py-3 border border-gray-200 rounded-sm text-base focus:outline-none focus:ring-1 focus:ring-black" />
                 </div>
               </div>
 
@@ -147,7 +147,7 @@ export default function Login() {
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-9 pr-10 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-black" />
+                    className="w-full pl-9 pr-10 py-3 border border-gray-200 rounded-sm text-base focus:outline-none focus:ring-1 focus:ring-black" />
                   <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black">
                     {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -169,7 +169,7 @@ export default function Login() {
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <input type="text" value={regUsername} onChange={e => setRegUsername(e.target.value)}
                       placeholder="mi_usuario"
-                      className={`w-full pl-9 pr-3 py-2.5 border rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-black ${fieldErrors.regUsername ? 'border-red-400' : 'border-gray-200'}`} />
+                      className={`w-full pl-9 pr-3 py-3 border rounded-sm text-base focus:outline-none focus:ring-1 focus:ring-black ${fieldErrors.regUsername ? 'border-red-400' : 'border-gray-200'}`} />
                   </div>
                   {fieldErrors.regUsername && <p className="text-xs text-red-500 mt-0.5">{fieldErrors.regUsername}</p>}
                 </div>
@@ -180,7 +180,7 @@ export default function Login() {
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <input type={showPass ? 'text' : 'password'} value={regPassword} onChange={e => setRegPassword(e.target.value)}
                       placeholder="Mínimo 6 caracteres"
-                      className={`w-full pl-9 pr-10 py-2.5 border rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-black ${fieldErrors.regPassword ? 'border-red-400' : 'border-gray-200'}`} />
+                      className={`w-full pl-9 pr-10 py-3 border rounded-sm text-base focus:outline-none focus:ring-1 focus:ring-black ${fieldErrors.regPassword ? 'border-red-400' : 'border-gray-200'}`} />
                     <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black">
                       {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -191,14 +191,14 @@ export default function Login() {
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Nombre *</label>
                   <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Carlos"
-                    className={`w-full px-3 py-2.5 border rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-black ${fieldErrors.firstName ? 'border-red-400' : 'border-gray-200'}`} />
+                    className={`w-full px-3 py-3 border rounded-sm text-base focus:outline-none focus:ring-1 focus:ring-black ${fieldErrors.firstName ? 'border-red-400' : 'border-gray-200'}`} />
                   {fieldErrors.firstName && <p className="text-xs text-red-500 mt-0.5">{fieldErrors.firstName}</p>}
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Apellidos *</label>
                   <input type="text" value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Mendoza"
-                    className={`w-full px-3 py-2.5 border rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-black ${fieldErrors.lastName ? 'border-red-400' : 'border-gray-200'}`} />
+                    className={`w-full px-3 py-3 border rounded-sm text-base focus:outline-none focus:ring-1 focus:ring-black ${fieldErrors.lastName ? 'border-red-400' : 'border-gray-200'}`} />
                   {fieldErrors.lastName && <p className="text-xs text-red-500 mt-0.5">{fieldErrors.lastName}</p>}
                 </div>
 
@@ -207,7 +207,7 @@ export default function Login() {
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="3001234567"
-                      className={`w-full pl-9 pr-3 py-2.5 border rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-black ${fieldErrors.phone ? 'border-red-400' : 'border-gray-200'}`} />
+                      className={`w-full pl-9 pr-3 py-3 border rounded-sm text-base focus:outline-none focus:ring-1 focus:ring-black ${fieldErrors.phone ? 'border-red-400' : 'border-gray-200'}`} />
                   </div>
                   {fieldErrors.phone && <p className="text-xs text-red-500 mt-0.5">{fieldErrors.phone}</p>}
                 </div>
@@ -217,7 +217,7 @@ export default function Login() {
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="correo@ejemplo.com"
-                      className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-black" />
+                      className="w-full pl-9 pr-3 py-3 border border-gray-200 rounded-sm text-base focus:outline-none focus:ring-1 focus:ring-black" />
                   </div>
                 </div>
 
@@ -226,14 +226,14 @@ export default function Login() {
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <input type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="Calle 10 # 12-34"
-                      className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-black" />
+                      className="w-full pl-9 pr-3 py-3 border border-gray-200 rounded-sm text-base focus:outline-none focus:ring-1 focus:ring-black" />
                   </div>
                 </div>
 
                 <div className="col-span-2">
                   <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Ciudad</label>
                   <input type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="Armenia"
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-black" />
+                    className="w-full px-3 py-3 border border-gray-200 rounded-sm text-base focus:outline-none focus:ring-1 focus:ring-black" />
                 </div>
               </div>
 
