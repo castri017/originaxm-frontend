@@ -121,6 +121,8 @@ interface ApiProduct {
   stock: number;
   isRecommended: boolean;
   recommendedOrder: number;
+  isFeatured: boolean;
+  featuredOrder: number;
 }
 
 // ── Price List types ──────────────────────────────────────
@@ -306,6 +308,10 @@ function AdminPanel() {
   // ── Recommended state ────────────────────────────────────────────────────
   const [recSavingId, setRecSavingId] = useState<string | null>(null);
   const [recOrderEdits, setRecOrderEdits] = useState<Record<string, number>>({});
+
+  // ── Featured state ────────────────────────────────────────────────────────
+  const [featSavingId, setFeatSavingId] = useState<string | null>(null);
+  const [featOrderEdits, setFeatOrderEdits] = useState<Record<string, number>>({});
 
   const [categories, setCategories] = useState<ApiCategory[]>([]);
   const [catLoading, setCatLoading] = useState(false);
@@ -1181,6 +1187,7 @@ function AdminPanel() {
             { id: 'carriers',     Icon: Truck,         label: 'Transportadoras' },
             { id: 'users',        Icon: Users,         label: 'Clientes'        },
             { id: 'recommended',  Icon: Star,          label: 'Recomendados'    },
+            { id: 'featured',     Icon: TrendingUp,    label: 'Destacados'      },
             { id: 'reports',      Icon: FileBarChart2, label: 'Informes'        },
             { id: 'settings',     Icon: Settings,      label: 'Configuración'   },
           ] as { id: string; Icon: React.ElementType; label: string }[]).map(({ id, Icon, label }) => (
@@ -1246,6 +1253,7 @@ function AdminPanel() {
               {activeTab === 'carriers'     && 'Transportadoras'}
               {activeTab === 'users'        && 'Clientes'}
               {activeTab === 'recommended'  && 'Productos Recomendados'}
+              {activeTab === 'featured'     && 'Novedades Destacadas'}
               {activeTab === 'reports'      && 'Informes'}
               {activeTab === 'settings'     && 'Configuración'}
             </h1>
@@ -2889,6 +2897,112 @@ function AdminPanel() {
                                   onChange={(e) => setRecOrderEdits(prev => ({ ...prev, [product.id]: Number(e.target.value) }))}
                                   onBlur={() => saveRecommended(true, orderVal)}
                                   className="w-16 border border-gray-200 rounded-sm text-center text-sm font-bold py-1 focus:outline-none focus:border-amber-400"
+                                  disabled={isSaving}
+                                />
+                              ) : (
+                                <span className="text-gray-300 text-sm">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ) : activeTab === 'featured' ? (
+            <div>
+              <div className="mb-6">
+                <h1 className="text-2xl font-extrabold text-black mb-1">Novedades Destacadas</h1>
+                <p className="text-sm text-gray-400">Activa el ícono para mostrar un producto en el slider "Novedades Destacadas" del inicio. Define el orden de aparición.</p>
+              </div>
+
+              {productsLoading ? (
+                <div className="flex items-center justify-center py-16 text-gray-400">
+                  <Loader2 className="w-6 h-6 animate-spin mr-2" /> Cargando productos...
+                </div>
+              ) : products.length === 0 ? (
+                <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-sm text-gray-400">
+                  <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">No hay productos disponibles.</p>
+                </div>
+              ) : (
+                <div className="bg-white rounded-sm shadow-sm border border-gray-100 overflow-x-auto">
+                  <table className="w-full text-left border-collapse min-w-[500px]">
+                    <thead>
+                      <tr className="border-b border-gray-100">
+                        <th className="px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Producto</th>
+                        <th className="px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Destacado</th>
+                        <th className="px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Orden</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {products.map((product) => {
+                        const orderVal = featOrderEdits[product.id] ?? product.featuredOrder;
+                        const isSaving = featSavingId === product.id;
+
+                        const saveFeatured = async (isFeat: boolean, order: number) => {
+                          setFeatSavingId(product.id);
+                          try {
+                            await fetch(`${API}/api/featured/${product.id}`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ isFeatured: isFeat, featuredOrder: order }),
+                            });
+                            setProducts(prev => prev.map(p =>
+                              p.id === product.id ? { ...p, isFeatured: isFeat, featuredOrder: order } : p
+                            ));
+                          } catch { /* silencioso */ }
+                          finally { setFeatSavingId(null); }
+                        };
+
+                        return (
+                          <tr key={product.id} className={`transition-colors ${product.isFeatured ? 'bg-blue-50 hover:bg-blue-50/70' : 'hover:bg-gray-50'}`}>
+                            <td className="px-6 py-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-[3.5rem] flex-shrink-0 rounded-sm border border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center">
+                                  {product.images?.[0] ? (
+                                    <img
+                                      src={product.images[0].startsWith('http') ? product.images[0] : `http://localhost:5173${product.images[0]}`}
+                                      alt={product.name}
+                                      className="w-full h-full object-contain p-0.5"
+                                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                    />
+                                  ) : (
+                                    <Package className="w-4 h-4 text-gray-300" />
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold text-black leading-tight">{product.name}</p>
+                                  {product.manufacturer && <p className="text-xs text-gray-400 uppercase tracking-wide mt-0.5">{product.manufacturer}</p>}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {isSaving ? (
+                                <Loader2 className="w-5 h-5 animate-spin text-blue-400 mx-auto" />
+                              ) : (
+                                <button
+                                  onClick={() => saveFeatured(!product.isFeatured, orderVal)}
+                                  title={product.isFeatured ? 'Quitar de destacados' : 'Marcar como destacado'}
+                                  className="mx-auto block transition-transform hover:scale-110"
+                                >
+                                  <TrendingUp
+                                    className={`w-6 h-6 transition-colors ${product.isFeatured ? 'text-blue-500' : 'text-gray-300 hover:text-blue-300'}`}
+                                  />
+                                </button>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {product.isFeatured ? (
+                                <input
+                                  type="number"
+                                  min={0}
+                                  value={orderVal}
+                                  onChange={(e) => setFeatOrderEdits(prev => ({ ...prev, [product.id]: Number(e.target.value) }))}
+                                  onBlur={() => saveFeatured(true, orderVal)}
+                                  className="w-16 border border-gray-200 rounded-sm text-center text-sm font-bold py-1 focus:outline-none focus:border-blue-400"
                                   disabled={isSaving}
                                 />
                               ) : (
