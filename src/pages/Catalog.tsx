@@ -310,7 +310,7 @@ export default function Catalog() {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-x-4 gap-y-8">
-          {filteredProducts.map(product => {
+          {filteredProducts.map((product, index) => {
             const img = getImage(product);
             const outOfStock = product.stock <= 0;
             const disc = product.discountPercentage ?? 0;
@@ -323,7 +323,15 @@ export default function Catalog() {
                 {/* Imagen portrait */}
                 <div className="relative aspect-[3/4] overflow-hidden bg-[#f4f4f4] flex items-center justify-center">
                   {img && !imgErrors.has(product.id)
-                    ? <img src={img} alt={product.name} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500 ease-out" onError={() => onImgError(product.id)} />
+                    ? <img
+                        src={img}
+                        alt={product.name}
+                        className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500 ease-out"
+                        onError={() => onImgError(product.id)}
+                        loading={index === 0 ? 'eager' : 'lazy'}
+                        fetchPriority={index === 0 ? 'high' : undefined}
+                        decoding="async"
+                      />
                     : <Package className="w-12 h-12 text-gray-300" />
                   }
                   {!outOfStock && disc > 0 && (

@@ -196,6 +196,9 @@ export default function ProductDetails() {
                 src={imgUrl(images[activeImg])}
                 alt={product.name}
                 className="w-full h-full object-cover"
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
@@ -247,7 +250,7 @@ export default function ProductDetails() {
                     activeImg === i ? 'border-gray-800' : 'border-gray-200 opacity-55 hover:opacity-90'
                   }`}
                 >
-                  <img src={imgUrl(img)} alt="" className="w-full h-full object-contain p-1" />
+                  <img src={imgUrl(img)} alt="" className="w-full h-full object-contain p-1" loading="lazy" decoding="async" />
                 </button>
               ))}
             </div>

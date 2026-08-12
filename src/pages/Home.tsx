@@ -84,6 +84,8 @@ export default function Home() {
             src="https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?auto=format&fit=crop&q=80&w=2000"
             alt="Hero Background"
             className="w-full h-full object-cover opacity-30"
+            fetchPriority="high"
+            decoding="async"
           />
         </div>
         <div className="relative z-10 max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
@@ -127,13 +129,21 @@ export default function Home() {
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-x-6 gap-y-10">
-                {recommended.map((product) => {
+                {recommended.map((product, index) => {
                   const img = getImage(product);
                   return (
                     <Link key={product.id} to={`/product/${product.id}`} className="group cursor-pointer flex flex-col">
                       <div className="relative aspect-[3/4] overflow-hidden bg-white mb-3 border border-gray-100 flex items-center justify-center p-3">
                         {img && !imgErrors.has(`rec-${product.id}`) ? (
-                          <img src={img} alt={product.name} className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105" onError={() => onImgError(`rec-${product.id}`)} />
+                          <img
+                            src={img}
+                            alt={product.name}
+                            className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
+                            onError={() => onImgError(`rec-${product.id}`)}
+                            loading={index === 0 ? 'eager' : 'lazy'}
+                            fetchPriority={index === 0 ? 'high' : undefined}
+                            decoding="async"
+                          />
                         ) : (
                           <Package className="w-14 h-14 text-gray-200" />
                         )}
@@ -217,7 +227,14 @@ export default function Home() {
                   >
                     <div className="relative aspect-[3/4] overflow-hidden bg-gray-100 mb-3">
                       {img && !imgErrors.has(`slider-${product.id}`) ? (
-                        <img src={img} alt={product.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" onError={() => onImgError(`slider-${product.id}`)} />
+                        <img
+                          src={img}
+                          alt={product.name}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          onError={() => onImgError(`slider-${product.id}`)}
+                          loading="lazy"
+                          decoding="async"
+                        />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Package className="w-12 h-12 text-gray-300" />
@@ -277,7 +294,14 @@ export default function Home() {
                   <Link key={product.id} to={`/product/${product.id}`} className="group cursor-pointer flex flex-col">
                     <div className="relative aspect-[3/4] overflow-hidden bg-white mb-4 border border-gray-100 flex items-center justify-center p-4">
                       {img && !imgErrors.has(`grid-${product.id}`) ? (
-                        <img src={img} alt={product.name} className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105" onError={() => onImgError(`grid-${product.id}`)} />
+                        <img
+                          src={img}
+                          alt={product.name}
+                          className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
+                          onError={() => onImgError(`grid-${product.id}`)}
+                          loading="lazy"
+                          decoding="async"
+                        />
                       ) : (
                         <Package className="w-16 h-16 text-gray-200" />
                       )}
