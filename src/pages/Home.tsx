@@ -17,6 +17,7 @@ interface ApiProduct {
   stock: number;
   isRecommended?: boolean;
   recommendedOrder?: number;
+  isInternational?: boolean;
 }
 
 export default function Home() {
@@ -226,6 +227,11 @@ export default function Home() {
                         <span className="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-extrabold uppercase tracking-widest px-2 py-1">Sin Stock</span>
                       ) : (
                         <span className="absolute top-3 left-3 bg-black text-white text-[10px] font-extrabold uppercase tracking-widest px-2 py-1">Recién Llegado</span>
+                      )}
+                      {product.isInternational && (
+                        <span className="absolute bottom-0 left-0 right-0 bg-black/85 text-white text-[9px] font-bold uppercase tracking-wide text-center leading-tight py-1.5 px-1">
+                          Pedido internacional · Envío 10-15 días
+                        </span>
                       )}
                     </div>
                     <h3 className="text-sm font-bold text-black leading-tight mb-1 line-clamp-2">

@@ -10,6 +10,7 @@ interface ApiProduct {
   id: string; name: string; manufacturer: string;
   categoryId: string; typeId: string; subTypeId: string;
   images: string[]; sellingPrice: number; discountPercentage: number; stock: number;
+  isInternational?: boolean;
 }
 interface SubType  { id: string; name: string; }
 interface ProdType { id: string; name: string; subTypes: SubType[]; }
@@ -333,6 +334,11 @@ export default function Catalog() {
                   {outOfStock && (
                     <span className="absolute top-3 left-3 bg-black text-white text-[10px] font-bold uppercase tracking-wide px-2 py-0.5">
                       Agotado
+                    </span>
+                  )}
+                  {product.isInternational && (
+                    <span className="absolute bottom-0 left-0 right-0 bg-black/85 text-white text-[9px] font-bold uppercase tracking-wide text-center leading-tight py-1.5 px-1">
+                      Pedido internacional · Envío 10-15 días
                     </span>
                   )}
                 </div>

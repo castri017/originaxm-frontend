@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { API } from '../config/api';
-import { Settings, Tag, Users, Package, TrendingUp, Plus, Edit, Trash2, ClipboardList, Eye, ArrowLeft, X, ShieldCheck, Lock, Mail, Loader2, AlertCircle, LogOut, BarChart3, DollarSign, RefreshCw, ChevronLeft, Truck, FileBarChart2, Star } from 'lucide-react';
+import { Settings, Tag, Users, Package, TrendingUp, Plus, Edit, Trash2, ClipboardList, Eye, ArrowLeft, X, ShieldCheck, Lock, Mail, Loader2, AlertCircle, LogOut, BarChart3, DollarSign, RefreshCw, ChevronLeft, Truck, FileBarChart2, Star, Globe } from 'lucide-react';
 import { useAdminAuthStore } from '../store/useAdminAuthStore';
 import { useCatalogStore } from '../store/useCatalogStore';
 
@@ -123,6 +123,7 @@ interface ApiProduct {
   recommendedOrder: number;
   isFeatured: boolean;
   featuredOrder: number;
+  isInternational: boolean;
 }
 
 // ── Price List types ──────────────────────────────────────
@@ -312,6 +313,9 @@ function AdminPanel() {
   // ── Featured state ────────────────────────────────────────────────────────
   const [featSavingId, setFeatSavingId] = useState<string | null>(null);
   const [featOrderEdits, setFeatOrderEdits] = useState<Record<string, number>>({});
+
+  // ── International state ─────────────────────────────────────────────────
+  const [intlSavingId, setIntlSavingId] = useState<string | null>(null);
 
   const [categories, setCategories] = useState<ApiCategory[]>([]);
   const [catLoading, setCatLoading] = useState(false);
@@ -1188,6 +1192,7 @@ function AdminPanel() {
             { id: 'users',        Icon: Users,         label: 'Clientes'        },
             { id: 'recommended',  Icon: Star,          label: 'Recomendados'    },
             { id: 'featured',     Icon: TrendingUp,    label: 'Destacados'      },
+            { id: 'international', Icon: Globe,        label: 'Internacionales' },
             { id: 'reports',      Icon: FileBarChart2, label: 'Informes'        },
             { id: 'settings',     Icon: Settings,      label: 'Configuración'   },
           ] as { id: string; Icon: React.ElementType; label: string }[]).map(({ id, Icon, label }) => (
@@ -1254,6 +1259,7 @@ function AdminPanel() {
               {activeTab === 'users'        && 'Clientes'}
               {activeTab === 'recommended'  && 'Productos Recomendados'}
               {activeTab === 'featured'     && 'Novedades Destacadas'}
+              {activeTab === 'international' && 'Productos Internacionales'}
               {activeTab === 'reports'      && 'Informes'}
               {activeTab === 'settings'     && 'Configuración'}
             </h1>
@@ -3007,6 +3013,95 @@ function AdminPanel() {
                                 />
                               ) : (
                                 <span className="text-gray-300 text-sm">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ) : activeTab === 'international' ? (
+            <div>
+              <div className="mb-6">
+                <h1 className="text-2xl font-extrabold text-black mb-1">Productos Internacionales</h1>
+                <p className="text-sm text-gray-400">Activa el ícono para marcar un producto como pedido internacional. Se mostrará una insignia de "Envío 10-15 días" en su foto dentro del catálogo y la ficha del producto.</p>
+              </div>
+
+              {productsLoading ? (
+                <div className="flex items-center justify-center py-16 text-gray-400">
+                  <Loader2 className="w-6 h-6 animate-spin mr-2" /> Cargando productos...
+                </div>
+              ) : products.length === 0 ? (
+                <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-sm text-gray-400">
+                  <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">No hay productos disponibles.</p>
+                </div>
+              ) : (
+                <div className="bg-white rounded-sm shadow-sm border border-gray-100 overflow-x-auto">
+                  <table className="w-full text-left border-collapse min-w-[500px]">
+                    <thead>
+                      <tr className="border-b border-gray-100">
+                        <th className="px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Producto</th>
+                        <th className="px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Internacional</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {products.map((product) => {
+                        const isSaving = intlSavingId === product.id;
+
+                        const saveInternational = async (isIntl: boolean) => {
+                          setIntlSavingId(product.id);
+                          try {
+                            await fetch(`${API}/api/international/${product.id}`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ isInternational: isIntl }),
+                            });
+                            setProducts(prev => prev.map(p =>
+                              p.id === product.id ? { ...p, isInternational: isIntl } : p
+                            ));
+                          } catch { /* silencioso */ }
+                          finally { setIntlSavingId(null); }
+                        };
+
+                        return (
+                          <tr key={product.id} className={`transition-colors ${product.isInternational ? 'bg-blue-50 hover:bg-blue-50/70' : 'hover:bg-gray-50'}`}>
+                            <td className="px-6 py-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-[3.5rem] flex-shrink-0 rounded-sm border border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center">
+                                  {product.images?.[0] ? (
+                                    <img
+                                      src={product.images[0].startsWith('http') ? product.images[0] : `http://localhost:5173${product.images[0]}`}
+                                      alt={product.name}
+                                      className="w-full h-full object-contain p-0.5"
+                                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                    />
+                                  ) : (
+                                    <Package className="w-4 h-4 text-gray-300" />
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold text-black leading-tight">{product.name}</p>
+                                  {product.manufacturer && <p className="text-xs text-gray-400 uppercase tracking-wide mt-0.5">{product.manufacturer}</p>}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {isSaving ? (
+                                <Loader2 className="w-5 h-5 animate-spin text-blue-400 mx-auto" />
+                              ) : (
+                                <button
+                                  onClick={() => saveInternational(!product.isInternational)}
+                                  title={product.isInternational ? 'Quitar marca de internacional' : 'Marcar como pedido internacional'}
+                                  className="mx-auto block transition-transform hover:scale-110"
+                                >
+                                  <Globe
+                                    className={`w-6 h-6 transition-colors ${product.isInternational ? 'text-blue-500' : 'text-gray-300 hover:text-blue-300'}`}
+                                  />
+                                </button>
                               )}
                             </td>
                           </tr>

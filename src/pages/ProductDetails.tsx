@@ -28,6 +28,7 @@ interface ApiProduct {
   sellingPrice: number;
   discountPercentage: number;
   stock: number;
+  isInternational?: boolean;
 }
 
 interface ApiCategory {
@@ -211,6 +212,11 @@ export default function ProductDetails() {
             {disc > 0 && (
               <span className="absolute top-4 right-4 bg-red-500 text-white text-[9px] font-bold uppercase tracking-[0.15em] px-2.5 py-1">
                 -{disc}%
+              </span>
+            )}
+            {product.isInternational && (
+              <span className="absolute bottom-0 left-0 right-0 bg-black/85 text-white text-[10px] font-bold uppercase tracking-[0.15em] text-center py-2 px-2">
+                Pedido internacional · Envío 10 a 15 días
               </span>
             )}
           </div>
