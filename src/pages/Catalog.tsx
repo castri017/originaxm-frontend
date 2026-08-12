@@ -340,8 +340,8 @@ export default function Catalog() {
                     </span>
                   )}
                   {outOfStock && (
-                    <span className="absolute top-3 left-3 bg-black text-white text-[10px] font-bold uppercase tracking-wide px-2 py-0.5">
-                      Agotado
+                    <span className="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-bold uppercase tracking-wide px-2 py-0.5">
+                      Sin Stock
                     </span>
                   )}
                   {product.isInternational && (

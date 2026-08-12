@@ -154,6 +154,11 @@ export default function Home() {
                             <Star className="w-2.5 h-2.5 fill-white" /> Top
                           </span>
                         )}
+                        {product.isInternational && (
+                          <span className="absolute bottom-0 left-0 right-0 bg-black/85 text-white text-[9px] font-bold uppercase tracking-wide text-center leading-tight py-1.5 px-1">
+                            Pedido internacional · Envío 10-15 días
+                          </span>
+                        )}
                       </div>
                       <h3 className="text-sm font-semibold text-black leading-tight mb-1 flex-grow line-clamp-2">{product.name}</h3>
                       {product.manufacturer && <p className="text-xs text-gray-400 mb-1">{product.manufacturer}</p>}
@@ -310,6 +315,11 @@ export default function Home() {
                       ) : (
                         <span className="absolute top-2 left-2 text-[10px] font-bold uppercase tracking-wider text-black flex items-center gap-1">
                           <span className="text-xs">★</span> Nuevo
+                        </span>
+                      )}
+                      {product.isInternational && (
+                        <span className="absolute bottom-0 left-0 right-0 bg-black/85 text-white text-[9px] font-bold uppercase tracking-wide text-center leading-tight py-1.5 px-1">
+                          Pedido internacional · Envío 10-15 días
                         </span>
                       )}
                     </div>

@@ -207,7 +207,11 @@ export default function ProductDetails() {
             )}
 
             {/* Top-left badge */}
-            {!outOfStock && (
+            {outOfStock ? (
+              <span className="absolute top-4 left-4 bg-red-500 text-white text-[9px] font-bold uppercase tracking-[0.2em] px-2.5 py-1">
+                Sin Stock
+              </span>
+            ) : (
               <span className="absolute top-4 left-4 bg-black text-white text-[9px] font-bold uppercase tracking-[0.2em] px-2.5 py-1">
                 {product.stock <= 5 ? 'Últimas unidades' : 'Nuevo'}
               </span>
@@ -219,7 +223,7 @@ export default function ProductDetails() {
             )}
             {product.isInternational && (
               <span className="absolute bottom-0 left-0 right-0 bg-black/85 text-white text-[10px] font-bold uppercase tracking-[0.15em] text-center py-2 px-2">
-                Pedido internacional · Envío 10 a 15 días
+                Pedido internacional · Envío 10-15 días
               </span>
             )}
           </div>
@@ -280,8 +284,8 @@ export default function ProductDetails() {
               </p>
             )}
             {outOfStock ? (
-              <span className="text-[11px] font-bold uppercase tracking-wider text-white bg-[#e87c6e] px-3 py-1 rounded-full">
-                Agotado online
+              <span className="text-[11px] font-bold uppercase tracking-wider text-white bg-red-500 px-3 py-1 rounded-full">
+                Sin Stock
               </span>
             ) : product.stock <= 5 ? (
               <span className="text-[11px] font-bold uppercase tracking-wider text-orange-600 bg-orange-50 px-3 py-1 rounded-full border border-orange-100">
