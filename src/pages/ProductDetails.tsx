@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { API } from '../config/api';
 import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Package, Loader2, ChevronDown, Clock, Droplets, Layers, ShieldCheck, ShoppingCart } from 'lucide-react';
@@ -50,6 +50,17 @@ function imgUrl(path: string) {
   return path.startsWith('http') ? path : `http://localhost:5173${path}`;
 }
 
+// Los distintos colores de un mismo producto no están vinculados en la base de
+// datos; se agrupan por nombre base (el nombre sin el color al final) + categoría/tipo.
+function baseProductName(p: ApiProduct) {
+  const name = p.name.trim();
+  const color = (p.color ?? '').trim();
+  if (color && name.toLowerCase().endsWith(color.toLowerCase())) {
+    return name.slice(0, name.length - color.length).trim().toLowerCase();
+  }
+  return name.toLowerCase();
+}
+
 function Accordion({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
@@ -68,10 +79,12 @@ function Accordion({ title, children, defaultOpen = false }: { title: string; ch
 
 export default function ProductDetails() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const addItem = useCartStore(state => state.addItem);
 
   const [product, setProduct] = useState<ApiProduct | null>(null);
   const [categories, setCategories] = useState<ApiCategory[]>([]);
+  const [allProducts, setAllProducts] = useState<ApiProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
@@ -84,12 +97,19 @@ export default function ProductDetails() {
       .then(r => r.ok ? r.json() : [])
       .then(setCategories)
       .catch(() => {});
+    fetch(`${API}/api/products`)
+      .then(r => r.ok ? r.json() : [])
+      .then(setAllProducts)
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
     if (!id) return;
     setLoading(true);
     setNotFound(false);
+    setActiveImg(0);
+    setQuantity(1);
+    setAdded(false);
     fetch(`${API}/api/products/${id}`)
       .then(res => {
         if (res.status === 404) { setNotFound(true); return null; }
@@ -148,6 +168,13 @@ export default function ProductDetails() {
   const brand    = category?.brands.find(b => b.id === product.brandId);
   const type     = brand?.types.find(t => t.id === product.typeId);
   const subType  = type?.subTypes.find(s => s.id === product.subTypeId);
+
+  const colorVariants = allProducts.filter(p =>
+    p.categoryId === product.categoryId &&
+    (p.typeId ?? '') === (product.typeId ?? '') &&
+    (p.subTypeId ?? '') === (product.subTypeId ?? '') &&
+    baseProductName(p) === baseProductName(product)
+  );
 
   const specGrid = [
     { Icon: Clock,       label: 'Frío / Calor', value: product.measurements },
@@ -315,12 +342,27 @@ export default function ProductDetails() {
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-black mb-2">
                 Color: <span className="font-normal normal-case tracking-normal text-gray-500">{product.color}</span>
               </p>
-              <div className="flex gap-2">
-                <div className="w-8 h-8 rounded-full border border-gray-300 ring-2 ring-offset-2 ring-gray-700 bg-gray-600 flex items-center justify-center">
-                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
+              <div className="flex flex-wrap gap-2">
+                {colorVariants.map(v => (
+                  <button
+                    key={v.id}
+                    onClick={() => v.id !== product.id && navigate(`/product/${v.id}`)}
+                    title={v.color || v.name}
+                    className={`w-12 h-12 rounded-lg overflow-hidden bg-[#f4f4f4] border-2 flex-shrink-0 transition-all ${
+                      v.id === product.id
+                        ? 'border-black ring-2 ring-offset-2 ring-gray-700'
+                        : 'border-gray-200 opacity-70 hover:opacity-100 hover:border-gray-400'
+                    }`}
+                  >
+                    {v.images?.[0] ? (
+                      <img src={imgUrl(v.images[0])} alt={v.color || v.name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="w-4 h-4 text-gray-300" />
+                      </div>
+                    )}
+                  </button>
+                ))}
               </div>
             </div>
           )}
