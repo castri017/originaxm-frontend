@@ -255,7 +255,7 @@ export default function ProductDetails() {
               <img
                 src={imgUrl(images[activeImg])}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain p-4"
                 loading="eager"
                 fetchPriority="high"
                 decoding="async"
