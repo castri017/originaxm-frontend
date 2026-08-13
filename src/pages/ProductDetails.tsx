@@ -56,7 +56,7 @@ function Accordion({ title, children, defaultOpen = false }: { title: string; ch
     <div className="border-t border-gray-100">
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between py-4 text-left group"
+        className="w-full flex items-center justify-between py-3 text-left group"
       >
         <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-gray-700 group-hover:text-black transition-colors">{title}</span>
         <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
@@ -173,10 +173,10 @@ export default function ProductDetails() {
   ].filter(s => s.value);
 
   return (
-    <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-36 sm:pb-14">
+    <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-36 sm:pb-10">
 
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-[11px] text-gray-400 mb-10 tracking-wide">
+      <nav className="flex items-center gap-2 text-[11px] text-gray-400 mb-5 tracking-wide">
         <Link to="/" className="hover:text-black transition-colors">Inicio</Link>
         <span className="text-gray-200">/</span>
         <Link to="/catalog" className="hover:text-black transition-colors">Catálogo</Link>
@@ -184,13 +184,13 @@ export default function ProductDetails() {
         <span className="text-gray-600 truncate max-w-[40vw] sm:max-w-xs">{product.name}</span>
       </nav>
 
-      <div className="flex flex-col md:flex-row gap-10 lg:gap-20">
+      <div className="flex flex-col md:flex-row gap-8 lg:gap-12">
 
         {/* ── Gallery ───────────────────────────────────── */}
-        <div className="w-full md:w-[48%] flex flex-col gap-3">
+        <div className="w-full md:w-[38%] md:max-w-sm flex flex-col gap-3">
 
           {/* Main image */}
-          <div className="relative bg-[#f4f4f4] overflow-hidden" style={{ aspectRatio: '3/4' }}>
+          <div className="relative bg-[#f4f4f4] overflow-hidden" style={{ aspectRatio: '4/5' }}>
             {images.length > 0 ? (
               <img
                 src={imgUrl(images[activeImg])}
@@ -262,24 +262,24 @@ export default function ProductDetails() {
         </div>
 
         {/* ── Product info ──────────────────────────────── */}
-        <div className="w-full md:w-[52%] flex flex-col">
+        <div className="w-full md:flex-1 flex flex-col">
 
           {/* Manufacturer */}
           {product.manufacturer && (
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-400 mb-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-400 mb-1.5">
               {product.manufacturer}
             </p>
           )}
 
           {/* Name */}
-          <h1 className="text-[1.6rem] sm:text-[1.85rem] font-extrabold text-black leading-snug mb-4">
+          <h1 className="text-[1.35rem] sm:text-[1.5rem] font-extrabold text-black leading-snug mb-2.5">
             {product.name}
           </h1>
 
           {/* Price row */}
           <div className="flex items-center gap-3 mb-1">
             {product.sellingPrice > 0 && (
-              <p className="text-[1.9rem] font-black text-black leading-none">
+              <p className="text-[1.6rem] font-black text-black leading-none">
                 ${finalPrice.toLocaleString('es-CL')}
               </p>
             )}
@@ -305,14 +305,14 @@ export default function ProductDetails() {
             </p>
           )}
 
-          <p className="text-[11px] text-gray-400 mb-6 leading-relaxed">
+          <p className="text-[11px] text-gray-400 mb-4 leading-relaxed">
             Precios con IVA incluido. Envío calculado al finalizar compra.
           </p>
 
           {/* Color swatch */}
           {product.color && (
-            <div className="mb-6">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-black mb-2.5">
+            <div className="mb-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-black mb-2">
                 Color: <span className="font-normal normal-case tracking-normal text-gray-500">{product.color}</span>
               </p>
               <div className="flex gap-2">
@@ -327,9 +327,9 @@ export default function ProductDetails() {
 
           {/* Spec grid */}
           {specGrid.length > 0 && (
-            <div className="grid grid-cols-2 gap-[1px] bg-gray-200 border border-gray-200 mb-7">
+            <div className="grid grid-cols-2 gap-[1px] bg-gray-200 border border-gray-200 mb-5">
               {specGrid.map(({ Icon, label, value }) => (
-                <div key={label} className="bg-white flex items-center gap-3 px-4 py-3">
+                <div key={label} className="bg-white flex items-center gap-3 px-3 py-2.5">
                   <Icon className="w-[15px] h-[15px] text-gray-400 flex-shrink-0 stroke-[1.5]" />
                   <div className="min-w-0">
                     <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400 leading-none mb-[3px]">{label}</p>
@@ -342,31 +342,31 @@ export default function ProductDetails() {
 
           {/* Quantity selector */}
           {!outOfStock && (
-            <div className="flex items-center gap-4 mb-5">
+            <div className="flex items-center gap-4 mb-4">
               <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">Cantidad</span>
               <div className="flex items-center border border-gray-200">
                 <button
                   onClick={() => setQuantity(q => Math.max(1, q - 1))}
                   disabled={quantity <= 1}
-                  className="w-9 h-9 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-25 text-base"
+                  className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-25 text-base"
                 >−</button>
-                <span className="w-10 h-9 flex items-center justify-center text-sm font-bold border-x border-gray-200">{quantity}</span>
+                <span className="w-9 h-8 flex items-center justify-center text-sm font-bold border-x border-gray-200">{quantity}</span>
                 <button
                   onClick={() => setQuantity(q => Math.min(product.stock, q + 1))}
                   disabled={quantity >= product.stock}
-                  className="w-9 h-9 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-25 text-base"
+                  className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-25 text-base"
                 >+</button>
               </div>
             </div>
           )}
 
           {/* CTA buttons */}
-          <div className="flex flex-col gap-2.5 mb-8">
+          <div className="flex flex-col gap-2 mb-5">
             {outOfStock ? (
               <>
                 <button
                   disabled
-                  className="w-full bg-[#2d3748] text-white text-[11px] font-bold uppercase tracking-[0.22em] py-4 flex items-center justify-center gap-2.5 cursor-not-allowed opacity-90"
+                  className="w-full bg-[#2d3748] text-white text-[11px] font-bold uppercase tracking-[0.22em] py-3.5 flex items-center justify-center gap-2.5 cursor-not-allowed opacity-90"
                 >
                   <ShoppingCart className="w-4 h-4 stroke-[1.5]" />
                   Producto Agotado
@@ -375,7 +375,7 @@ export default function ProductDetails() {
                   href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`¡Hola! Quisiera realizar un pedido del producto: ${product.name}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full bg-[#25D366] hover:bg-[#20bc5a] text-white text-[11px] font-bold uppercase tracking-[0.22em] py-4 flex items-center justify-center gap-2.5 transition-colors"
+                  className="w-full bg-[#25D366] hover:bg-[#20bc5a] text-white text-[11px] font-bold uppercase tracking-[0.22em] py-3.5 flex items-center justify-center gap-2.5 transition-colors"
                 >
                   {WA_ICON} Pedir por WhatsApp
                 </a>
@@ -384,7 +384,7 @@ export default function ProductDetails() {
               <>
                 <button
                   onClick={handleAddToCart}
-                  className={`w-full text-[11px] font-bold uppercase tracking-[0.22em] py-4 flex items-center justify-center gap-2.5 transition-all ${
+                  className={`w-full text-[11px] font-bold uppercase tracking-[0.22em] py-3.5 flex items-center justify-center gap-2.5 transition-all ${
                     added ? 'bg-green-600 text-white' : 'bg-black hover:bg-gray-900 text-white'
                   }`}
                 >
@@ -394,7 +394,7 @@ export default function ProductDetails() {
                 {added && (
                   <Link
                     to="/cart"
-                    className="w-full border border-black text-black text-[11px] font-bold uppercase tracking-[0.22em] py-3.5 flex items-center justify-center transition-all hover:bg-black hover:text-white"
+                    className="w-full border border-black text-black text-[11px] font-bold uppercase tracking-[0.22em] py-3 flex items-center justify-center transition-all hover:bg-black hover:text-white"
                   >
                     Ver carrito →
                   </Link>
