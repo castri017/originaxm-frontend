@@ -214,10 +214,27 @@ export default function ProductDetails() {
       <div className="flex flex-col md:flex-row gap-8 lg:gap-12">
 
         {/* ── Gallery ───────────────────────────────────── */}
-        <div className="w-full md:w-[38%] md:max-w-sm flex flex-col gap-3">
+        <div className="w-full md:w-[38%] md:max-w-sm flex flex-col-reverse sm:flex-row gap-3">
+
+          {/* Thumbnails */}
+          {images.length > 1 && (
+            <div className="flex sm:flex-col gap-2 flex-shrink-0">
+              {images.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveImg(i)}
+                  className={`w-14 h-14 flex-shrink-0 overflow-hidden bg-[#f4f4f4] border transition-all duration-200 ${
+                    activeImg === i ? 'border-gray-800' : 'border-gray-200 opacity-55 hover:opacity-90'
+                  }`}
+                >
+                  <img src={imgUrl(img)} alt="" className="w-full h-full object-contain p-1" loading="lazy" decoding="async" />
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Main image */}
-          <div className="relative bg-[#f4f4f4] overflow-hidden" style={{ aspectRatio: '4/5' }}>
+          <div className="relative bg-[#f4f4f4] overflow-hidden w-full sm:max-w-[240px]" style={{ aspectRatio: '4/5' }}>
             {images.length > 0 ? (
               <img
                 src={imgUrl(images[activeImg])}
@@ -254,38 +271,6 @@ export default function ProductDetails() {
               </span>
             )}
           </div>
-
-          {/* Dot indicators */}
-          {images.length > 1 && (
-            <div className="flex justify-center items-center gap-1.5 py-1">
-              {images.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveImg(i)}
-                  className={`rounded-full transition-all duration-300 ${
-                    activeImg === i ? 'bg-black w-5 h-[5px]' : 'bg-gray-300 w-[5px] h-[5px] hover:bg-gray-500'
-                  }`}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Thumbnails */}
-          {images.length > 1 && (
-            <div className="flex gap-2">
-              {images.map((img, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveImg(i)}
-                  className={`w-[72px] h-[72px] flex-shrink-0 overflow-hidden bg-[#f4f4f4] border transition-all duration-200 ${
-                    activeImg === i ? 'border-gray-800' : 'border-gray-200 opacity-55 hover:opacity-90'
-                  }`}
-                >
-                  <img src={imgUrl(img)} alt="" className="w-full h-full object-contain p-1" loading="lazy" decoding="async" />
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* ── Product info ──────────────────────────────── */}
