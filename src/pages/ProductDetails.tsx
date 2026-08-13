@@ -227,10 +227,10 @@ export default function ProductDetails() {
         <span className="text-gray-600 truncate max-w-[40vw] sm:max-w-xs">{product.name}</span>
       </nav>
 
-      <div className="flex flex-col md:flex-row gap-6 lg:gap-10">
+      <div className="flex flex-col md:flex-row md:items-start gap-6 lg:gap-10">
 
         {/* ── Gallery ───────────────────────────────────── */}
-        <div className="w-full md:w-[38%] md:max-w-sm flex flex-col-reverse sm:flex-row gap-2">
+        <div className="w-full md:w-[38%] md:max-w-sm flex flex-col-reverse sm:flex-row sm:items-start gap-2">
 
           {/* Thumbnails */}
           {images.length > 1 && (
@@ -250,7 +250,7 @@ export default function ProductDetails() {
           )}
 
           {/* Main image */}
-          <div className="relative bg-[#f4f4f4] overflow-hidden w-full sm:max-w-[220px]" style={{ aspectRatio: '4/5' }}>
+          <div className="relative bg-[#f4f4f4] overflow-hidden w-full sm:w-[260px]" style={{ aspectRatio: '260 / 324' }}>
             {images.length > 0 ? (
               <img
                 src={imgUrl(images[activeImg])}
