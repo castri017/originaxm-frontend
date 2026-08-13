@@ -91,6 +91,7 @@ export default function ProductDetails() {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const addedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loadedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     fetch(`${API}/api/categories`)
@@ -104,12 +105,27 @@ export default function ProductDetails() {
   }, []);
 
   useEffect(() => {
-    if (!id) return;
-    setLoading(true);
+    if (!id || loadedIdRef.current === id) return;
+    loadedIdRef.current = id;
     setNotFound(false);
     setActiveImg(0);
     setQuantity(1);
     setAdded(false);
+
+    // Si ya tenemos el producto en la lista cacheada (ej. al cambiar de color),
+    // lo mostramos al instante sin spinner, y refrescamos en segundo plano.
+    const cached = allProducts.find(p => p.id === id);
+    if (cached) {
+      setProduct(cached);
+      setLoading(false);
+      fetch(`${API}/api/products/${id}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(fresh => { if (fresh) setProduct(fresh); })
+        .catch(() => {});
+      return;
+    }
+
+    setLoading(true);
     fetch(`${API}/api/products/${id}`)
       .then(res => {
         if (res.status === 404) { setNotFound(true); return null; }
@@ -118,7 +134,7 @@ export default function ProductDetails() {
       .then(data => { if (data) setProduct(data); })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, allProducts]);
 
   if (loading) {
     return (
@@ -200,10 +216,10 @@ export default function ProductDetails() {
   ].filter(s => s.value);
 
   return (
-    <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-36 sm:pb-10">
+    <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-5 pb-36 sm:pb-8">
 
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-[11px] text-gray-400 mb-5 tracking-wide">
+      <nav className="flex items-center gap-2 text-[11px] text-gray-400 mb-4 tracking-wide">
         <Link to="/" className="hover:text-black transition-colors">Inicio</Link>
         <span className="text-gray-200">/</span>
         <Link to="/catalog" className="hover:text-black transition-colors">Catálogo</Link>
@@ -211,19 +227,19 @@ export default function ProductDetails() {
         <span className="text-gray-600 truncate max-w-[40vw] sm:max-w-xs">{product.name}</span>
       </nav>
 
-      <div className="flex flex-col md:flex-row gap-8 lg:gap-12">
+      <div className="flex flex-col md:flex-row gap-6 lg:gap-10">
 
         {/* ── Gallery ───────────────────────────────────── */}
-        <div className="w-full md:w-[38%] md:max-w-sm flex flex-col-reverse sm:flex-row gap-3">
+        <div className="w-full md:w-[38%] md:max-w-sm flex flex-col-reverse sm:flex-row gap-2">
 
           {/* Thumbnails */}
           {images.length > 1 && (
-            <div className="flex sm:flex-col gap-2 flex-shrink-0">
+            <div className="flex sm:flex-col gap-1.5 flex-shrink-0">
               {images.map((img, i) => (
                 <button
                   key={i}
                   onClick={() => setActiveImg(i)}
-                  className={`w-14 h-14 flex-shrink-0 overflow-hidden bg-[#f4f4f4] border transition-all duration-200 ${
+                  className={`w-12 h-12 flex-shrink-0 overflow-hidden bg-[#f4f4f4] border transition-all duration-200 ${
                     activeImg === i ? 'border-gray-800' : 'border-gray-200 opacity-55 hover:opacity-90'
                   }`}
                 >
@@ -234,7 +250,7 @@ export default function ProductDetails() {
           )}
 
           {/* Main image */}
-          <div className="relative bg-[#f4f4f4] overflow-hidden w-full sm:max-w-[240px]" style={{ aspectRatio: '4/5' }}>
+          <div className="relative bg-[#f4f4f4] overflow-hidden w-full sm:max-w-[220px]" style={{ aspectRatio: '4/5' }}>
             {images.length > 0 ? (
               <img
                 src={imgUrl(images[activeImg])}
@@ -284,7 +300,7 @@ export default function ProductDetails() {
           )}
 
           {/* Name */}
-          <h1 className="text-[1.35rem] sm:text-[1.5rem] font-extrabold text-black leading-snug mb-2.5">
+          <h1 className="text-[1.35rem] sm:text-[1.5rem] font-extrabold text-black leading-snug mb-2">
             {product.name}
           </h1>
 
@@ -317,23 +333,23 @@ export default function ProductDetails() {
             </p>
           )}
 
-          <p className="text-[11px] text-gray-400 mb-4 leading-relaxed">
+          <p className="text-[11px] text-gray-400 mb-3 leading-relaxed">
             Precios con IVA incluido. Envío calculado al finalizar compra.
           </p>
 
           {/* Color swatch */}
           {product.color && (
-            <div className="mb-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-black mb-2">
+            <div className="mb-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-black mb-1.5">
                 Color: <span className="font-normal normal-case tracking-normal text-gray-500">{product.color}</span>
               </p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {colorVariants.map(v => (
                   <button
                     key={v.id}
                     onClick={() => v.id !== product.id && navigate(`/product/${v.id}`)}
                     title={v.color || v.name}
-                    className={`w-12 h-12 rounded-lg overflow-hidden bg-[#f4f4f4] border-2 flex-shrink-0 transition-all ${
+                    className={`w-11 h-11 rounded-lg overflow-hidden bg-[#f4f4f4] border-2 flex-shrink-0 transition-all ${
                       v.id === product.id
                         ? 'border-black ring-2 ring-offset-2 ring-gray-700'
                         : 'border-gray-200 opacity-70 hover:opacity-100 hover:border-gray-400'
@@ -354,9 +370,9 @@ export default function ProductDetails() {
 
           {/* Spec grid */}
           {specGrid.length > 0 && (
-            <div className="grid grid-cols-2 gap-[1px] bg-gray-200 border border-gray-200 mb-5">
+            <div className="grid grid-cols-2 gap-[1px] bg-gray-200 border border-gray-200 mb-4">
               {specGrid.map(({ Icon, label, value }) => (
-                <div key={label} className="bg-white flex items-center gap-3 px-3 py-2.5">
+                <div key={label} className="bg-white flex items-center gap-2.5 px-2.5 py-2">
                   <Icon className="w-[15px] h-[15px] text-gray-400 flex-shrink-0 stroke-[1.5]" />
                   <div className="min-w-0">
                     <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400 leading-none mb-[3px]">{label}</p>
@@ -369,31 +385,31 @@ export default function ProductDetails() {
 
           {/* Quantity selector */}
           {!outOfStock && (
-            <div className="flex items-center gap-4 mb-4">
+            <div className="flex items-center gap-3 mb-3">
               <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">Cantidad</span>
               <div className="flex items-center border border-gray-200">
                 <button
                   onClick={() => setQuantity(q => Math.max(1, q - 1))}
                   disabled={quantity <= 1}
-                  className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-25 text-base"
+                  className="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-25 text-base"
                 >−</button>
-                <span className="w-9 h-8 flex items-center justify-center text-sm font-bold border-x border-gray-200">{quantity}</span>
+                <span className="w-8 h-7 flex items-center justify-center text-sm font-bold border-x border-gray-200">{quantity}</span>
                 <button
                   onClick={() => setQuantity(q => Math.min(product.stock, q + 1))}
                   disabled={quantity >= product.stock}
-                  className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-25 text-base"
+                  className="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-25 text-base"
                 >+</button>
               </div>
             </div>
           )}
 
           {/* CTA buttons */}
-          <div className="flex flex-col gap-2 mb-5">
+          <div className="flex flex-col gap-1.5 mb-4">
             {outOfStock ? (
               <>
                 <button
                   disabled
-                  className="w-full bg-[#2d3748] text-white text-[11px] font-bold uppercase tracking-[0.22em] py-3.5 flex items-center justify-center gap-2.5 cursor-not-allowed opacity-90"
+                  className="w-full bg-[#2d3748] text-white text-[11px] font-bold uppercase tracking-[0.22em] py-3 flex items-center justify-center gap-2.5 cursor-not-allowed opacity-90"
                 >
                   <ShoppingCart className="w-4 h-4 stroke-[1.5]" />
                   Producto Agotado
@@ -402,7 +418,7 @@ export default function ProductDetails() {
                   href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`¡Hola! Quisiera realizar un pedido del producto: ${product.name}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full bg-[#25D366] hover:bg-[#20bc5a] text-white text-[11px] font-bold uppercase tracking-[0.22em] py-3.5 flex items-center justify-center gap-2.5 transition-colors"
+                  className="w-full bg-[#25D366] hover:bg-[#20bc5a] text-white text-[11px] font-bold uppercase tracking-[0.22em] py-3 flex items-center justify-center gap-2.5 transition-colors"
                 >
                   {WA_ICON} Pedir por WhatsApp
                 </a>
@@ -411,7 +427,7 @@ export default function ProductDetails() {
               <>
                 <button
                   onClick={handleAddToCart}
-                  className={`w-full text-[11px] font-bold uppercase tracking-[0.22em] py-3.5 flex items-center justify-center gap-2.5 transition-all ${
+                  className={`w-full text-[11px] font-bold uppercase tracking-[0.22em] py-3 flex items-center justify-center gap-2.5 transition-all ${
                     added ? 'bg-green-600 text-white' : 'bg-black hover:bg-gray-900 text-white'
                   }`}
                 >
@@ -421,7 +437,7 @@ export default function ProductDetails() {
                 {added && (
                   <Link
                     to="/cart"
-                    className="w-full border border-black text-black text-[11px] font-bold uppercase tracking-[0.22em] py-3 flex items-center justify-center transition-all hover:bg-black hover:text-white"
+                    className="w-full border border-black text-black text-[11px] font-bold uppercase tracking-[0.22em] py-2.5 flex items-center justify-center transition-all hover:bg-black hover:text-white"
                   >
                     Ver carrito →
                   </Link>
