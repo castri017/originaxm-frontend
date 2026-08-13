@@ -230,7 +230,7 @@ export default function ProductDetails() {
       <div className="flex flex-col md:flex-row md:items-start gap-6 lg:gap-10">
 
         {/* ── Gallery ───────────────────────────────────── */}
-        <div className="w-full md:w-[42%] md:max-w-[480px] flex flex-col-reverse sm:flex-row sm:items-start gap-2">
+        <div className="w-full md:w-auto md:flex-shrink-0 flex flex-col-reverse sm:flex-row sm:items-start gap-2">
 
           {/* Thumbnails */}
           {images.length > 1 && (
@@ -250,7 +250,7 @@ export default function ProductDetails() {
           )}
 
           {/* Main image */}
-          <div className="relative bg-[#f4f4f4] overflow-hidden w-full sm:w-[400px]" style={{ aspectRatio: '400 / 324' }}>
+          <div className="relative bg-[#f4f4f4] overflow-hidden w-full sm:w-[400px] sm:h-[324px] flex-shrink-0" style={{ aspectRatio: '400 / 324' }}>
             {images.length > 0 ? (
               <img
                 src={imgUrl(images[activeImg])}
