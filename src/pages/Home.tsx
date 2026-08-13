@@ -307,7 +307,7 @@ export default function Home() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 gap-x-8 gap-y-12">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-x-8 gap-y-12">
               {products.slice(0, 8).map((product) => {
                 const img = getImage(product);
                 return (
