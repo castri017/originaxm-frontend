@@ -29,6 +29,7 @@ interface ApiProduct {
   discountPercentage: number;
   stock: number;
   isInternational?: boolean;
+  variantGroupId?: string | null;
 }
 
 interface ApiCategory {
@@ -48,17 +49,6 @@ const WA_ICON = (
 function imgUrl(path: string) {
   if (!path) return '';
   return path.startsWith('http') ? path : `http://localhost:5173${path}`;
-}
-
-// Los distintos colores de un mismo producto no están vinculados en la base de
-// datos; se agrupan por nombre base (el nombre sin el color al final) + categoría/tipo.
-function baseProductName(p: ApiProduct) {
-  const name = p.name.trim();
-  const color = (p.color ?? '').trim();
-  if (color && name.toLowerCase().endsWith(color.toLowerCase())) {
-    return name.slice(0, name.length - color.length).trim().toLowerCase();
-  }
-  return name.toLowerCase();
 }
 
 function Accordion({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
@@ -185,12 +175,9 @@ export default function ProductDetails() {
   const type     = brand?.types.find(t => t.id === product.typeId);
   const subType  = type?.subTypes.find(s => s.id === product.subTypeId);
 
-  const colorVariants = allProducts.filter(p =>
-    p.categoryId === product.categoryId &&
-    (p.typeId ?? '') === (product.typeId ?? '') &&
-    (p.subTypeId ?? '') === (product.subTypeId ?? '') &&
-    baseProductName(p) === baseProductName(product)
-  );
+  const colorVariants = product.variantGroupId
+    ? allProducts.filter(p => p.variantGroupId === product.variantGroupId)
+    : (product.color ? [product] : []);
 
   const specGrid = [
     { Icon: Clock,       label: 'Frío / Calor', value: product.measurements },

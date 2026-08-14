@@ -124,6 +124,7 @@ interface ApiProduct {
   isFeatured: boolean;
   featuredOrder: number;
   isInternational: boolean;
+  variantGroupId?: string | null;
 }
 
 // ── Price List types ──────────────────────────────────────
@@ -710,6 +711,48 @@ function AdminPanel() {
   const [editProductPLItems, setEditProductPLItems] = useState<ProductPriceListItem[]>([]);
   const [editProductPLForms, setEditProductPLForms] = useState<Record<string, { purchasePrice: string; sellingPrice: string; discountPercent: string }>>({});
   const [editProductPLLoading, setEditProductPLLoading] = useState(false);
+  const [variantSearch, setVariantSearch] = useState('');
+  const [variantSavingId, setVariantSavingId] = useState<string | null>(null);
+
+  const linkVariant = async (targetId: string) => {
+    if (!editingProduct) return;
+    setVariantSavingId(targetId);
+    try {
+      const res = await fetch(`${API}/api/variantgroup/${editingProduct.id}/link`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ linkToProductId: targetId }),
+      });
+      if (res.ok) {
+        const listRes = await fetch(`${API}/api/products`);
+        if (listRes.ok) {
+          const list: ApiProduct[] = await listRes.json();
+          setProducts(list);
+          const updated = list.find(p => p.id === editingProduct.id);
+          if (updated) setEditingProduct(updated);
+        }
+      }
+    } catch { /* silencioso */ }
+    finally { setVariantSavingId(null); }
+  };
+
+  const unlinkVariant = async (variantId: string) => {
+    if (!editingProduct) return;
+    setVariantSavingId(variantId);
+    try {
+      const res = await fetch(`${API}/api/variantgroup/${variantId}/unlink`, { method: 'PATCH' });
+      if (res.ok) {
+        const listRes = await fetch(`${API}/api/products`);
+        if (listRes.ok) {
+          const list: ApiProduct[] = await listRes.json();
+          setProducts(list);
+          const updated = list.find(p => p.id === editingProduct.id);
+          if (updated) setEditingProduct(updated);
+        }
+      }
+    } catch { /* silencioso */ }
+    finally { setVariantSavingId(null); }
+  };
 
   const openEditProduct = async (p: ApiProduct) => {
     setEditingProduct(p);
@@ -740,6 +783,7 @@ function AdminPanel() {
     setEditProductPLItems([]);
     setEditProductPLForms({});
     setEditProductPLLoading(true);
+    setVariantSearch('');
     // Cargar imágenes frescas desde la API (bypass caché del listado)
     fetch(`${API}/api/products/${p.id}`)
       .then(r => r.ok ? r.json() : null)
@@ -4186,6 +4230,76 @@ function AdminPanel() {
                       <p className="text-xs text-gray-400 mt-1">Máx. 5 imágenes en total.</p>
                     </div>
                   </div>
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 pb-2 border-b border-slate-100">Variantes de Color</h4>
+                  <p className="text-xs text-gray-400 mb-3">
+                    Vinculá este producto con otros colores del mismo ítem para que en la tienda se muestren como opciones seleccionables.
+                  </p>
+                  {editingProduct && (() => {
+                    const linkedVariants = editingProduct.variantGroupId
+                      ? products.filter(p => p.variantGroupId === editingProduct.variantGroupId && p.id !== editingProduct.id)
+                      : [];
+                    const candidates = products.filter(p =>
+                      p.id !== editingProduct.id &&
+                      p.variantGroupId !== editingProduct.variantGroupId &&
+                      variantSearch.trim().length > 0 &&
+                      p.name.toLowerCase().includes(variantSearch.trim().toLowerCase())
+                    ).slice(0, 8);
+                    return (
+                      <div className="space-y-3">
+                        {linkedVariants.length > 0 && (
+                          <div className="space-y-2">
+                            {linkedVariants.map(v => (
+                              <div key={v.id} className="flex items-center gap-3 border border-gray-200 rounded-sm p-2">
+                                <img src={v.images?.[0]} alt="" className="w-10 h-10 object-cover rounded-sm bg-gray-100 flex-shrink-0" />
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-xs font-semibold text-black truncate">{v.name}</p>
+                                  <p className="text-[11px] text-gray-400">{(v as any).color || 'Sin color'}</p>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => unlinkVariant(v.id)}
+                                  disabled={variantSavingId === v.id}
+                                  className="text-[11px] font-bold uppercase tracking-wider text-red-500 hover:text-red-700 disabled:opacity-40 flex-shrink-0"
+                                >
+                                  {variantSavingId === v.id ? '...' : 'Quitar'}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <input
+                          type="text"
+                          value={variantSearch}
+                          onChange={e => setVariantSearch(e.target.value)}
+                          placeholder="Buscar producto por nombre para vincular…"
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                        />
+                        {candidates.length > 0 && (
+                          <div className="space-y-1.5 max-h-56 overflow-y-auto border border-gray-100 rounded-sm p-2">
+                            {candidates.map(c => (
+                              <div key={c.id} className="flex items-center gap-3 p-1.5 hover:bg-gray-50 rounded-sm">
+                                <img src={c.images?.[0]} alt="" className="w-9 h-9 object-cover rounded-sm bg-gray-100 flex-shrink-0" />
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-xs font-semibold text-black truncate">{c.name}</p>
+                                  <p className="text-[11px] text-gray-400">{(c as any).color || 'Sin color'}</p>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => linkVariant(c.id)}
+                                  disabled={variantSavingId === c.id}
+                                  className="text-[11px] font-bold uppercase tracking-wider text-black hover:opacity-60 disabled:opacity-40 flex-shrink-0"
+                                >
+                                  {variantSavingId === c.id ? '...' : 'Vincular'}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 pb-2 border-b border-slate-100">Precio al Público</h4>
