@@ -4240,12 +4240,19 @@ function AdminPanel() {
                     const linkedVariants = editingProduct.variantGroupId
                       ? products.filter(p => p.variantGroupId === editingProduct.variantGroupId && p.id !== editingProduct.id)
                       : [];
-                    const candidates = products.filter(p =>
-                      p.id !== editingProduct.id &&
-                      p.variantGroupId !== editingProduct.variantGroupId &&
-                      variantSearch.trim().length > 0 &&
-                      p.name.toLowerCase().includes(variantSearch.trim().toLowerCase())
-                    ).slice(0, 8);
+                    const q = variantSearch.trim().toLowerCase();
+                    const candidates = products
+                      .filter(p =>
+                        p.id !== editingProduct.id &&
+                        p.variantGroupId !== editingProduct.variantGroupId &&
+                        (q.length === 0 || p.name.toLowerCase().includes(q))
+                      )
+                      .sort((a, b) => {
+                        const aSame = a.categoryId === editingProduct.categoryId ? 0 : 1;
+                        const bSame = b.categoryId === editingProduct.categoryId ? 0 : 1;
+                        return aSame - bSame || a.name.localeCompare(b.name);
+                      })
+                      .slice(0, 30);
                     return (
                       <div className="space-y-3">
                         {linkedVariants.length > 0 && (
@@ -4273,11 +4280,11 @@ function AdminPanel() {
                           type="text"
                           value={variantSearch}
                           onChange={e => setVariantSearch(e.target.value)}
-                          placeholder="Buscar producto por nombre para vincular…"
+                          placeholder="Filtrar por nombre… (dejalo vacío para ver todos)"
                           className="w-full px-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-black"
                         />
-                        {candidates.length > 0 && (
-                          <div className="space-y-1.5 max-h-56 overflow-y-auto border border-gray-100 rounded-sm p-2">
+                        {candidates.length > 0 ? (
+                          <div className="space-y-1.5 max-h-72 overflow-y-auto border border-gray-100 rounded-sm p-2">
                             {candidates.map(c => (
                               <div key={c.id} className="flex items-center gap-3 p-1.5 hover:bg-gray-50 rounded-sm">
                                 <img src={c.images?.[0]} alt="" className="w-9 h-9 object-cover rounded-sm bg-gray-100 flex-shrink-0" />
@@ -4296,6 +4303,8 @@ function AdminPanel() {
                               </div>
                             ))}
                           </div>
+                        ) : (
+                          <p className="text-xs text-gray-400 italic">Sin resultados.</p>
                         )}
                       </div>
                     );
