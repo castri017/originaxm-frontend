@@ -712,6 +712,8 @@ function AdminPanel() {
   const [editProductPLForms, setEditProductPLForms] = useState<Record<string, { purchasePrice: string; sellingPrice: string; discountPercent: string }>>({});
   const [editProductPLLoading, setEditProductPLLoading] = useState(false);
   const [variantSearch, setVariantSearch] = useState('');
+  const [variantBrandFilter, setVariantBrandFilter] = useState('');
+  const [variantTypeFilter, setVariantTypeFilter] = useState('');
   const [variantSavingId, setVariantSavingId] = useState<string | null>(null);
 
   const linkVariant = async (targetId: string) => {
@@ -784,6 +786,8 @@ function AdminPanel() {
     setEditProductPLForms({});
     setEditProductPLLoading(true);
     setVariantSearch('');
+    setVariantBrandFilter('');
+    setVariantTypeFilter('');
     // Cargar imágenes frescas desde la API (bypass caché del listado)
     fetch(`${API}/api/products/${p.id}`)
       .then(r => r.ok ? r.json() : null)
@@ -4237,16 +4241,37 @@ function AdminPanel() {
                     Vinculá este producto con otros colores del mismo ítem para que en la tienda se muestren como opciones seleccionables.
                   </p>
                   {editingProduct && (() => {
+                    const brandNameOf = (p: ApiProduct) => {
+                      const cat = categories.find(c => c.id === p.categoryId);
+                      return cat?.brands.find(b => b.id === p.brandId)?.name ?? '';
+                    };
+                    const typeNameOf = (p: ApiProduct) => {
+                      const cat = categories.find(c => c.id === p.categoryId);
+                      const brand = cat?.brands.find(b => b.id === p.brandId);
+                      return brand?.types.find(t => t.id === p.typeId)?.name ?? '';
+                    };
+                    const allBrandNames = Array.from(new Set(categories.flatMap(c => c.brands.map(b => b.name)))).sort();
+                    const allTypeNames = Array.from(new Set(categories.flatMap(c => c.brands.flatMap(b => b.types.map(t => t.name))))).sort();
+
                     const linkedVariants = editingProduct.variantGroupId
                       ? products.filter(p => p.variantGroupId === editingProduct.variantGroupId && p.id !== editingProduct.id)
                       : [];
                     const q = variantSearch.trim().toLowerCase();
                     const candidates = products
-                      .filter(p =>
-                        p.id !== editingProduct.id &&
-                        p.variantGroupId !== editingProduct.variantGroupId &&
-                        (q.length === 0 || p.name.toLowerCase().includes(q))
-                      )
+                      .filter(p => {
+                        if (p.id === editingProduct.id) return false;
+                        // Excluir solo si ya está en el mismo grupo que el producto que estamos editando
+                        // (si editingProduct no tiene grupo todavía, ningún candidato debe descartarse por esto).
+                        if (editingProduct.variantGroupId != null && p.variantGroupId === editingProduct.variantGroupId) return false;
+                        const pBrand = brandNameOf(p);
+                        const pType  = typeNameOf(p);
+                        if (variantBrandFilter && pBrand !== variantBrandFilter) return false;
+                        if (variantTypeFilter && pType !== variantTypeFilter) return false;
+                        if (q.length === 0) return true;
+                        return p.name.toLowerCase().includes(q)
+                          || pBrand.toLowerCase().includes(q)
+                          || pType.toLowerCase().includes(q);
+                      })
                       .sort((a, b) => {
                         const aSame = a.categoryId === editingProduct.categoryId ? 0 : 1;
                         const bSame = b.categoryId === editingProduct.categoryId ? 0 : 1;
@@ -4276,11 +4301,29 @@ function AdminPanel() {
                             ))}
                           </div>
                         )}
+                        <div className="flex gap-2">
+                          <select
+                            value={variantBrandFilter}
+                            onChange={e => setVariantBrandFilter(e.target.value)}
+                            className="flex-1 px-2 py-2 border border-gray-200 rounded-sm text-xs focus:outline-none focus:ring-2 focus:ring-black"
+                          >
+                            <option value="">Todas las marcas</option>
+                            {allBrandNames.map(n => <option key={n} value={n}>{n}</option>)}
+                          </select>
+                          <select
+                            value={variantTypeFilter}
+                            onChange={e => setVariantTypeFilter(e.target.value)}
+                            className="flex-1 px-2 py-2 border border-gray-200 rounded-sm text-xs focus:outline-none focus:ring-2 focus:ring-black"
+                          >
+                            <option value="">Todos los tipos</option>
+                            {allTypeNames.map(n => <option key={n} value={n}>{n}</option>)}
+                          </select>
+                        </div>
                         <input
                           type="text"
                           value={variantSearch}
                           onChange={e => setVariantSearch(e.target.value)}
-                          placeholder="Filtrar por nombre… (dejalo vacío para ver todos)"
+                          placeholder="Filtrar por nombre, marca o tipo… (dejalo vacío para ver todos)"
                           className="w-full px-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-black"
                         />
                         {candidates.length > 0 ? (
