@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { API } from '../config/api';
-import { Settings, Tag, Users, Package, TrendingUp, Plus, Edit, Trash2, ClipboardList, Eye, ArrowLeft, X, ShieldCheck, Lock, Mail, Loader2, AlertCircle, LogOut, BarChart3, DollarSign, RefreshCw, ChevronLeft, Truck, FileBarChart2, Star, Globe, Wallet } from 'lucide-react';
+import { Settings, Tag, Users, Package, TrendingUp, Plus, Edit, Trash2, ClipboardList, Eye, ArrowLeft, X, ShieldCheck, Lock, Mail, Loader2, AlertCircle, LogOut, BarChart3, DollarSign, RefreshCw, ChevronLeft, ChevronDown, Truck, FileBarChart2, Star, Globe, Wallet } from 'lucide-react';
 import { useAdminAuthStore } from '../store/useAdminAuthStore';
 import { useCatalogStore } from '../store/useCatalogStore';
 
@@ -534,8 +534,13 @@ function AdminPanel() {
         const d = await res.json();
         throw new Error(d.message || 'Error al guardar.');
       }
+      const saved = await res.json().catch(() => null);
       setShowClientModal(false);
       await fetchClients();
+      if (quickAddCustomer && saved?.id) {
+        setNewCreditSaleForm(f => ({ ...f, customerId: saved.id }));
+        setQuickAddCustomer(false);
+      }
     } catch (err: unknown) {
       setClientError(err instanceof Error ? err.message : 'Error desconocido.');
     } finally {
@@ -712,6 +717,16 @@ function AdminPanel() {
   const [newPaymentForm, setNewPaymentForm] = useState({ amount: '', paymentDate: '', notes: '' });
   const [paymentSaving, setPaymentSaving]   = useState(false);
   const [paymentError, setPaymentError]     = useState('');
+  const [productPickerOpen, setProductPickerOpen]   = useState(false);
+  const [productSearchQuery, setProductSearchQuery] = useState('');
+  const productPickerRef = React.useRef<HTMLDivElement>(null);
+  const [quickAddCustomer, setQuickAddCustomer] = useState(false);
+
+  React.useEffect(() => {
+    const h = (e: MouseEvent) => { if (productPickerRef.current && !productPickerRef.current.contains(e.target as Node)) setProductPickerOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
 
   const fetchCreditSales = async (customerId?: string) => {
     setCreditSalesLoading(true);
@@ -4360,18 +4375,74 @@ function AdminPanel() {
               <button onClick={() => setShowNewCreditSaleModal(false)} className="text-gray-400 hover:text-black"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleCreateCreditSale} className="p-6 space-y-4">
-              <div>
+              <div ref={productPickerRef} className="relative">
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Producto *</label>
-                <select required value={newCreditSaleForm.productId} onChange={e => setNewCreditSaleForm(p => ({ ...p, productId: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white">
-                  <option value="">— Selecciona un producto —</option>
-                  {products.map((p: ApiProduct) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
+                <button type="button" onClick={() => setProductPickerOpen(o => !o)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 border border-gray-200 rounded-sm text-sm bg-white text-left focus:outline-none focus:ring-2 focus:ring-black">
+                  {(() => {
+                    const selected = products.find((p: ApiProduct) => p.id === newCreditSaleForm.productId);
+                    if (!selected) return <span className="flex-1 text-gray-400">— Selecciona un producto —</span>;
+                    const img = selected.images?.[0];
+                    return (
+                      <>
+                        <div className="w-8 h-8 flex-shrink-0 rounded-sm border border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center">
+                          {img ? (
+                            <img src={img.startsWith('http') ? img : `http://localhost:5173${img}`} alt="" className="w-full h-full object-contain" />
+                          ) : (
+                            <Package className="w-3.5 h-3.5 text-gray-300" />
+                          )}
+                        </div>
+                        <span className="flex-1 truncate">{selected.name}</span>
+                      </>
+                    );
+                  })()}
+                  <ChevronDown className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${productPickerOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {productPickerOpen && (
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-sm shadow-lg flex flex-col">
+                    <input
+                      type="text"
+                      autoFocus
+                      value={productSearchQuery}
+                      onChange={e => setProductSearchQuery(e.target.value)}
+                      placeholder="Buscar producto..."
+                      className="px-3 py-2 border-b border-gray-100 text-sm focus:outline-none"
+                    />
+                    <div className="max-h-56 overflow-y-auto">
+                      {products
+                        .filter((p: ApiProduct) => p.name.toLowerCase().includes(productSearchQuery.trim().toLowerCase()))
+                        .map((p: ApiProduct) => {
+                          const img = p.images?.[0];
+                          return (
+                            <button
+                              type="button"
+                              key={p.id}
+                              onClick={() => { setNewCreditSaleForm(f => ({ ...f, productId: p.id })); setProductPickerOpen(false); setProductSearchQuery(''); }}
+                              className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 text-left"
+                            >
+                              <div className="w-8 h-8 flex-shrink-0 rounded-sm border border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center">
+                                {img ? (
+                                  <img src={img.startsWith('http') ? img : `http://localhost:5173${img}`} alt="" className="w-full h-full object-contain" />
+                                ) : (
+                                  <Package className="w-3.5 h-3.5 text-gray-300" />
+                                )}
+                              </div>
+                              <span className="text-sm truncate">{p.name}</span>
+                            </button>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Cliente *</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Cliente *</label>
+                  <button type="button" onClick={() => { setQuickAddCustomer(true); openNewClient(); }}
+                    className="flex items-center gap-1 text-[11px] font-bold text-black hover:opacity-60 uppercase tracking-wider">
+                    <Plus className="w-3 h-3" /> Nuevo Cliente
+                  </button>
+                </div>
                 <select required value={newCreditSaleForm.customerId} onChange={e => setNewCreditSaleForm(p => ({ ...p, customerId: e.target.value }))}
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white">
                   <option value="">— Selecciona un cliente —</option>
@@ -4963,7 +5034,7 @@ function AdminPanel() {
               <h3 className="text-xl font-extrabold text-black">
                 {editingClient ? 'Editar Cliente' : 'Nuevo Cliente'}
               </h3>
-              <button onClick={() => setShowClientModal(false)} className="text-gray-400 hover:text-black"><X className="w-5 h-5" /></button>
+              <button onClick={() => { setShowClientModal(false); setQuickAddCustomer(false); }} className="text-gray-400 hover:text-black"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleSaveClient} className="overflow-y-auto flex-1 p-6 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -5038,7 +5109,7 @@ function AdminPanel() {
                 </div>
               )}
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowClientModal(false)}
+                <button type="button" onClick={() => { setShowClientModal(false); setQuickAddCustomer(false); }}
                   className="flex-1 py-2.5 font-bold text-sm text-gray-600 border border-gray-200 rounded-sm hover:bg-gray-50">Cancelar</button>
                 <button type="submit" disabled={clientSaving}
                   className="flex-1 py-2.5 font-bold text-sm text-white bg-black hover:bg-gray-800 disabled:bg-gray-400 rounded-sm flex items-center justify-center gap-2">
