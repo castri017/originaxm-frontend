@@ -571,6 +571,24 @@ function AdminPanel() {
   const [historyProduct, setHistoryProduct]       = useState<InventoryProduct | null>(null);
   const [historyMovements, setHistoryMovements]   = useState<StockMovementRecord[]>([]);
   const [historyLoading, setHistoryLoading]       = useState(false);
+  const [quickAdjustingId, setQuickAdjustingId]   = useState<string | null>(null);
+
+  const handleQuickAdjust = async (product: InventoryProduct, type: 'Entrada' | 'Salida') => {
+    if (type === 'Salida' && product.stock <= 0) return;
+    setQuickAdjustingId(product.id);
+    try {
+      const res = await fetch(`${API}/api/inventory/${product.id}/movements`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, quantity: 1, notes: 'Ajuste rápido desde inventario' }),
+      });
+      if (res.ok) {
+        await fetchInventory();
+        invalidateCatalog();
+      }
+    } catch { /* silencioso */ }
+    finally { setQuickAdjustingId(null); }
+  };
 
   // Edit movement
   const [editingMovement, setEditingMovement]     = useState<StockMovementRecord | null>(null);
@@ -2390,7 +2408,27 @@ function AdminPanel() {
                                 {p.brandName && <p className="text-xs text-gray-400">{p.brandName}</p>}
                               </td>
                               <td className="px-4 py-3 text-center">
-                                <span className="text-lg font-extrabold text-black">{p.stock}</span>
+                                <div className="flex items-center justify-center gap-2">
+                                  <button
+                                    onClick={() => handleQuickAdjust(p, 'Salida')}
+                                    disabled={quickAdjustingId === p.id || p.stock <= 0}
+                                    title="Restar 1 del stock"
+                                    className="w-6 h-6 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-red-50 hover:border-red-200 hover:text-red-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                  >
+                                    <span className="text-sm leading-none">−</span>
+                                  </button>
+                                  <span className="text-lg font-extrabold text-black w-7 text-center">
+                                    {quickAdjustingId === p.id ? <Loader2 className="w-4 h-4 animate-spin mx-auto text-gray-400" /> : p.stock}
+                                  </span>
+                                  <button
+                                    onClick={() => handleQuickAdjust(p, 'Entrada')}
+                                    disabled={quickAdjustingId === p.id}
+                                    title="Sumar 1 al stock"
+                                    className="w-6 h-6 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                  >
+                                    <span className="text-sm leading-none">+</span>
+                                  </button>
+                                </div>
                               </td>
                               <td className="px-4 py-3 text-center">
                                 <span className="text-sm font-bold text-emerald-600">+{p.totalEntradas}</span>
