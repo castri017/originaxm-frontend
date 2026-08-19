@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { API } from '../config/api';
-import { Settings, Tag, Users, Package, TrendingUp, Plus, Edit, Trash2, ClipboardList, Eye, ArrowLeft, X, ShieldCheck, Lock, Mail, Loader2, AlertCircle, LogOut, BarChart3, DollarSign, RefreshCw, ChevronLeft, Truck, FileBarChart2, Star, Globe } from 'lucide-react';
+import { Settings, Tag, Users, Package, TrendingUp, Plus, Edit, Trash2, ClipboardList, Eye, ArrowLeft, X, ShieldCheck, Lock, Mail, Loader2, AlertCircle, LogOut, BarChart3, DollarSign, RefreshCw, ChevronLeft, Truck, FileBarChart2, Star, Globe, Wallet } from 'lucide-react';
 import { useAdminAuthStore } from '../store/useAdminAuthStore';
 import { useCatalogStore } from '../store/useCatalogStore';
 
@@ -170,6 +170,53 @@ interface PriceListDetail {
   isActive: boolean;
   createdAt: string;
   items: PriceListItem[];
+}
+
+// ── Credit Sales ("Gastos") types ──────────────────────────
+interface CreditPayment {
+  id: string;
+  creditSaleId: string;
+  amount: number;
+  paymentDate: string;
+  notes: string | null;
+  createdAt: string;
+}
+
+interface CreditSaleSummary {
+  id: string;
+  productId: string | null;
+  productName: string;
+  productCode: string;
+  productImage: string;
+  customerId: string | null;
+  customerName: string;
+  purchasePrice: number;
+  sellingPrice: number;
+  margin: number;
+  marginPercent: number;
+  purchaseDate: string;
+  amountPaid: number;
+  balance: number;
+  isPaid: boolean;
+  paymentCount: number;
+}
+
+interface CreditSaleDetail extends CreditSaleSummary {
+  notes: string;
+  createdAt: string;
+  updatedAt: string | null;
+  payments: CreditPayment[];
+}
+
+interface CreditSalesStats {
+  totalPurchased: number;
+  totalCollected: number;
+  totalCommittedSelling: number;
+  profit: number;
+  totalBalance: number;
+  saleCount: number;
+  paidCount: number;
+  pendingCount: number;
 }
 
 // ─── Login Screen ────────────────────────────────────────────────────────────
@@ -648,6 +695,119 @@ function AdminPanel() {
   const [plItemEditForm, setPlItemEditForm]   = useState({ characteristic: '', purchasePrice: '', sellingPrice: '', discountPercent: '0' });
   const [plItemEditSaving, setPlItemEditSaving] = useState(false);
   const [plItemEditError, setPlItemEditError]   = useState('');
+
+  // ── Credit sales ("Gastos") state ──────────────────────────────────────
+  const [creditSales, setCreditSales]       = useState<CreditSaleSummary[]>([]);
+  const [creditSalesLoading, setCreditSalesLoading] = useState(false);
+  const [creditStats, setCreditStats]       = useState<CreditSalesStats | null>(null);
+  const [selectedCreditSale, setSelectedCreditSale] = useState<CreditSaleDetail | null>(null);
+  const [creditCustomerFilter, setCreditCustomerFilter] = useState('');
+  const [showNewCreditSaleModal, setShowNewCreditSaleModal] = useState(false);
+  const [newCreditSaleForm, setNewCreditSaleForm] = useState({
+    productId: '', customerId: '', purchasePrice: '', sellingPrice: '', purchaseDate: '', notes: '',
+  });
+  const [creditSaleSaving, setCreditSaleSaving] = useState(false);
+  const [creditSaleError, setCreditSaleError]   = useState('');
+  const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
+  const [newPaymentForm, setNewPaymentForm] = useState({ amount: '', paymentDate: '', notes: '' });
+  const [paymentSaving, setPaymentSaving]   = useState(false);
+  const [paymentError, setPaymentError]     = useState('');
+
+  const fetchCreditSales = async (customerId?: string) => {
+    setCreditSalesLoading(true);
+    try {
+      const qs = customerId ? `?customerId=${customerId}` : '';
+      const res = await fetch(`${API}/api/creditsales${qs}`);
+      if (res.ok) setCreditSales(await res.json());
+    } catch { /* silencioso */ }
+    finally { setCreditSalesLoading(false); }
+  };
+
+  const fetchCreditSaleDetail = async (id: string) => {
+    try {
+      const res = await fetch(`${API}/api/creditsales/${id}`);
+      if (res.ok) setSelectedCreditSale(await res.json());
+    } catch { /* silencioso */ }
+  };
+
+  const fetchCreditStats = async () => {
+    try {
+      const res = await fetch(`${API}/api/creditsales/summary`);
+      if (res.ok) setCreditStats(await res.json());
+    } catch { /* silencioso */ }
+  };
+
+  const handleCreateCreditSale = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreditSaleSaving(true); setCreditSaleError('');
+    try {
+      const res = await fetch(`${API}/api/creditsales`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: newCreditSaleForm.productId,
+          customerId: newCreditSaleForm.customerId,
+          purchasePrice: Number(newCreditSaleForm.purchasePrice) || 0,
+          sellingPrice: Number(newCreditSaleForm.sellingPrice) || 0,
+          purchaseDate: newCreditSaleForm.purchaseDate || null,
+          notes: newCreditSaleForm.notes,
+        }),
+      });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.message || 'Error al registrar la compra.'); }
+      setShowNewCreditSaleModal(false);
+      setNewCreditSaleForm({ productId: '', customerId: '', purchasePrice: '', sellingPrice: '', purchaseDate: '', notes: '' });
+      await Promise.all([fetchCreditSales(creditCustomerFilter || undefined), fetchCreditStats()]);
+    } catch (err: any) {
+      setCreditSaleError(err.message || 'Error al registrar la compra.');
+    } finally {
+      setCreditSaleSaving(false);
+    }
+  };
+
+  const handleDeleteCreditSale = async (id: string) => {
+    if (!confirm('¿Eliminar esta venta a crédito? Se borrarán también sus abonos.')) return;
+    try {
+      await fetch(`${API}/api/creditsales/${id}`, { method: 'DELETE' });
+      if (selectedCreditSale?.id === id) setSelectedCreditSale(null);
+      await Promise.all([fetchCreditSales(creditCustomerFilter || undefined), fetchCreditStats()]);
+    } catch { /* silencioso */ }
+  };
+
+  const handleAddPayment = async (e: React.FormEvent) => {
+    if (!selectedCreditSale) return;
+    e.preventDefault();
+    setPaymentSaving(true); setPaymentError('');
+    try {
+      const res = await fetch(`${API}/api/creditsales/${selectedCreditSale.id}/payments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: Number(newPaymentForm.amount) || 0,
+          paymentDate: newPaymentForm.paymentDate || null,
+          notes: newPaymentForm.notes || null,
+        }),
+      });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.message || 'Error al agregar el abono.'); }
+      setSelectedCreditSale(await res.json());
+      setShowAddPaymentModal(false);
+      setNewPaymentForm({ amount: '', paymentDate: '', notes: '' });
+      await Promise.all([fetchCreditSales(creditCustomerFilter || undefined), fetchCreditStats()]);
+    } catch (err: any) {
+      setPaymentError(err.message || 'Error al agregar el abono.');
+    } finally {
+      setPaymentSaving(false);
+    }
+  };
+
+  const handleDeletePayment = async (paymentId: string) => {
+    if (!selectedCreditSale) return;
+    if (!confirm('¿Eliminar este abono?')) return;
+    try {
+      await fetch(`${API}/api/creditsales/${selectedCreditSale.id}/payments/${paymentId}`, { method: 'DELETE' });
+      await fetchCreditSaleDetail(selectedCreditSale.id);
+      await Promise.all([fetchCreditSales(creditCustomerFilter || undefined), fetchCreditStats()]);
+    } catch { /* silencioso */ }
+  };
 
   // ── Product form state ─────────────────────────────────────────────────
   const [showProductModal, setShowProductModal] = useState(false);
@@ -1201,7 +1361,7 @@ function AdminPanel() {
     await fetchPriceLists();
   };
 
-  React.useEffect(() => { fetchProducts(); fetchCategories(); fetchInventory(); fetchPriceLists(); fetchClients(); fetchOrders(); fetchCarriers(); fetchAllOrders(); }, []);
+  React.useEffect(() => { fetchProducts(); fetchCategories(); fetchInventory(); fetchPriceLists(); fetchClients(); fetchOrders(); fetchCarriers(); fetchAllOrders(); fetchCreditSales(); fetchCreditStats(); }, []);
 
   // Re-fetch pedidos al entrar a la pestaña
   React.useEffect(() => {
@@ -1235,6 +1395,7 @@ function AdminPanel() {
             { id: 'products',   Icon: Package,       label: 'Productos'     },
             { id: 'inventory',  Icon: BarChart3,     label: 'Inventario'    },
             { id: 'pricelists',  Icon: DollarSign,    label: 'Lista de Precios' },
+            { id: 'gastos',      Icon: Wallet,        label: 'Gastos'           },
             { id: 'categories',    Icon: Tag,           label: 'Categorías'      },
             { id: 'carriers',     Icon: Truck,         label: 'Transportadoras' },
             { id: 'users',        Icon: Users,         label: 'Clientes'        },
@@ -1246,7 +1407,7 @@ function AdminPanel() {
           ] as { id: string; Icon: React.ElementType; label: string }[]).map(({ id, Icon, label }) => (
             <button
               key={id}
-              onClick={() => { setActiveTab(id); setSelectedOrder(null); setSidebarOpen(false); }}
+              onClick={() => { setActiveTab(id); setSelectedOrder(null); setSelectedCreditSale(null); setSidebarOpen(false); }}
               className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg transition-all text-sm font-medium ${
                 activeTab === id
                   ? 'bg-white text-slate-900 shadow-sm'
@@ -1308,6 +1469,7 @@ function AdminPanel() {
               {activeTab === 'recommended'  && 'Productos Recomendados'}
               {activeTab === 'featured'     && 'Novedades Destacadas'}
               {activeTab === 'international' && 'Productos Internacionales'}
+              {activeTab === 'gastos'       && (selectedCreditSale ? selectedCreditSale.productName : 'Compras a Crédito')}
               {activeTab === 'reports'      && 'Informes'}
               {activeTab === 'settings'     && 'Configuración'}
             </h1>
@@ -2401,6 +2563,202 @@ function AdminPanel() {
                       </table>
                     </div>
                   )}
+                </>
+              )}
+            </div>
+
+          ) : activeTab === 'gastos' ? (
+            <div className="space-y-6">
+              {creditStats && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="bg-white border border-gray-100 rounded-sm p-4 shadow-sm">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Comprado</p>
+                    <p className="text-2xl font-extrabold text-black">${creditStats.totalPurchased.toLocaleString('es-CL')}</p>
+                  </div>
+                  <div className="bg-white border border-gray-100 rounded-sm p-4 shadow-sm">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Cobrado</p>
+                    <p className="text-2xl font-extrabold text-black">${creditStats.totalCollected.toLocaleString('es-CL')}</p>
+                  </div>
+                  <div className={`bg-white border rounded-sm p-4 shadow-sm ${creditStats.profit >= 0 ? 'border-emerald-100' : 'border-red-100'}`}>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Ganancia</p>
+                    <p className={`text-2xl font-extrabold ${creditStats.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>${creditStats.profit.toLocaleString('es-CL')}</p>
+                  </div>
+                  <div className="bg-white border border-amber-100 rounded-sm p-4 shadow-sm">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pendiente por Cobrar</p>
+                    <p className="text-2xl font-extrabold text-amber-600">${creditStats.totalBalance.toLocaleString('es-CL')}</p>
+                  </div>
+                </div>
+              )}
+
+              {!selectedCreditSale ? (
+                <>
+                  <div className="flex items-center justify-between flex-wrap gap-3">
+                    <div>
+                      <h2 className="text-xl font-extrabold text-black">Compras a Crédito</h2>
+                      <p className="text-sm text-gray-500 mt-0.5">Productos comprados y vendidos a crédito, con abonos.</p>
+                    </div>
+                    <button onClick={() => setShowNewCreditSaleModal(true)}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-black text-white text-sm font-bold rounded-sm hover:bg-gray-800">
+                      <Plus className="w-4 h-4" /> Nueva Venta a Crédito
+                    </button>
+                  </div>
+
+                  <select
+                    value={creditCustomerFilter}
+                    onChange={e => { setCreditCustomerFilter(e.target.value); fetchCreditSales(e.target.value || undefined); }}
+                    className="text-sm border border-gray-200 rounded-sm px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-black"
+                  >
+                    <option value="">Todos los clientes</option>
+                    {clients.map(c => <option key={c.id} value={c.id}>{c.fullName}</option>)}
+                  </select>
+
+                  {creditSalesLoading ? (
+                    <div className="flex items-center justify-center py-16 text-gray-400">
+                      <Loader2 className="w-6 h-6 animate-spin mr-2" />Cargando...
+                    </div>
+                  ) : creditSales.length === 0 ? (
+                    <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-sm text-gray-400">
+                      <Wallet className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                      <p className="text-sm">No hay compras a crédito registradas todavía.</p>
+                    </div>
+                  ) : (
+                    <div className="bg-white border border-gray-100 rounded-sm shadow-sm overflow-x-auto">
+                      <table className="w-full min-w-[900px]">
+                        <thead>
+                          <tr className="border-b border-gray-100">
+                            <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-wider px-4 md:px-6 py-3 w-56">Producto</th>
+                            <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-wider px-4 py-3">Cliente</th>
+                            <th className="text-right text-xs font-bold text-gray-400 uppercase tracking-wider px-4 py-3">P. Compra</th>
+                            <th className="text-right text-xs font-bold text-gray-400 uppercase tracking-wider px-4 py-3">P. Venta</th>
+                            <th className="text-right text-xs font-bold text-gray-400 uppercase tracking-wider px-4 py-3">Margen</th>
+                            <th className="text-right text-xs font-bold text-gray-400 uppercase tracking-wider px-4 py-3">Cobrado</th>
+                            <th className="text-right text-xs font-bold text-gray-400 uppercase tracking-wider px-4 py-3">Saldo</th>
+                            <th className="text-center text-xs font-bold text-gray-400 uppercase tracking-wider px-4 py-3">Estado</th>
+                            <th className="px-4 md:px-6 py-3"></th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                          {creditSales.map(s => (
+                            <tr key={s.id} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => fetchCreditSaleDetail(s.id)}>
+                              <td className="px-4 md:px-6 py-3">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-[3.5rem] flex-shrink-0 rounded-sm border border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center">
+                                    {s.productImage ? (
+                                      <img
+                                        src={s.productImage.startsWith('http') ? s.productImage : `http://localhost:5173${s.productImage}`}
+                                        alt={s.productName}
+                                        className="w-full h-full object-contain p-0.5"
+                                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                      />
+                                    ) : (
+                                      <Package className="w-4 h-4 text-gray-300" />
+                                    )}
+                                  </div>
+                                  <span className="font-semibold text-sm text-black leading-tight">{s.productName}</span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 text-sm text-gray-600">{s.customerName}</td>
+                              <td className="px-4 py-3 text-right text-sm text-gray-600">${s.purchasePrice.toLocaleString('es-CL')}</td>
+                              <td className="px-4 py-3 text-right text-sm text-gray-600">${s.sellingPrice.toLocaleString('es-CL')}</td>
+                              <td className="px-4 py-3 text-right">
+                                <span className={`text-sm font-bold ${s.margin >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{s.marginPercent}%</span>
+                              </td>
+                              <td className="px-4 py-3 text-right text-sm text-gray-600">${s.amountPaid.toLocaleString('es-CL')}</td>
+                              <td className="px-4 py-3 text-right font-bold text-sm text-black">${s.balance.toLocaleString('es-CL')}</td>
+                              <td className="px-4 py-3 text-center">
+                                <span className={`inline-block px-2 py-0.5 text-xs font-bold rounded-full ${s.isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                  {s.isPaid ? 'Pagado' : 'Pendiente'}
+                                </span>
+                              </td>
+                              <td className="px-4 md:px-6 py-3 text-right">
+                                <button onClick={(e) => { e.stopPropagation(); handleDeleteCreditSale(s.id); }}
+                                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-sm transition-colors">
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setSelectedCreditSale(null)}
+                      className="p-2 border border-gray-200 rounded-sm hover:bg-gray-50">
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <div className="flex-1">
+                      <h2 className="text-xl font-extrabold text-black">{selectedCreditSale.productName}</h2>
+                      <p className="text-sm text-gray-500">{selectedCreditSale.customerName} · Margen {selectedCreditSale.marginPercent}%</p>
+                    </div>
+                    <button onClick={() => setShowAddPaymentModal(true)}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-black text-white text-sm font-bold rounded-sm hover:bg-gray-800">
+                      <Plus className="w-4 h-4" /> Agregar Abono
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-white border border-gray-100 rounded-sm p-4 shadow-sm">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">P. Compra</p>
+                      <p className="text-lg font-extrabold text-black">${selectedCreditSale.purchasePrice.toLocaleString('es-CL')}</p>
+                    </div>
+                    <div className="bg-white border border-gray-100 rounded-sm p-4 shadow-sm">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">P. Venta</p>
+                      <p className="text-lg font-extrabold text-black">${selectedCreditSale.sellingPrice.toLocaleString('es-CL')}</p>
+                    </div>
+                    <div className="bg-white border border-gray-100 rounded-sm p-4 shadow-sm">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Cobrado</p>
+                      <p className="text-lg font-extrabold text-black">${selectedCreditSale.amountPaid.toLocaleString('es-CL')}</p>
+                    </div>
+                    <div className={`bg-white border rounded-sm p-4 shadow-sm ${selectedCreditSale.isPaid ? 'border-emerald-100' : 'border-amber-100'}`}>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Saldo Pendiente</p>
+                      <p className={`text-lg font-extrabold ${selectedCreditSale.isPaid ? 'text-emerald-600' : 'text-amber-600'}`}>${selectedCreditSale.balance.toLocaleString('es-CL')}</p>
+                    </div>
+                  </div>
+
+                  {selectedCreditSale.notes && (
+                    <p className="text-sm text-gray-500 bg-gray-50 border border-gray-100 rounded-sm p-3">{selectedCreditSale.notes}</p>
+                  )}
+
+                  <div>
+                    <h3 className="text-sm font-extrabold text-black mb-3">Historial de Abonos</h3>
+                    {selectedCreditSale.payments.length === 0 ? (
+                      <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-sm text-gray-400">
+                        <p className="text-sm">Todavía no hay abonos registrados.</p>
+                      </div>
+                    ) : (
+                      <div className="bg-white border border-gray-100 rounded-sm shadow-sm overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-gray-100">
+                              <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-wider px-4 md:px-6 py-3">Fecha</th>
+                              <th className="text-right text-xs font-bold text-gray-400 uppercase tracking-wider px-4 py-3">Monto</th>
+                              <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-wider px-4 py-3">Notas</th>
+                              <th className="px-4 md:px-6 py-3"></th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-50">
+                            {selectedCreditSale.payments.map(p => (
+                              <tr key={p.id} className="hover:bg-gray-50 transition-colors">
+                                <td className="px-4 md:px-6 py-3 text-sm text-gray-600">{new Date(p.paymentDate).toLocaleDateString('es-CL')}</td>
+                                <td className="px-4 py-3 text-right font-bold text-sm text-black">${p.amount.toLocaleString('es-CL')}</td>
+                                <td className="px-4 py-3 text-sm text-gray-500">{p.notes || '—'}</td>
+                                <td className="px-4 md:px-6 py-3 text-right">
+                                  <button onClick={() => handleDeletePayment(p.id)}
+                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-sm transition-colors">
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
             </div>
@@ -3986,6 +4344,132 @@ function AdminPanel() {
                 <button type="submit" disabled={plItemEditSaving}
                   className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-black hover:bg-gray-800 disabled:bg-gray-400 rounded-sm uppercase tracking-wider">
                   {plItemEditSaving ? <><Loader2 className="w-4 h-4 animate-spin" />Guardando...</> : 'Guardar cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Nueva Venta a Crédito Modal */}
+      {showNewCreditSaleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-sm shadow-xl w-full max-w-lg">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
+              <h3 className="text-lg font-extrabold text-black">Nueva Venta a Crédito</h3>
+              <button onClick={() => setShowNewCreditSaleModal(false)} className="text-gray-400 hover:text-black"><X className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={handleCreateCreditSale} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Producto *</label>
+                <select required value={newCreditSaleForm.productId} onChange={e => setNewCreditSaleForm(p => ({ ...p, productId: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white">
+                  <option value="">— Selecciona un producto —</option>
+                  {products.map((p: ApiProduct) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Cliente *</label>
+                <select required value={newCreditSaleForm.customerId} onChange={e => setNewCreditSaleForm(p => ({ ...p, customerId: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white">
+                  <option value="">— Selecciona un cliente —</option>
+                  {clients.map(c => (
+                    <option key={c.id} value={c.id}>{c.fullName}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Precio Compra *</label>
+                  <input type="number" min="0" step="0.01" required value={newCreditSaleForm.purchasePrice}
+                    onChange={e => setNewCreditSaleForm(p => ({ ...p, purchasePrice: e.target.value }))}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-black" placeholder="0" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Precio Venta *</label>
+                  <input type="number" min="0" step="0.01" required value={newCreditSaleForm.sellingPrice}
+                    onChange={e => setNewCreditSaleForm(p => ({ ...p, sellingPrice: e.target.value }))}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-black" placeholder="0" />
+                </div>
+              </div>
+              {(Number(newCreditSaleForm.purchasePrice) > 0 || Number(newCreditSaleForm.sellingPrice) > 0) && (
+                <p className="text-xs text-gray-500">
+                  Margen: <span className={`font-bold ${Number(newCreditSaleForm.sellingPrice) - Number(newCreditSaleForm.purchasePrice) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                    ${(Number(newCreditSaleForm.sellingPrice) - Number(newCreditSaleForm.purchasePrice)).toLocaleString('es-CL')}
+                  </span>
+                </p>
+              )}
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Fecha</label>
+                <input type="date" value={newCreditSaleForm.purchaseDate}
+                  onChange={e => setNewCreditSaleForm(p => ({ ...p, purchaseDate: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Notas</label>
+                <textarea rows={2} value={newCreditSaleForm.notes} onChange={e => setNewCreditSaleForm(p => ({ ...p, notes: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none" placeholder="Opcional..." />
+              </div>
+              {creditSaleError && (
+                <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-sm text-sm">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />{creditSaleError}
+                </div>
+              )}
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={() => setShowNewCreditSaleModal(false)}
+                  className="px-5 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-100 rounded-sm uppercase tracking-wider">Cancelar</button>
+                <button type="submit" disabled={creditSaleSaving}
+                  className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-black hover:bg-gray-800 disabled:bg-gray-400 rounded-sm uppercase tracking-wider">
+                  {creditSaleSaving ? <><Loader2 className="w-4 h-4 animate-spin" />Guardando...</> : 'Registrar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Agregar Abono Modal */}
+      {showAddPaymentModal && selectedCreditSale && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-sm shadow-xl w-full max-w-sm">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
+              <h3 className="text-lg font-extrabold text-black">Agregar Abono</h3>
+              <button onClick={() => setShowAddPaymentModal(false)} className="text-gray-400 hover:text-black"><X className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={handleAddPayment} className="p-6 space-y-4">
+              <p className="text-xs text-gray-500">
+                Saldo pendiente: <span className="font-bold text-black">${selectedCreditSale.balance.toLocaleString('es-CL')}</span>
+              </p>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Monto *</label>
+                <input type="number" min="0.01" step="0.01" required value={newPaymentForm.amount}
+                  onChange={e => setNewPaymentForm(p => ({ ...p, amount: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-black" placeholder="0" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Fecha</label>
+                <input type="date" value={newPaymentForm.paymentDate}
+                  onChange={e => setNewPaymentForm(p => ({ ...p, paymentDate: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Notas</label>
+                <input type="text" value={newPaymentForm.notes} onChange={e => setNewPaymentForm(p => ({ ...p, notes: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-black" placeholder="Ej: Nequi, Efectivo..." />
+              </div>
+              {paymentError && (
+                <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-sm text-sm">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />{paymentError}
+                </div>
+              )}
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={() => setShowAddPaymentModal(false)}
+                  className="px-5 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-100 rounded-sm uppercase tracking-wider">Cancelar</button>
+                <button type="submit" disabled={paymentSaving}
+                  className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-black hover:bg-gray-800 disabled:bg-gray-400 rounded-sm uppercase tracking-wider">
+                  {paymentSaving ? <><Loader2 className="w-4 h-4 animate-spin" />Guardando...</> : 'Agregar Abono'}
                 </button>
               </div>
             </form>
