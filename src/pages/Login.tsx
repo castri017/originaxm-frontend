@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, User, LogIn, UserPlus, Phone, MapPin, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useCustomerAuthStore } from '../store/useCustomerAuthStore';
 
 import { API } from '../config/api';
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
 
 export default function Login() {
   const navigate   = useNavigate();
@@ -13,6 +15,8 @@ export default function Login() {
 
   const [isLogin, setIsLogin] = useState(true);
   const [showPass, setShowPass] = useState(false);
+  const [googleError, setGoogleError] = useState('');
+  const googleButtonRef = useRef<HTMLDivElement>(null);
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -101,6 +105,49 @@ export default function Login() {
     }
   }
 
+  async function handleGoogleCredential(response: { credential: string }) {
+    setGoogleError('');
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/api/customers/google-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential: response.credential }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message ?? 'Error al iniciar sesión con Google.');
+      }
+      loginStore(await res.json());
+      navigate(from, { replace: true });
+    } catch (err: any) {
+      setGoogleError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID || !googleButtonRef.current) return;
+
+    let cancelled = false;
+    const tryRender = () => {
+      if (cancelled) return;
+      const google = (window as any).google;
+      if (!google?.accounts?.id) {
+        setTimeout(tryRender, 200);
+        return;
+      }
+      google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleCredential });
+      if (googleButtonRef.current) {
+        googleButtonRef.current.innerHTML = '';
+        google.accounts.id.renderButton(googleButtonRef.current, { theme: 'outline', size: 'large', width: 336, text: 'continue_with' });
+      }
+    };
+    tryRender();
+    return () => { cancelled = true; };
+  }, [isLogin]);
+
   return (
     <div className="min-h-[80vh] flex items-center justify-center bg-gray-50 py-12 px-4">
       <div className="w-full max-w-md">
@@ -127,6 +174,22 @@ export default function Login() {
             <div className="mb-4 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-sm font-medium">
               {error}
             </div>
+          )}
+          {googleError && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-sm font-medium">
+              {googleError}
+            </div>
+          )}
+
+          {GOOGLE_CLIENT_ID && (
+            <>
+              <div ref={googleButtonRef} className="flex justify-center mb-5" />
+              <div className="flex items-center gap-3 mb-5">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="text-xs text-gray-400 uppercase tracking-wider">o continúa con usuario y contraseña</span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+            </>
           )}
 
           {isLogin ? (
