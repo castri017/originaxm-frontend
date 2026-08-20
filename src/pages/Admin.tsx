@@ -725,6 +725,9 @@ function AdminPanel() {
   const [creditStats, setCreditStats]       = useState<CreditSalesStats | null>(null);
   const [selectedCreditSale, setSelectedCreditSale] = useState<CreditSaleDetail | null>(null);
   const [creditCustomerFilter, setCreditCustomerFilter] = useState('');
+  const [creditStatusFilter, setCreditStatusFilter] = useState<'all' | 'mora' | 'cancelado'>('all');
+  const matchesCreditStatusFilter = (s: CreditSaleSummary) =>
+    creditStatusFilter === 'all' ? true : creditStatusFilter === 'mora' ? !s.isPaid : s.isPaid;
   const [showNewCreditSaleModal, setShowNewCreditSaleModal] = useState(false);
   const [newCreditSaleForm, setNewCreditSaleForm] = useState({
     productId: '', customerId: '', purchasePrice: '', sellingPrice: '', purchaseDate: '', notes: '',
@@ -2656,23 +2659,40 @@ function AdminPanel() {
                     </button>
                   </div>
 
-                  <select
-                    value={creditCustomerFilter}
-                    onChange={e => { setCreditCustomerFilter(e.target.value); fetchCreditSales(e.target.value || undefined); }}
-                    className="text-sm border border-gray-200 rounded-sm px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-black"
-                  >
-                    <option value="">Todos los clientes</option>
-                    {clients.map(c => <option key={c.id} value={c.id}>{c.fullName}</option>)}
-                  </select>
+                  <div className="flex flex-wrap gap-3">
+                    <select
+                      value={creditCustomerFilter}
+                      onChange={e => { setCreditCustomerFilter(e.target.value); fetchCreditSales(e.target.value || undefined); }}
+                      className="text-sm border border-gray-200 rounded-sm px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-black"
+                    >
+                      <option value="">Todos los clientes</option>
+                      {clients.map(c => <option key={c.id} value={c.id}>{c.fullName}</option>)}
+                    </select>
+                    <select
+                      value={creditStatusFilter}
+                      onChange={e => setCreditStatusFilter(e.target.value as 'all' | 'mora' | 'cancelado')}
+                      className="text-sm border border-gray-200 rounded-sm px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-black"
+                    >
+                      <option value="all">Todos los estados</option>
+                      <option value="mora">En Mora</option>
+                      <option value="cancelado">Cancelado</option>
+                    </select>
+                  </div>
 
                   {creditSalesLoading ? (
                     <div className="flex items-center justify-center py-16 text-gray-400">
                       <Loader2 className="w-6 h-6 animate-spin mr-2" />Cargando...
                     </div>
-                  ) : creditSales.length === 0 ? (
+                  ) : creditSales.filter(matchesCreditStatusFilter).length === 0 ? (
                     <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-sm text-gray-400">
                       <Wallet className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                      <p className="text-sm">No hay compras a crédito registradas todavía.</p>
+                      <p className="text-sm">
+                        {creditStatusFilter === 'all'
+                          ? 'No hay compras a crédito registradas todavía.'
+                          : creditStatusFilter === 'mora'
+                          ? 'No hay clientes en mora.'
+                          : 'No hay ventas canceladas todavía.'}
+                      </p>
                     </div>
                   ) : (
                     <div className="bg-white border border-gray-100 rounded-sm shadow-sm overflow-x-auto">
@@ -2691,7 +2711,7 @@ function AdminPanel() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                          {creditSales.map(s => (
+                          {creditSales.filter(matchesCreditStatusFilter).map(s => (
                             <tr key={s.id} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => fetchCreditSaleDetail(s.id)}>
                               <td className="px-4 md:px-6 py-3">
                                 <div className="flex items-center gap-3">
@@ -2720,7 +2740,7 @@ function AdminPanel() {
                               <td className="px-4 py-3 text-right font-bold text-sm text-black">${s.balance.toLocaleString('es-CL')}</td>
                               <td className="px-4 py-3 text-center">
                                 <span className={`inline-block px-2 py-0.5 text-xs font-bold rounded-full ${s.isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                                  {s.isPaid ? 'Pagado' : 'Pendiente'}
+                                  {s.isPaid ? 'Cancelado' : 'En Mora'}
                                 </span>
                               </td>
                               <td className="px-4 md:px-6 py-3 text-right">
