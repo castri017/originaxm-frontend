@@ -60,8 +60,23 @@ export default function Home() {
     loadProducts();
     loadRecommended();
     loadFeatured();
-    const timer = setInterval(() => { loadProducts(); loadRecommended(); loadFeatured(); }, 60000);
-    return () => clearInterval(timer);
+
+    // El catálogo se cachea 10 min en el backend; no tiene sentido consultar más seguido que eso,
+    // y solo mientras la pestaña está visible (evita pings de fondo indefinidos que mantienen la DB activa).
+    const reloadAll = () => { loadProducts(); loadRecommended(); loadFeatured(); };
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible') reloadAll();
+    }, 600000);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') reloadAll();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [catalogVersion]);
 
   const scroll = (direction: 'left' | 'right') => {
