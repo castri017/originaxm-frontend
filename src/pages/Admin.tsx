@@ -573,9 +573,20 @@ function AdminPanel() {
   const [historyLoading, setHistoryLoading]       = useState(false);
   const [quickAdjustingId, setQuickAdjustingId]   = useState<string | null>(null);
 
+  const applyLocalStockDelta = (productId: string, type: 'Entrada' | 'Salida', sign: 1 | -1) => {
+    setInventoryProducts(prev => prev.map(p => p.id === productId ? {
+      ...p,
+      stock: p.stock + sign,
+      totalEntradas: p.totalEntradas + (type === 'Entrada' ? sign : 0),
+      totalSalidas: p.totalSalidas + (type === 'Salida' ? sign : 0),
+    } : p));
+  };
+
   const handleQuickAdjust = async (product: InventoryProduct, type: 'Entrada' | 'Salida') => {
     if (type === 'Salida' && product.stock <= 0) return;
     setQuickAdjustingId(product.id);
+    // Optimista: reflejar el cambio ya mismo en la fila, sin recargar todo el inventario.
+    applyLocalStockDelta(product.id, type, 1);
     try {
       const res = await fetch(`${API}/api/inventory/${product.id}/movements`, {
         method: 'POST',
@@ -583,10 +594,15 @@ function AdminPanel() {
         body: JSON.stringify({ type, quantity: 1, notes: 'Ajuste rápido desde inventario' }),
       });
       if (res.ok) {
-        await fetchInventory();
+        const movement: StockMovementRecord = await res.json();
+        setInventoryProducts(prev => prev.map(p => p.id === product.id ? { ...p, stock: movement.newStock } : p));
         invalidateCatalog();
+      } else {
+        applyLocalStockDelta(product.id, type, -1);
       }
-    } catch { /* silencioso */ }
+    } catch {
+      applyLocalStockDelta(product.id, type, -1);
+    }
     finally { setQuickAdjustingId(null); }
   };
 
