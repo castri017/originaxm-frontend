@@ -219,6 +219,27 @@ interface CreditSalesStats {
   pendingCount: number;
 }
 
+// ── Ganancias/Gastos manuales ────────────────────────────────
+interface FinanceEntry {
+  id: string;
+  type: 'Ganancia' | 'Gasto';
+  amount: number;
+  category: string;
+  description: string;
+  date: string;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+interface FinanceStats {
+  totalGanancias: number;
+  totalGastos: number;
+  neto: number;
+  count: number;
+}
+
+const FINANCE_CATEGORIES = ['Venta en efectivo', 'Arriendo', 'Publicidad', 'Insumos', 'Servicios', 'Otro'];
+
 // ─── Login Screen ────────────────────────────────────────────────────────────
 function AdminLogin() {
   const login = useAdminAuthStore((s) => s.login);
@@ -858,6 +879,100 @@ function AdminPanel() {
       await fetch(`${API}/api/creditsales/${selectedCreditSale.id}/payments/${paymentId}`, { method: 'DELETE' });
       await fetchCreditSaleDetail(selectedCreditSale.id);
       await Promise.all([fetchCreditSales(creditCustomerFilter || undefined), fetchCreditStats()]);
+    } catch { /* silencioso */ }
+  };
+
+  // ── Ganancias/Gastos manuales state ─────────────────────────────────────
+  const [gastosSubTab, setGastosSubTab] = useState<'credito' | 'manual'>('credito');
+  const [financeEntries, setFinanceEntries]       = useState<FinanceEntry[]>([]);
+  const [financeEntriesLoading, setFinanceEntriesLoading] = useState(false);
+  const [financeEntriesLoaded, setFinanceEntriesLoaded]   = useState(false);
+  const [financeStats, setFinanceStats]           = useState<FinanceStats | null>(null);
+  const [financeTypeFilter, setFinanceTypeFilter] = useState<'all' | 'Ganancia' | 'Gasto'>('all');
+  const [showFinanceModal, setShowFinanceModal]   = useState(false);
+  const [editingFinanceEntry, setEditingFinanceEntry] = useState<FinanceEntry | null>(null);
+  const [financeForm, setFinanceForm] = useState({ type: 'Ganancia' as 'Ganancia' | 'Gasto', amount: '', category: FINANCE_CATEGORIES[0], description: '', date: '' });
+  const [financeSaving, setFinanceSaving] = useState(false);
+  const [financeError, setFinanceError]   = useState('');
+
+  const fetchFinanceEntries = async (type?: 'Ganancia' | 'Gasto') => {
+    setFinanceEntriesLoading(true);
+    try {
+      const qs = type ? `?type=${type}` : '';
+      const res = await fetch(`${API}/api/financeentries${qs}`);
+      if (res.ok) setFinanceEntries(await res.json());
+    } catch { /* silencioso */ }
+    finally { setFinanceEntriesLoading(false); setFinanceEntriesLoaded(true); }
+  };
+
+  const fetchFinanceStats = async () => {
+    try {
+      const res = await fetch(`${API}/api/financeentries/stats`);
+      if (res.ok) setFinanceStats(await res.json());
+    } catch { /* silencioso */ }
+  };
+
+  // La grilla de Compras a Crédito ya carga al entrar al panel; esta sub-pestaña
+  // se consulta recién cuando el admin la abre, para no sumar otra llamada al montar.
+  const openFinanceTab = () => {
+    setGastosSubTab('manual');
+    if (!financeEntriesLoaded) { fetchFinanceEntries(); fetchFinanceStats(); }
+  };
+
+  const openFinanceModal = (entry?: FinanceEntry) => {
+    setFinanceError('');
+    if (entry) {
+      setEditingFinanceEntry(entry);
+      setFinanceForm({ type: entry.type, amount: String(entry.amount), category: entry.category || FINANCE_CATEGORIES[0], description: entry.description, date: entry.date.slice(0, 10) });
+    } else {
+      setEditingFinanceEntry(null);
+      setFinanceForm({ type: 'Ganancia', amount: '', category: FINANCE_CATEGORIES[0], description: '', date: '' });
+    }
+    setShowFinanceModal(true);
+  };
+
+  const handleSaveFinanceEntry = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFinanceSaving(true); setFinanceError('');
+    try {
+      const res = editingFinanceEntry
+        ? await fetch(`${API}/api/financeentries/${editingFinanceEntry.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: financeForm.type,
+              amount: Number(financeForm.amount) || 0,
+              category: financeForm.category,
+              description: financeForm.description,
+              date: financeForm.date,
+            }),
+          })
+        : await fetch(`${API}/api/financeentries`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: financeForm.type,
+              amount: Number(financeForm.amount) || 0,
+              category: financeForm.category,
+              description: financeForm.description,
+              date: financeForm.date || null,
+            }),
+          });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.message || 'Error al guardar el registro.'); }
+      setShowFinanceModal(false);
+      await Promise.all([fetchFinanceEntries(financeTypeFilter === 'all' ? undefined : financeTypeFilter), fetchFinanceStats()]);
+    } catch (err: any) {
+      setFinanceError(err.message || 'Error al guardar el registro.');
+    } finally {
+      setFinanceSaving(false);
+    }
+  };
+
+  const handleDeleteFinanceEntry = async (id: string) => {
+    if (!confirm('¿Eliminar este registro?')) return;
+    try {
+      await fetch(`${API}/api/financeentries/${id}`, { method: 'DELETE' });
+      await Promise.all([fetchFinanceEntries(financeTypeFilter === 'all' ? undefined : financeTypeFilter), fetchFinanceStats()]);
     } catch { /* silencioso */ }
   };
 
@@ -1521,7 +1636,7 @@ function AdminPanel() {
               {activeTab === 'recommended'  && 'Productos Recomendados'}
               {activeTab === 'featured'     && 'Novedades Destacadas'}
               {activeTab === 'international' && 'Productos Internacionales'}
-              {activeTab === 'gastos'       && (selectedCreditSale ? selectedCreditSale.productName : 'Compras a Crédito')}
+              {activeTab === 'gastos'       && (selectedCreditSale ? selectedCreditSale.productName : gastosSubTab === 'manual' ? 'Ganancias y Gastos' : 'Compras a Crédito')}
               {activeTab === 'reports'      && 'Informes'}
               {activeTab === 'settings'     && 'Configuración'}
             </h1>
@@ -2641,6 +2756,23 @@ function AdminPanel() {
 
           ) : activeTab === 'gastos' ? (
             <div className="space-y-6">
+              <div className="flex gap-1 border-b border-gray-100">
+                <button
+                  onClick={() => setGastosSubTab('credito')}
+                  className={`px-4 py-2.5 text-sm font-bold border-b-2 -mb-px transition-colors ${gastosSubTab === 'credito' ? 'border-black text-black' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                >
+                  Compras a Crédito
+                </button>
+                <button
+                  onClick={openFinanceTab}
+                  className={`px-4 py-2.5 text-sm font-bold border-b-2 -mb-px transition-colors ${gastosSubTab === 'manual' ? 'border-black text-black' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                >
+                  Ganancias y Gastos
+                </button>
+              </div>
+
+              {gastosSubTab === 'credito' ? (
+              <>
               {creditStats && (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div className="bg-white border border-gray-100 rounded-sm p-4 shadow-sm">
@@ -2849,6 +2981,105 @@ function AdminPanel() {
                     )}
                   </div>
                 </>
+              )}
+              </>
+              ) : (
+              <>
+                {financeStats && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="bg-white border border-emerald-100 rounded-sm p-4 shadow-sm">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Ganancias</p>
+                      <p className="text-2xl font-extrabold text-emerald-600">${financeStats.totalGanancias.toLocaleString('es-CL')}</p>
+                    </div>
+                    <div className="bg-white border border-red-100 rounded-sm p-4 shadow-sm">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Gastos</p>
+                      <p className="text-2xl font-extrabold text-red-600">${financeStats.totalGastos.toLocaleString('es-CL')}</p>
+                    </div>
+                    <div className={`bg-white border rounded-sm p-4 shadow-sm ${financeStats.neto >= 0 ? 'border-emerald-100' : 'border-red-100'}`}>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Neto</p>
+                      <p className={`text-2xl font-extrabold ${financeStats.neto >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>${financeStats.neto.toLocaleString('es-CL')}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div>
+                    <h2 className="text-xl font-extrabold text-black">Ganancias y Gastos</h2>
+                    <p className="text-sm text-gray-500 mt-0.5">Registro manual de ganancias y gastos del negocio.</p>
+                  </div>
+                  <button onClick={() => openFinanceModal()}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-black text-white text-sm font-bold rounded-sm hover:bg-gray-800">
+                    <Plus className="w-4 h-4" /> Nuevo Registro
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  <select
+                    value={financeTypeFilter}
+                    onChange={e => { const v = e.target.value as 'all' | 'Ganancia' | 'Gasto'; setFinanceTypeFilter(v); fetchFinanceEntries(v === 'all' ? undefined : v); }}
+                    className="text-sm border border-gray-200 rounded-sm px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-black"
+                  >
+                    <option value="all">Todos los tipos</option>
+                    <option value="Ganancia">Ganancias</option>
+                    <option value="Gasto">Gastos</option>
+                  </select>
+                </div>
+
+                {financeEntriesLoading ? (
+                  <div className="flex items-center justify-center py-16 text-gray-400">
+                    <Loader2 className="w-6 h-6 animate-spin mr-2" />Cargando...
+                  </div>
+                ) : financeEntries.length === 0 ? (
+                  <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-sm text-gray-400">
+                    <Wallet className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm">No hay registros todavía.</p>
+                  </div>
+                ) : (
+                  <div className="bg-white border border-gray-100 rounded-sm shadow-sm overflow-x-auto">
+                    <table className="w-full min-w-[700px]">
+                      <thead>
+                        <tr className="border-b border-gray-100">
+                          <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-wider px-4 md:px-6 py-3">Fecha</th>
+                          <th className="text-center text-xs font-bold text-gray-400 uppercase tracking-wider px-4 py-3">Tipo</th>
+                          <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-wider px-4 py-3">Categoría</th>
+                          <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-wider px-4 py-3">Descripción</th>
+                          <th className="text-right text-xs font-bold text-gray-400 uppercase tracking-wider px-4 py-3">Monto</th>
+                          <th className="px-4 md:px-6 py-3"></th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {financeEntries.map(entry => (
+                          <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-4 md:px-6 py-3 text-sm text-gray-600">{new Date(entry.date).toLocaleDateString('es-CL')}</td>
+                            <td className="px-4 py-3 text-center">
+                              <span className={`inline-block px-2 py-0.5 text-xs font-bold rounded-full ${entry.type === 'Ganancia' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                                {entry.type === 'Ganancia' ? 'Ganancia' : 'Gasto'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">{entry.category || '—'}</td>
+                            <td className="px-4 py-3 text-sm text-gray-500">{entry.description || '—'}</td>
+                            <td className={`px-4 py-3 text-right font-bold text-sm ${entry.type === 'Ganancia' ? 'text-emerald-600' : 'text-red-600'}`}>
+                              {entry.type === 'Ganancia' ? '+' : '-'}${entry.amount.toLocaleString('es-CL')}
+                            </td>
+                            <td className="px-4 md:px-6 py-3">
+                              <div className="flex items-center justify-end gap-1">
+                                <button onClick={() => openFinanceModal(entry)}
+                                  className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 rounded-sm transition-colors">
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                                <button onClick={() => handleDeleteFinanceEntry(entry.id)}
+                                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-sm transition-colors">
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </>
               )}
             </div>
 
@@ -4615,6 +4846,69 @@ function AdminPanel() {
                 <button type="submit" disabled={paymentSaving}
                   className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-black hover:bg-gray-800 disabled:bg-gray-400 rounded-sm uppercase tracking-wider">
                   {paymentSaving ? <><Loader2 className="w-4 h-4 animate-spin" />Guardando...</> : 'Agregar Abono'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showFinanceModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-sm shadow-xl w-full max-w-sm">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
+              <h3 className="text-lg font-extrabold text-black">{editingFinanceEntry ? 'Editar Registro' : 'Nuevo Registro'}</h3>
+              <button onClick={() => setShowFinanceModal(false)} className="text-gray-400 hover:text-black"><X className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={handleSaveFinanceEntry} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Tipo *</label>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setFinanceForm(f => ({ ...f, type: 'Ganancia' }))}
+                    className={`flex-1 px-3 py-2.5 text-sm font-bold rounded-sm border transition-colors ${financeForm.type === 'Ganancia' ? 'bg-emerald-600 text-white border-emerald-600' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
+                    Ganancia
+                  </button>
+                  <button type="button" onClick={() => setFinanceForm(f => ({ ...f, type: 'Gasto' }))}
+                    className={`flex-1 px-3 py-2.5 text-sm font-bold rounded-sm border transition-colors ${financeForm.type === 'Gasto' ? 'bg-red-600 text-white border-red-600' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
+                    Gasto
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Monto *</label>
+                <input type="number" min="0.01" step="0.01" required value={financeForm.amount}
+                  onChange={e => setFinanceForm(f => ({ ...f, amount: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-black" placeholder="0" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Categoría</label>
+                <select value={financeForm.category} onChange={e => setFinanceForm(f => ({ ...f, category: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-black">
+                  {FINANCE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Fecha</label>
+                <input type="date" value={financeForm.date}
+                  onChange={e => setFinanceForm(f => ({ ...f, date: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Descripción</label>
+                <input type="text" value={financeForm.description} onChange={e => setFinanceForm(f => ({ ...f, description: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-black" placeholder="Ej: Venta directa en local, Pago de arriendo agosto..." />
+              </div>
+              {financeError && (
+                <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-sm text-sm">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />{financeError}
+                </div>
+              )}
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={() => setShowFinanceModal(false)}
+                  className="px-5 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-100 rounded-sm uppercase tracking-wider">Cancelar</button>
+                <button type="submit" disabled={financeSaving}
+                  className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-black hover:bg-gray-800 disabled:bg-gray-400 rounded-sm uppercase tracking-wider">
+                  {financeSaving ? <><Loader2 className="w-4 h-4 animate-spin" />Guardando...</> : 'Guardar'}
                 </button>
               </div>
             </form>
