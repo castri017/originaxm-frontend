@@ -916,7 +916,7 @@ function AdminPanel() {
   // se consulta recién cuando el admin la abre, para no sumar otra llamada al montar.
   const openFinanceTab = () => {
     setGastosSubTab('manual');
-    if (!financeEntriesLoaded) { fetchFinanceEntries(); fetchFinanceStats(); }
+    if (!financeEntriesLoaded) fetchFinanceEntries();
   };
 
   const openFinanceModal = (entry?: FinanceEntry) => {
@@ -1528,7 +1528,13 @@ function AdminPanel() {
     await fetchPriceLists();
   };
 
-  React.useEffect(() => { fetchProducts(); fetchCategories(); fetchInventory(); fetchPriceLists(); fetchClients(); fetchOrders(); fetchCarriers(); fetchAllOrders(); fetchCreditSales(); fetchCreditStats(); }, []);
+  React.useEffect(() => { fetchProducts(); fetchCategories(); fetchInventory(); fetchPriceLists(); fetchClients(); fetchOrders(); fetchCarriers(); fetchAllOrders(); fetchCreditSales(); fetchCreditStats(); fetchFinanceStats(); }, []);
+
+  // Dashboard unico de Gastos: la ganancia de compras a credito (cobrado - comprado)
+  // se suma a las ganancias/gastos manuales, para que un abono se refleje aca tambien.
+  const gastosGananciasTotal = (creditStats?.profit ?? 0) + (financeStats?.totalGanancias ?? 0);
+  const gastosGastosTotal    = financeStats?.totalGastos ?? 0;
+  const gastosNeto           = gastosGananciasTotal - gastosGastosTotal;
 
   // Re-fetch pedidos al entrar a la pestaña
   React.useEffect(() => {
@@ -2756,6 +2762,27 @@ function AdminPanel() {
 
           ) : activeTab === 'gastos' ? (
             <div className="space-y-6">
+              {(creditStats || financeStats) && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="bg-white border border-emerald-100 rounded-sm p-4 shadow-sm">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Ganancias</p>
+                    <p className="text-2xl font-extrabold text-emerald-600">${gastosGananciasTotal.toLocaleString('es-CL')}</p>
+                  </div>
+                  <div className="bg-white border border-red-100 rounded-sm p-4 shadow-sm">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Gastos</p>
+                    <p className="text-2xl font-extrabold text-red-600">${gastosGastosTotal.toLocaleString('es-CL')}</p>
+                  </div>
+                  <div className={`bg-white border rounded-sm p-4 shadow-sm ${gastosNeto >= 0 ? 'border-emerald-100' : 'border-red-100'}`}>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Neto</p>
+                    <p className={`text-2xl font-extrabold ${gastosNeto >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>${gastosNeto.toLocaleString('es-CL')}</p>
+                  </div>
+                  <div className="bg-white border border-amber-100 rounded-sm p-4 shadow-sm">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pendiente por Cobrar</p>
+                    <p className="text-2xl font-extrabold text-amber-600">${(creditStats?.totalBalance ?? 0).toLocaleString('es-CL')}</p>
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-1 border-b border-gray-100">
                 <button
                   onClick={() => setGastosSubTab('credito')}
@@ -2774,7 +2801,7 @@ function AdminPanel() {
               {gastosSubTab === 'credito' ? (
               <>
               {creditStats && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div className="bg-white border border-gray-100 rounded-sm p-4 shadow-sm">
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Comprado</p>
                     <p className="text-2xl font-extrabold text-black">${creditStats.totalPurchased.toLocaleString('es-CL')}</p>
@@ -2782,14 +2809,6 @@ function AdminPanel() {
                   <div className="bg-white border border-gray-100 rounded-sm p-4 shadow-sm">
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Cobrado</p>
                     <p className="text-2xl font-extrabold text-black">${creditStats.totalCollected.toLocaleString('es-CL')}</p>
-                  </div>
-                  <div className={`bg-white border rounded-sm p-4 shadow-sm ${creditStats.profit >= 0 ? 'border-emerald-100' : 'border-red-100'}`}>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Ganancia</p>
-                    <p className={`text-2xl font-extrabold ${creditStats.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>${creditStats.profit.toLocaleString('es-CL')}</p>
-                  </div>
-                  <div className="bg-white border border-amber-100 rounded-sm p-4 shadow-sm">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pendiente por Cobrar</p>
-                    <p className="text-2xl font-extrabold text-amber-600">${creditStats.totalBalance.toLocaleString('es-CL')}</p>
                   </div>
                 </div>
               )}
@@ -2985,23 +3004,6 @@ function AdminPanel() {
               </>
               ) : (
               <>
-                {financeStats && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    <div className="bg-white border border-emerald-100 rounded-sm p-4 shadow-sm">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Ganancias</p>
-                      <p className="text-2xl font-extrabold text-emerald-600">${financeStats.totalGanancias.toLocaleString('es-CL')}</p>
-                    </div>
-                    <div className="bg-white border border-red-100 rounded-sm p-4 shadow-sm">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Gastos</p>
-                      <p className="text-2xl font-extrabold text-red-600">${financeStats.totalGastos.toLocaleString('es-CL')}</p>
-                    </div>
-                    <div className={`bg-white border rounded-sm p-4 shadow-sm ${financeStats.neto >= 0 ? 'border-emerald-100' : 'border-red-100'}`}>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Neto</p>
-                      <p className={`text-2xl font-extrabold ${financeStats.neto >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>${financeStats.neto.toLocaleString('es-CL')}</p>
-                    </div>
-                  </div>
-                )}
-
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <div>
                     <h2 className="text-xl font-extrabold text-black">Ganancias y Gastos</h2>
