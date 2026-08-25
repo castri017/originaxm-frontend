@@ -5,6 +5,12 @@ import { ArrowRight, ShoppingBag, ChevronLeft, ChevronRight, Package, Star } fro
 import { useCatalogStore } from '../store/useCatalogStore';
 import FloatingCartButton from '../components/layout/FloatingCartButton';
 
+interface ApiBanner {
+  id: string;
+  imageUrl: string;
+  sortOrder: number;
+}
+
 interface ApiProduct {
   id: string;
   name: string;
@@ -31,6 +37,8 @@ export default function Home() {
   const [imgErrors, setImgErrors] = useState<Set<string>>(new Set());
   const onImgError = (id: string) => setImgErrors(s => new Set(s).add(id));
   const catalogVersion = useCatalogStore((s) => s.version);
+  const [banners, setBanners] = useState<ApiBanner[]>([]);
+  const [bannerIndex, setBannerIndex] = useState(0);
 
   const loadProducts = () =>
     fetch(`${API}/api/products`)
@@ -52,6 +60,22 @@ export default function Home() {
       .then((data: ApiProduct[]) => setFeatured(data))
       .catch(() => {})
       .finally(() => setFeatLoading(false));
+
+  useEffect(() => {
+    fetch(`${API}/api/banners`)
+      .then(r => r.ok ? r.json() : [])
+      .then((data: ApiBanner[]) => setBanners(data))
+      .catch(() => {});
+  }, []);
+
+  // Rota automáticamente entre las imágenes del banner cuando hay más de una.
+  useEffect(() => {
+    if (banners.length < 2) return;
+    const timer = setInterval(() => {
+      setBannerIndex(i => (i + 1) % banners.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [banners.length]);
 
   useEffect(() => {
     setLoading(true);
@@ -95,14 +119,39 @@ export default function Home() {
       {/* Hero */}
       <section className="relative h-[35vh] 2xl:h-[45vh] bg-gray-100 overflow-hidden">
         <div className="absolute inset-0">
-          <img
-            src="https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?auto=format&fit=crop&q=80&w=2000"
-            alt="Hero Background"
-            className="w-full h-full object-cover opacity-30"
-            fetchPriority="high"
-            decoding="async"
-          />
+          {banners.length > 0 ? (
+            banners.map((b, i) => (
+              <img
+                key={b.id}
+                src={b.imageUrl}
+                alt=""
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${i === bannerIndex ? 'opacity-30' : 'opacity-0'}`}
+                fetchPriority={i === 0 ? 'high' : 'auto'}
+                decoding="async"
+              />
+            ))
+          ) : (
+            <img
+              src="https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?auto=format&fit=crop&q=80&w=2000"
+              alt="Hero Background"
+              className="w-full h-full object-cover opacity-30"
+              fetchPriority="high"
+              decoding="async"
+            />
+          )}
         </div>
+        {banners.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+            {banners.map((b, i) => (
+              <button
+                key={b.id}
+                onClick={() => setBannerIndex(i)}
+                aria-label={`Ver imagen ${i + 1}`}
+                className={`h-1.5 rounded-full transition-all ${i === bannerIndex ? 'w-6 bg-white' : 'w-1.5 bg-white/50'}`}
+              />
+            ))}
+          </div>
+        )}
         <div className="relative z-10 max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
           <div className="max-w-2xl">
             <h1 className="text-4xl md:text-6xl 2xl:text-7xl font-extrabold text-white tracking-tight mb-4 drop-shadow-md">

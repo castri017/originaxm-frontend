@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { API } from '../config/api';
-import { Settings, Tag, Users, Package, TrendingUp, Plus, Edit, Trash2, ClipboardList, Eye, ArrowLeft, X, ShieldCheck, Lock, Mail, Loader2, AlertCircle, LogOut, BarChart3, DollarSign, RefreshCw, ChevronLeft, ChevronDown, Truck, FileBarChart2, Star, Globe, Wallet } from 'lucide-react';
+import { Settings, Tag, Users, Package, TrendingUp, Plus, Edit, Trash2, ClipboardList, Eye, ArrowLeft, X, ShieldCheck, Lock, Mail, Loader2, AlertCircle, LogOut, BarChart3, DollarSign, RefreshCw, ChevronLeft, ChevronDown, Truck, FileBarChart2, Star, Globe, Wallet, Image as ImageIcon, ArrowUp, ArrowDown } from 'lucide-react';
 import { useAdminAuthStore } from '../store/useAdminAuthStore';
 import { useCatalogStore } from '../store/useCatalogStore';
 
@@ -20,6 +20,13 @@ interface ApiCarrier {
   name: string;
   contactInfo?: string;
   isActive: boolean;
+  createdAt: string;
+}
+
+interface ApiBanner {
+  id: string;
+  imageUrl: string;
+  sortOrder: number;
   createdAt: string;
 }
 
@@ -494,6 +501,65 @@ function AdminPanel() {
     if (!confirm('¿Eliminar esta transportadora?')) return;
     await fetch(`${API}/api/carriers/${id}`, { method: 'DELETE' });
     fetchCarriers();
+  };
+
+  // ── Banners state ─────────────────────────────────────────────────────
+  const MAX_BANNERS = 3;
+  const [banners, setBanners]           = useState<ApiBanner[]>([]);
+  const [bannersLoading, setBannersLoading] = useState(false);
+  const [bannerUploading, setBannerUploading] = useState(false);
+  const [bannerError, setBannerError]         = useState('');
+
+  const fetchBanners = async () => {
+    setBannersLoading(true);
+    try {
+      const res = await fetch(`${API}/api/banners`);
+      if (res.ok) setBanners(await res.json());
+    } catch { /* silencioso */ }
+    finally { setBannersLoading(false); }
+  };
+
+  const handleUploadBanner = async (file: File) => {
+    if (banners.length >= MAX_BANNERS) return;
+    setBannerError('');
+    setBannerUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('files', file);
+      const upRes = await fetch(`${API}/api/uploads/banners`, { method: 'POST', body: fd });
+      if (!upRes.ok) throw new Error('Error al subir la imagen.');
+      const upData = await upRes.json();
+      const imageUrl = (upData.paths as string[])[0];
+
+      const res = await fetch(`${API}/api/banners`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl }),
+      });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.message ?? 'Error al guardar el banner.'); }
+      fetchBanners();
+    } catch (err: unknown) {
+      setBannerError(err instanceof Error ? err.message : 'Error desconocido.');
+    } finally {
+      setBannerUploading(false);
+    }
+  };
+
+  const handleDeleteBanner = async (id: string) => {
+    if (!confirm('¿Eliminar esta imagen del banner?')) return;
+    await fetch(`${API}/api/banners/${id}`, { method: 'DELETE' });
+    fetchBanners();
+  };
+
+  const handleReorderBanner = async (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= banners.length) return;
+    const reordered = [...banners];
+    [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
+    setBanners(reordered);
+    await fetch(`${API}/api/banners/reorder`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderedIds: reordered.map(b => b.id) }),
+    });
   };
 
   // ── Customers state ───────────────────────────────────────────────────
@@ -1528,7 +1594,7 @@ function AdminPanel() {
     await fetchPriceLists();
   };
 
-  React.useEffect(() => { fetchProducts(); fetchCategories(); fetchInventory(); fetchPriceLists(); fetchClients(); fetchOrders(); fetchCarriers(); fetchAllOrders(); fetchCreditSales(); fetchCreditStats(); fetchFinanceStats(); }, []);
+  React.useEffect(() => { fetchProducts(); fetchCategories(); fetchInventory(); fetchPriceLists(); fetchClients(); fetchOrders(); fetchCarriers(); fetchBanners(); fetchAllOrders(); fetchCreditSales(); fetchCreditStats(); fetchFinanceStats(); }, []);
 
   // Dashboard unico de Gastos: la ganancia de compras a credito (cobrado - comprado)
   // se suma a las ganancias/gastos manuales, para que un abono se refleje aca tambien.
@@ -1571,6 +1637,7 @@ function AdminPanel() {
             { id: 'gastos',      Icon: Wallet,        label: 'Gastos'           },
             { id: 'categories',    Icon: Tag,           label: 'Categorías'      },
             { id: 'carriers',     Icon: Truck,         label: 'Transportadoras' },
+            { id: 'banners',      Icon: ImageIcon,     label: 'Banner Principal' },
             { id: 'users',        Icon: Users,         label: 'Clientes'        },
             { id: 'recommended',  Icon: Star,          label: 'Recomendados'    },
             { id: 'featured',     Icon: TrendingUp,    label: 'Destacados'      },
@@ -1638,6 +1705,7 @@ function AdminPanel() {
               {activeTab === 'categories' && 'Gestión de Categorías'}
               {activeTab === 'inventory'    && 'Inventario de Productos'}
               {activeTab === 'carriers'     && 'Transportadoras'}
+              {activeTab === 'banners'      && 'Banner Principal'}
               {activeTab === 'users'        && 'Clientes'}
               {activeTab === 'recommended'  && 'Productos Recomendados'}
               {activeTab === 'featured'     && 'Novedades Destacadas'}
@@ -2320,6 +2388,76 @@ function AdminPanel() {
                       ))}
                     </tbody>
                   </table>
+                )}
+              </div>
+            </div>
+
+          ) : activeTab === 'banners' ? (
+            <div className="space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h1 className="text-2xl font-extrabold text-black">Banner Principal</h1>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {banners.length}/{MAX_BANNERS} imágenes · se muestran en la portada, rotando automáticamente
+                  </p>
+                </div>
+                {banners.length < MAX_BANNERS && (
+                  <label className={`flex items-center gap-2 px-5 py-2.5 bg-black text-white text-sm font-bold rounded-full transition-colors uppercase tracking-wide cursor-pointer ${bannerUploading ? 'opacity-60 pointer-events-none' : 'hover:bg-gray-800'}`}>
+                    {bannerUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                    Subir Imagen
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif"
+                      className="hidden"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadBanner(f); e.target.value = ''; }}
+                    />
+                  </label>
+                )}
+              </div>
+
+              {bannerError && (
+                <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-100 rounded-sm text-sm text-red-600">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" /> {bannerError}
+                </div>
+              )}
+
+              <div className="bg-white rounded-sm shadow-sm border border-gray-100 p-5">
+                {bannersLoading ? (
+                  <div className="flex items-center justify-center py-16 text-gray-400">
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" /> Cargando banner...
+                  </div>
+                ) : banners.length === 0 ? (
+                  <div className="text-center py-16 text-gray-400">
+                    <ImageIcon className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm font-medium">No hay imágenes de banner cargadas.</p>
+                    <p className="text-xs mt-1 text-gray-300">Sube hasta {MAX_BANNERS} imágenes para mostrarlas rotando en la portada.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                    {banners.map((b, i) => (
+                      <div key={b.id} className="relative group rounded-sm overflow-hidden border border-gray-100">
+                        <img src={b.imageUrl} alt={`Banner ${i + 1}`} className="w-full aspect-video object-cover" />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors" />
+                        <span className="absolute top-2 left-2 px-2 py-0.5 text-[10px] font-bold bg-black/70 text-white rounded-sm">
+                          #{i + 1}
+                        </span>
+                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => handleReorderBanner(i, 'up')} disabled={i === 0}
+                            className="p-1.5 bg-white/90 text-gray-700 rounded-sm hover:bg-white disabled:opacity-30 disabled:pointer-events-none">
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => handleReorderBanner(i, 'down')} disabled={i === banners.length - 1}
+                            className="p-1.5 bg-white/90 text-gray-700 rounded-sm hover:bg-white disabled:opacity-30 disabled:pointer-events-none">
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => handleDeleteBanner(b.id)}
+                            className="p-1.5 bg-white/90 text-red-500 rounded-sm hover:bg-white">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
