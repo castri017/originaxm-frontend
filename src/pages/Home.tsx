@@ -28,6 +28,7 @@ interface ApiProduct {
 
 export default function Home() {
   const sliderRef = useRef<HTMLDivElement>(null);
+  const recSliderRef = useRef<HTMLDivElement>(null);
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [recommended, setRecommended] = useState<ApiProduct[]>([]);
@@ -109,6 +110,12 @@ export default function Home() {
     }
   };
 
+  const scrollRec = (direction: 'left' | 'right') => {
+    if (recSliderRef.current) {
+      recSliderRef.current.scrollBy({ left: direction === 'left' ? -300 : 300, behavior: 'smooth' });
+    }
+  };
+
   const getImage = (p: ApiProduct) =>
     p.images?.[0]
       ? (p.images[0].startsWith('http') ? p.images[0] : `http://localhost:5173${p.images[0]}`)
@@ -176,15 +183,25 @@ export default function Home() {
       {(recLoading || recommended.length > 0) && (
         <section className="py-14 bg-gray-50 border-b border-gray-100">
           <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-3 mb-10">
-              <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
-              <h2 className="text-xl font-bold uppercase tracking-[0.2em] text-black">Productos Recomendados</h2>
+            <div className="flex justify-between items-center mb-10">
+              <div className="flex items-center gap-3">
+                <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
+                <h2 className="text-xl font-bold uppercase tracking-[0.2em] text-black">Productos Recomendados</h2>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => scrollRec('left')} className="p-2 border border-gray-200 rounded-full hover:bg-black hover:text-white transition-all duration-300">
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button onClick={() => scrollRec('right')} className="p-2 border border-gray-200 rounded-full hover:bg-black hover:text-white transition-all duration-300">
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {recLoading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-6">
+              <div className="flex gap-6">
                 {[...Array(4)].map((_, i) => (
-                  <div key={i} className="animate-pulse">
+                  <div key={i} className="flex-shrink-0 w-56 sm:w-64 animate-pulse">
                     <div className="aspect-[4/5] bg-gray-200 mb-3 rounded-sm" />
                     <div className="h-3 bg-gray-200 rounded w-3/4 mb-2" />
                     <div className="h-3 bg-gray-200 rounded w-1/2" />
@@ -192,11 +209,15 @@ export default function Home() {
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-x-6 gap-y-10">
+              <div
+                ref={recSliderRef}
+                className="flex gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-4 -mx-4 px-4 sm:mx-0 sm:px-0"
+                style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
+              >
                 {recommended.map((product, index) => {
                   const img = getImage(product);
                   return (
-                    <Link key={product.id} to={`/product/${product.id}`} className="group cursor-pointer flex flex-col">
+                    <Link key={product.id} to={`/product/${product.id}`} className="group cursor-pointer flex-shrink-0 w-56 sm:w-64 snap-start flex flex-col">
                       <div className="relative aspect-[3/4] overflow-hidden bg-white mb-3 border border-gray-100 flex items-center justify-center p-3">
                         {img && !imgErrors.has(`rec-${product.id}`) ? (
                           <img
