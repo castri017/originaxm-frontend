@@ -1,21 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Karla:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-brand-charcoal: #333333;
-  --color-brand-charcoal-light: #666666;
-  --color-brand-charcoal-dark: #111111;
-  
-  --color-brand-copper: #c27a42;
-  --color-brand-copper-light: #d18f5c;
-  --color-brand-copper-dark: #a1622b;
+  /* Tinta cálida en lugar de gris neutro */
+  --color-brand-charcoal: #3a362e;
+  --color-brand-charcoal-light: #6b655b;
+  --color-brand-charcoal-dark: #1c1a16;
 
+  /* Ocre: reemplaza el amarillo/cobre. El tono base cumple contraste sobre papel */
+  --color-brand-copper: #b8761b;
+  --color-brand-copper-light: #d99a2b;
+  --color-brand-copper-dark: #8f5a11;
+
+  /* Papel: blanco puro */
   --color-brand-sand: #ffffff;
-  --color-brand-sand-dark: #f8f8f8;
+  --color-brand-sand-dark: #f1ede5;
+
+  /* Nuevos */
+  --color-brand-line: #e2ddd3;
+  --color-brand-muted: #9a9284;
+  --color-brand-stock: #2a6b45;
+
+  --font-sans: 'Karla', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Archivo', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 }
 
 @layer base {
   body {
-    @apply bg-white text-brand-charcoal-dark font-sans antialiased overflow-x-hidden;
+    @apply bg-brand-sand text-brand-charcoal-dark font-sans antialiased overflow-x-hidden;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display tracking-tight;
+    text-wrap: pretty;
   }
 
   :root {
@@ -25,3 +43,31 @@
   }
 }
 
+@layer components {
+  /* Etiqueta mono para metadatos: envío, capacidad, SKU */
+  .meta-label {
+    @apply font-mono text-[10.5px] tracking-[0.12em] uppercase text-brand-muted;
+  }
+  /* Sello de envío discreto: sustituye la banda negra sobre la foto */
+  .ship-note {
+    @apply font-mono text-[10.5px] tracking-[0.06em] text-brand-charcoal-light;
+  }
+  .ship-note-stock {
+    @apply font-mono text-[10.5px] tracking-[0.06em] text-brand-stock;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 bg-brand-charcoal-dark text-brand-sand
+           font-display font-bold text-[15px] px-7 py-4 min-h-[48px]
+           hover:bg-brand-charcoal transition-colors;
+  }
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2 bg-brand-copper-light text-brand-charcoal-dark
+           font-display font-bold text-[15px] px-7 py-4 min-h-[48px]
+           hover:bg-brand-copper transition-colors;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 border border-brand-charcoal-dark
+           text-brand-charcoal-dark font-display font-bold text-[14.5px] px-6 py-3.5 min-h-[48px]
+           hover:bg-brand-sand-dark transition-colors;
+  }
+}

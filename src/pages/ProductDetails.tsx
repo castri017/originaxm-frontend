@@ -1,7 +1,7 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { API } from '../config/api';
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Package, Loader2, ChevronDown, Clock, Droplets, Layers, ShieldCheck, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Package, Loader2, ChevronDown, ShoppingCart } from 'lucide-react';
 import { useCartStore } from '../store/useCartStore';
 
 interface ApiProduct {
@@ -54,15 +54,15 @@ function imgUrl(path: string) {
 function Accordion({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border-t border-gray-100">
+    <div className="border-t border-brand-line">
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between py-3 text-left group"
+        className="w-full flex items-center justify-between py-4 text-left group min-h-[48px]"
       >
-        <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-gray-700 group-hover:text-black transition-colors">{title}</span>
-        <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
+        <span className="font-display font-semibold text-[15px] text-brand-charcoal-dark">{title}</span>
+        <ChevronDown className={`w-4 h-4 text-brand-charcoal-light transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
       </button>
-      {open && <div className="pb-5">{children}</div>}
+      {open && <div className="pb-6">{children}</div>}
     </div>
   );
 }
@@ -129,7 +129,7 @@ export default function ProductDetails() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-40">
-        <Loader2 className="w-7 h-7 animate-spin text-gray-300" />
+        <Loader2 className="w-7 h-7 animate-spin text-brand-line" />
       </div>
     );
   }
@@ -137,9 +137,9 @@ export default function ProductDetails() {
   if (notFound || !product) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-24 text-center">
-        <Package className="w-14 h-14 mx-auto mb-5 text-gray-200" />
-        <h2 className="text-xl font-bold mb-4 text-gray-700">Producto no encontrado</h2>
-        <Link to="/catalog" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-black hover:opacity-60 transition-opacity">
+        <Package className="w-14 h-14 mx-auto mb-5 text-brand-line" />
+        <h2 className="font-display font-bold text-xl mb-4 text-brand-charcoal">Producto no encontrado</h2>
+        <Link to="/catalog" className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-brand-copper hover:text-brand-copper-dark transition-colors">
           <ArrowLeft className="w-3.5 h-3.5" /> Volver al catálogo
         </Link>
       </div>
@@ -180,10 +180,10 @@ export default function ProductDetails() {
     : (product.color ? [product] : []);
 
   const specGrid = [
-    { Icon: Clock,       label: 'Frío / Calor', value: product.measurements },
-    { Icon: Droplets,    label: 'Capacidad',    value: product.capacity     },
-    { Icon: Layers,      label: 'Material',     value: product.materials    },
-    { Icon: ShieldCheck, label: 'Libre de',     value: product.components   },
+    { label: 'Frío / calor', value: product.measurements },
+    { label: 'Capacidad',    value: product.capacity     },
+    { label: 'Material',     value: product.materials    },
+    { label: 'Libre de',     value: product.components   },
   ].filter(s => s.value);
 
   const allSpecs = [
@@ -203,150 +203,134 @@ export default function ProductDetails() {
   ].filter(s => s.value);
 
   return (
-    <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-5 pb-36 sm:pb-8">
+    <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-40 sm:pb-12">
 
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-[11px] text-gray-400 mb-4 tracking-wide">
-        <Link to="/" className="hover:text-black transition-colors">Inicio</Link>
-        <span className="text-gray-200">/</span>
-        <Link to="/catalog" className="hover:text-black transition-colors">Catálogo</Link>
-        <span className="text-gray-200">/</span>
-        <span className="text-gray-600 truncate max-w-[40vw] sm:max-w-xs">{product.name}</span>
+      <nav className="flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.12em] text-brand-muted mb-6">
+        <Link to="/" className="hover:text-brand-charcoal-dark transition-colors">Inicio</Link>
+        <span className="text-brand-line">/</span>
+        <Link to="/catalog" className="hover:text-brand-charcoal-dark transition-colors">Catálogo</Link>
+        <span className="text-brand-line">/</span>
+        <span className="text-brand-charcoal-light truncate max-w-[45vw] sm:max-w-xs normal-case tracking-normal">{product.name}</span>
       </nav>
 
-      <div className="flex flex-col md:flex-row md:items-start gap-6 lg:gap-10">
+      <div className="grid lg:grid-cols-2 gap-8 lg:gap-14 items-start">
 
-        {/* ── Gallery ───────────────────────────────────── */}
-        <div className="w-full md:w-auto md:flex-shrink-0 flex flex-col-reverse sm:flex-row sm:items-start gap-2">
-
-          {/* Thumbnails */}
+        {/* ── Galería ──────────────────────────────────── */}
+        <div className="flex flex-col-reverse sm:flex-row sm:items-start gap-3">
           {images.length > 1 && (
-            <div className="flex sm:flex-col gap-1.5 flex-shrink-0">
+            <div className="flex sm:flex-col gap-2.5 flex-shrink-0">
               {images.map((img, i) => (
                 <button
                   key={i}
                   onClick={() => setActiveImg(i)}
-                  className={`w-12 h-12 flex-shrink-0 overflow-hidden bg-[#f4f4f4] border transition-all duration-200 ${
-                    activeImg === i ? 'border-gray-800' : 'border-gray-200 opacity-55 hover:opacity-90'
+                  aria-label={`Ver imagen ${i + 1}`}
+                  className={`w-[70px] h-[84px] flex-shrink-0 overflow-hidden bg-white border-2 transition-colors ${
+                    activeImg === i ? 'border-brand-charcoal-dark' : 'border-transparent opacity-60 hover:opacity-100'
                   }`}
                 >
-                  <img src={imgUrl(img)} alt="" className="w-full h-full object-contain p-1" loading="lazy" decoding="async" />
+                  <img src={imgUrl(img)} alt="" className="w-full h-full object-contain p-1.5" loading="lazy" decoding="async" />
                 </button>
               ))}
             </div>
           )}
 
-          {/* Main image */}
-          <div className="relative bg-[#f4f4f4] overflow-hidden w-full sm:w-[400px] sm:h-[324px] flex-shrink-0" style={{ aspectRatio: '400 / 324' }}>
+          <div className="relative flex-1 bg-white overflow-hidden w-full aspect-[4/5] sm:aspect-[5/6]">
             {images.length > 0 ? (
               <img
                 src={imgUrl(images[activeImg])}
                 alt={product.name}
-                className="w-full h-full object-contain p-4"
+                className="w-full h-full object-contain p-8"
                 loading="eager"
                 fetchPriority="high"
                 decoding="async"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <Package className="w-20 h-20 text-gray-300" />
+                <Package className="w-20 h-20 text-brand-line" />
               </div>
             )}
 
-            {/* Top-left badge */}
             {outOfStock ? (
-              <span className="absolute top-4 left-4 bg-red-500 text-white text-[9px] font-bold uppercase tracking-[0.2em] px-2.5 py-1">
-                Sin Stock
+              <span className="absolute top-4 left-4 bg-brand-charcoal-light text-brand-sand font-mono text-[10px] uppercase tracking-[0.14em] px-3 py-1.5">
+                Agotado
               </span>
             ) : (
-              <span className="absolute top-4 left-4 bg-black text-white text-[9px] font-bold uppercase tracking-[0.2em] px-2.5 py-1">
+              <span className="absolute top-4 left-4 bg-brand-charcoal-dark text-brand-sand font-mono text-[10px] uppercase tracking-[0.14em] px-3 py-1.5">
                 {product.stock <= 5 ? 'Últimas unidades' : 'Nuevo'}
               </span>
             )}
             {disc > 0 && (
-              <span className="absolute top-4 right-4 bg-red-500 text-white text-[9px] font-bold uppercase tracking-[0.15em] px-2.5 py-1">
+              <span className="absolute top-4 right-4 bg-brand-copper-light text-brand-charcoal-dark font-mono text-[10px] font-semibold px-2.5 py-1.5">
                 -{disc}%
-              </span>
-            )}
-            {product.isInternational && (
-              <span className="absolute bottom-0 left-0 right-0 bg-black/85 text-white text-[10px] font-bold uppercase tracking-[0.15em] text-center py-2 px-2">
-                Pedido internacional · Envío 10-15 días
               </span>
             )}
           </div>
         </div>
 
-        {/* ── Product info ──────────────────────────────── */}
-        <div className="w-full md:flex-1 flex flex-col">
+        {/* ── Información ─────────────────────────────── */}
+        <div className="flex flex-col gap-6">
 
-          {/* Manufacturer */}
-          {product.manufacturer && (
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-400 mb-1.5">
-              {product.manufacturer}
+          <div className="flex flex-col gap-3">
+            {product.manufacturer && (
+              <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-brand-muted">
+                {product.manufacturer}
+              </span>
+            )}
+            <h1 className="font-display font-extrabold text-[30px] sm:text-[38px] leading-[1.08] tracking-[-0.03em] text-brand-charcoal-dark">
+              {product.name}
+            </h1>
+
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2 mt-1">
+              {product.sellingPrice > 0 && (
+                <span className="font-display font-extrabold text-[30px] text-brand-charcoal-dark leading-none">
+                  ${finalPrice.toLocaleString('es-CL')}
+                </span>
+              )}
+              {disc > 0 && (
+                <span className="text-[15px] text-brand-muted line-through">
+                  ${product.sellingPrice.toLocaleString('es-CL')}
+                </span>
+              )}
+              {outOfStock ? (
+                <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-brand-charcoal-light border border-brand-line px-2.5 py-1">
+                  Agotado
+                </span>
+              ) : product.stock <= 5 ? (
+                <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-brand-copper-dark bg-brand-sand-dark px-2.5 py-1">
+                  Solo {product.stock} disponibles
+                </span>
+              ) : null}
+            </div>
+
+            <p className="text-[13.5px] text-brand-charcoal-light">
+              Precios con IVA incluido. Envío calculado al finalizar compra.
             </p>
-          )}
-
-          {/* Name */}
-          <h1 className="text-[1.35rem] sm:text-[1.5rem] font-extrabold text-black leading-snug mb-2">
-            {product.name}
-          </h1>
-
-          {/* Price row */}
-          <div className="flex items-center gap-3 mb-1">
-            {product.sellingPrice > 0 && (
-              <p className="text-[1.6rem] font-black text-black leading-none">
-                ${finalPrice.toLocaleString('es-CL')}
-              </p>
-            )}
-            {outOfStock ? (
-              <span className="text-[11px] font-bold uppercase tracking-wider text-white bg-red-500 px-3 py-1 rounded-full">
-                Sin Stock
-              </span>
-            ) : product.stock <= 5 ? (
-              <span className="text-[11px] font-bold uppercase tracking-wider text-orange-600 bg-orange-50 px-3 py-1 rounded-full border border-orange-100">
-                ¡Solo {product.stock} restantes!
-              </span>
-            ) : null}
-            {disc > 0 && (
-              <span className="text-[11px] font-bold text-red-500 bg-red-50 px-2.5 py-1 rounded-full border border-red-100">
-                -{disc}% OFF
-              </span>
-            )}
           </div>
 
-          {disc > 0 && (
-            <p className="text-xs text-gray-400 line-through mb-1.5">
-              ${product.sellingPrice.toLocaleString('es-CL')}
-            </p>
-          )}
-
-          <p className="text-[11px] text-gray-400 mb-3 leading-relaxed">
-            Precios con IVA incluido. Envío calculado al finalizar compra.
-          </p>
-
-          {/* Color swatch */}
+          {/* Color */}
           {product.color && (
-            <div className="mb-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-black mb-1.5">
-                Color: <span className="font-normal normal-case tracking-normal text-gray-500">{product.color}</span>
-              </p>
-              <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-col gap-3">
+              <span className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-brand-charcoal-light">
+                Color · <span className="text-brand-charcoal-dark">{product.color}</span>
+              </span>
+              <div className="flex flex-wrap gap-2.5">
                 {colorVariants.map(v => (
                   <button
                     key={v.id}
                     onClick={() => v.id !== product.id && navigate(`/product/${v.id}`)}
                     title={v.color || v.name}
-                    className={`w-11 h-11 rounded-lg overflow-hidden bg-[#f4f4f4] border-2 flex-shrink-0 transition-all ${
+                    className={`w-[52px] h-[52px] overflow-hidden bg-white border-2 flex-shrink-0 transition-colors ${
                       v.id === product.id
-                        ? 'border-black ring-2 ring-offset-2 ring-gray-700'
-                        : 'border-gray-200 opacity-70 hover:opacity-100 hover:border-gray-400'
+                        ? 'border-brand-charcoal-dark'
+                        : 'border-brand-line opacity-70 hover:opacity-100 hover:border-brand-charcoal-light'
                     }`}
                   >
                     {v.images?.[0] ? (
-                      <img src={imgUrl(v.images[0])} alt={v.color || v.name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                      <img src={imgUrl(v.images[0])} alt={v.color || v.name} className="w-full h-full object-contain p-1" loading="lazy" decoding="async" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Package className="w-4 h-4 text-gray-300" />
+                        <Package className="w-4 h-4 text-brand-line" />
                       </div>
                     )}
                   </button>
@@ -355,138 +339,163 @@ export default function ProductDetails() {
             </div>
           )}
 
-          {/* Spec grid */}
+          {/* Especificaciones rápidas */}
           {specGrid.length > 0 && (
-            <div className="grid grid-cols-2 gap-[1px] bg-gray-200 border border-gray-200 mb-4">
-              {specGrid.map(({ Icon, label, value }) => (
-                <div key={label} className="bg-white flex items-center gap-2.5 px-2.5 py-2">
-                  <Icon className="w-[15px] h-[15px] text-gray-400 flex-shrink-0 stroke-[1.5]" />
-                  <div className="min-w-0">
-                    <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400 leading-none mb-[3px]">{label}</p>
-                    <p className="text-[12px] font-semibold text-black leading-tight">{value}</p>
-                  </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-[1px] bg-white border border-brand-line">
+              {specGrid.map(({ label, value }) => (
+                <div key={label} className="bg-brand-sand px-4 py-3.5 flex flex-col gap-1">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-brand-muted">{label}</span>
+                  <span className="font-display font-bold text-[15px] text-brand-charcoal-dark leading-snug">{value}</span>
                 </div>
               ))}
             </div>
           )}
 
-          {/* Quantity selector */}
-          {!outOfStock && (
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">Cantidad</span>
-              <div className="flex items-center border border-gray-200">
-                <button
-                  onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                  disabled={quantity <= 1}
-                  className="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-25 text-base"
-                >−</button>
-                <span className="w-8 h-7 flex items-center justify-center text-sm font-bold border-x border-gray-200">{quantity}</span>
-                <button
-                  onClick={() => setQuantity(q => Math.min(product.stock, q + 1))}
-                  disabled={quantity >= product.stock}
-                  className="w-7 h-7 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-25 text-base"
-                >+</button>
-              </div>
-            </div>
-          )}
-
-          {/* CTA buttons */}
-          <div className="flex flex-col gap-1.5 mb-4">
+          {/* Compra */}
+          <div className="flex flex-col gap-3">
             {outOfStock ? (
               <>
-                <button
-                  disabled
-                  className="w-full bg-[#2d3748] text-white text-[11px] font-bold uppercase tracking-[0.22em] py-3 flex items-center justify-center gap-2.5 cursor-not-allowed opacity-90"
-                >
-                  <ShoppingCart className="w-4 h-4 stroke-[1.5]" />
-                  Producto Agotado
+                <button disabled className="w-full bg-brand-sand-dark text-brand-muted font-display font-bold text-[15px] py-4 min-h-[52px] flex items-center justify-center gap-2.5 cursor-not-allowed">
+                  <ShoppingCart className="w-4 h-4" />
+                  Producto agotado
                 </button>
                 <a
                   href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`¡Hola! Quisiera realizar un pedido del producto: ${product.name}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full bg-[#25D366] hover:bg-[#20bc5a] text-white text-[11px] font-bold uppercase tracking-[0.22em] py-3 flex items-center justify-center gap-2.5 transition-colors"
+                  className="btn-ghost w-full"
                 >
                   {WA_ICON} Pedir por WhatsApp
                 </a>
               </>
             ) : (
               <>
-                <button
-                  onClick={handleAddToCart}
-                  className={`w-full text-[11px] font-bold uppercase tracking-[0.22em] py-3 flex items-center justify-center gap-2.5 transition-all ${
-                    added ? 'bg-green-600 text-white' : 'bg-black hover:bg-gray-900 text-white'
-                  }`}
-                >
-                  <ShoppingCart className="w-4 h-4 stroke-[1.5]" />
-                  {added ? '✓  Añadido al carrito' : 'Añadir al Carrito'}
-                </button>
-                {added && (
-                  <Link
-                    to="/cart"
-                    className="w-full border border-black text-black text-[11px] font-bold uppercase tracking-[0.22em] py-2.5 flex items-center justify-center transition-all hover:bg-black hover:text-white"
+                <div className="flex items-stretch gap-3">
+                  <div className="flex items-center border border-brand-line flex-shrink-0">
+                    <button
+                      onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                      disabled={quantity <= 1}
+                      aria-label="Quitar uno"
+                      className="w-11 h-[52px] flex items-center justify-center text-brand-charcoal-light hover:bg-brand-sand-dark transition-colors disabled:opacity-25 text-lg"
+                    >−</button>
+                    <span className="w-10 text-center font-display font-bold text-[16px]">{quantity}</span>
+                    <button
+                      onClick={() => setQuantity(q => Math.min(product.stock, q + 1))}
+                      disabled={quantity >= product.stock}
+                      aria-label="Añadir uno"
+                      className="w-11 h-[52px] flex items-center justify-center text-brand-charcoal-dark hover:bg-brand-sand-dark transition-colors disabled:opacity-25 text-lg"
+                    >+</button>
+                  </div>
+                  <button
+                    onClick={handleAddToCart}
+                    className={`flex-1 font-display font-bold text-[15px] min-h-[52px] flex items-center justify-center gap-2.5 transition-colors ${
+                      added ? 'bg-brand-stock text-brand-sand' : 'bg-brand-charcoal-dark text-brand-sand hover:bg-brand-charcoal'
+                    }`}
                   >
-                    Ver carrito →
+                    <ShoppingCart className="w-4 h-4" />
+                    {added ? 'Añadido al carrito' : `Añadir al carrito · $${finalPrice.toLocaleString('es-CL')}`}
+                  </button>
+                </div>
+                {added && (
+                  <Link to="/cart" className="btn-ghost w-full">
+                    Ver carrito
                   </Link>
                 )}
+                <a
+                  href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`¡Hola! Tengo una duda sobre: ${product.name}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-brand-copper hover:text-brand-copper-dark transition-colors self-start"
+                >
+                  Preguntar por WhatsApp
+                </a>
               </>
             )}
           </div>
 
-          {/* Accordions */}
-          <Accordion title="Especificaciones Técnicas">
-            <div className="divide-y divide-gray-50">
-              {allSpecs.map(s => (
-                <div key={s.label} className="flex items-start py-2.5 gap-6">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 w-24 flex-shrink-0 pt-0.5">{s.label}</span>
-                  <span className="text-[13px] text-gray-700">{s.value}</span>
+          {/* Pedido internacional: se explica en 3 pasos en vez de una banda sobre la foto */}
+          {product.isInternational && (
+            <div className="bg-white border border-brand-line p-5 flex flex-col gap-4">
+              <span className="font-display font-bold text-[15px] text-brand-charcoal-dark">
+                Este producto viene por pedido internacional
+              </span>
+              <div className="grid sm:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-1">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-brand-muted">1 · Confirmas</span>
+                  <span className="text-[13px] text-brand-charcoal-light leading-snug">Pagas y reservamos tu unidad.</span>
                 </div>
-              ))}
+                <div className="flex flex-col gap-1">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-brand-muted">2 · Importamos</span>
+                  <span className="text-[13px] text-brand-charcoal-light leading-snug">Lo traemos del catálogo oficial.</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-brand-muted">3 · Llega</span>
+                  <span className="text-[13px] text-brand-charcoal-light leading-snug">10 a 15 días, con seguimiento.</span>
+                </div>
+              </div>
             </div>
-          </Accordion>
-
-          {product.detailedDescription && product.detailedDescription !== product.description && (
-            <Accordion title="Descripción Detallada">
-              <p className="text-[13px] text-gray-600 leading-relaxed">{product.detailedDescription}</p>
-            </Accordion>
           )}
 
-          {product.components && specGrid.every(s => s.label !== 'Libre de') && (
-            <Accordion title="¿Qué incluye?">
-              <p className="text-[13px] text-gray-600 leading-relaxed">{product.components}</p>
+          {/* Acordeones */}
+          <div className="flex flex-col">
+            <Accordion title="Especificaciones técnicas">
+              <div className="flex flex-col">
+                {allSpecs.map(s => (
+                  <div key={s.label} className="flex items-start gap-6 py-2.5 border-b border-brand-line last:border-b-0">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-brand-muted w-28 flex-shrink-0 pt-0.5">{s.label}</span>
+                    <span className="text-[13.5px] text-brand-charcoal">{s.value}</span>
+                  </div>
+                ))}
+              </div>
             </Accordion>
-          )}
+
+            {product.detailedDescription && product.detailedDescription !== product.description && (
+              <Accordion title="Descripción detallada">
+                <p className="text-[14px] text-brand-charcoal-light leading-relaxed">{product.detailedDescription}</p>
+              </Accordion>
+            )}
+
+            {product.components && specGrid.every(s => s.label !== 'Libre de') && (
+              <Accordion title="¿Qué incluye?">
+                <p className="text-[14px] text-brand-charcoal-light leading-relaxed">{product.components}</p>
+              </Accordion>
+            )}
+
+            <div className="border-t border-brand-line" />
+          </div>
 
           <Link
             to="/catalog"
-            className="mt-5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-400 hover:text-black transition-colors self-start"
+            className="flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.14em] text-brand-muted hover:text-brand-charcoal-dark transition-colors self-start"
           >
-            <ArrowLeft className="w-3 h-3" /> Volver al catálogo
+            <ArrowLeft className="w-3.5 h-3.5" /> Volver al catálogo
           </Link>
         </div>
       </div>
 
-      {/* Full-width description */}
+      {/* Descripción a ancho completo */}
       {product.description && (
-        <div className="mt-16 pt-10 border-t border-gray-100">
-          <h2 className="text-[11px] font-bold uppercase tracking-[0.22em] text-black mb-4">
-            Descripción del Producto
+        <div className="mt-16 pt-10 border-t border-brand-line">
+          <h2 className="font-display font-extrabold text-[24px] tracking-[-0.02em] text-brand-charcoal-dark mb-4">
+            Sobre este producto
           </h2>
-          <p className="text-[13px] text-gray-500 leading-loose max-w-2xl">{product.description}</p>
+          <p className="text-[15px] text-brand-charcoal-light leading-relaxed max-w-2xl">{product.description}</p>
         </div>
       )}
 
-      {/* Mobile sticky CTA */}
+      {/* Barra de compra fija en móvil */}
       <div
-        className="sm:hidden fixed bottom-16 left-0 right-0 z-30 bg-white border-t border-gray-100 px-4 py-3 flex items-center gap-3"
+        className="sm:hidden fixed bottom-16 left-0 right-0 z-30 bg-brand-sand border-t border-brand-line px-4 py-3 flex items-center gap-3"
         style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
       >
         {product.sellingPrice > 0 && (
           <div className="flex flex-col min-w-0">
-            <span className="text-[9px] text-gray-400 uppercase tracking-widest font-bold leading-none mb-0.5">Precio</span>
-            <span className="text-base font-black text-black leading-tight">${finalPrice.toLocaleString('es-CL')}</span>
+            <span className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-brand-muted">Precio</span>
+            <span className="font-display font-extrabold text-[17px] text-brand-charcoal-dark leading-tight">
+              ${finalPrice.toLocaleString('es-CL')}
+            </span>
             {disc > 0 && (
-              <span className="text-[9px] text-gray-400 line-through">${product.sellingPrice.toLocaleString('es-CL')}</span>
+              <span className="text-[10px] text-brand-muted line-through">${product.sellingPrice.toLocaleString('es-CL')}</span>
             )}
           </div>
         )}
@@ -495,18 +504,18 @@ export default function ProductDetails() {
             href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`¡Hola! Quisiera realizar un pedido del producto: ${product.name}`)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 bg-[#25D366] text-white text-[10px] font-bold uppercase tracking-wider py-3 flex items-center justify-center gap-2"
+            className="flex-1 min-h-[48px] border border-brand-charcoal-dark text-brand-charcoal-dark font-display font-bold text-[14px] flex items-center justify-center gap-2"
           >
             {WA_ICON} Pedir por WhatsApp
           </a>
         ) : (
           <button
             onClick={handleAddToCart}
-            className={`flex-1 text-[10px] font-bold uppercase tracking-wider py-3 transition-all ${
-              added ? 'bg-green-600 text-white' : 'bg-black text-white hover:bg-gray-900'
+            className={`flex-1 min-h-[48px] font-display font-bold text-[14px] transition-colors ${
+              added ? 'bg-brand-stock text-brand-sand' : 'bg-brand-charcoal-dark text-brand-sand'
             }`}
           >
-            {added ? '✓ Añadido' : 'Añadir al Carrito'}
+            {added ? 'Añadido' : 'Añadir al carrito'}
           </button>
         )}
       </div>
