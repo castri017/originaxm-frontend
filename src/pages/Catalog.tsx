@@ -91,6 +91,13 @@ export default function Catalog() {
   const [priceOpen,      setPriceOpen]      = useState(false);
   const priceRef = useRef<HTMLDivElement>(null);
 
+  /* keep category in sync with the URL (e.g. footer "Todos los productos") */
+  const urlCat = searchParams.get('category') || '';
+  const [prevUrlCat, setPrevUrlCat] = useState(urlCat);
+  if (urlCat !== prevUrlCat) {
+    setPrevUrlCat(urlCat); setActiveCat(urlCat); setActiveType(''); setActiveSubType('');
+  }
+
   useEffect(() => {
     const h = (e: MouseEvent) => { if (priceRef.current && !priceRef.current.contains(e.target as Node)) setPriceOpen(false); };
     document.addEventListener('mousedown', h);

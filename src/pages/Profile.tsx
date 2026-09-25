@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Package, User, MapPin, LogOut, Phone, Mail, ChevronDown, ChevronUp, Truck } from 'lucide-react';
+import { Package, User, MapPin, LogOut, Phone, Mail, ChevronDown, ChevronUp, Truck, Check } from 'lucide-react';
 import { useCustomerAuthStore } from '../store/useCustomerAuthStore';
 
 import { API } from '../config/api';
@@ -33,6 +33,73 @@ const STATUS_COLORS: Record<string, string> = {
   'Cancelado':      'bg-red-100 text-red-700',
   'Pendiente Pago': 'bg-orange-100 text-orange-700',
 };
+
+const DELIVERY_STEPS = [
+  { status: 'Procesando',  title: 'Pedido recibido',       desc: 'Recibimos tu pedido y estamos confirmándolo.' },
+  { status: 'Picking',     title: 'Preparando pedido',     desc: 'Estamos alistando y empacando tus productos.' },
+  { status: 'Enviado',     title: 'Enviado',               desc: 'Entregamos tu paquete a la transportadora.' },
+  { status: 'En Tránsito', title: 'En camino',             desc: 'Tu paquete va en camino a tu dirección.' },
+  { status: 'Entregado',   title: 'Entregado',             desc: '¡Tu pedido llegó! Gracias por comprar en OrigenAXM.' },
+];
+
+function DeliveryTimeline({ order }: { order: CustomerOrder }) {
+  if (order.status === 'Cancelado') {
+    return (
+      <div className="bg-red-50 border border-red-100 rounded-sm px-4 py-3 text-sm text-red-700 font-medium">
+        Este pedido fue cancelado.
+      </div>
+    );
+  }
+
+  const pendingPayment = order.status === 'Pendiente Pago';
+  const current = pendingPayment ? 0 : Math.max(0, DELIVERY_STEPS.findIndex(s => s.status === order.status));
+  const delivered = order.status === 'Entregado';
+
+  return (
+    <div>
+      <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Seguimiento de la entrega</p>
+      <ol className="relative">
+        {DELIVERY_STEPS.map((step, i) => {
+          const done   = i < current || (delivered && i === current);
+          const active = i === current && !delivered;
+          const isLast = i === DELIVERY_STEPS.length - 1;
+          const title  = i === 0 && pendingPayment ? 'Esperando pago' : step.title;
+          const desc   = i === 0 && pendingPayment ? 'Tu pedido se procesará cuando se confirme el pago.' : step.desc;
+          return (
+            <li key={step.status} className="relative flex gap-3 pb-5 last:pb-0">
+              {!isLast && (
+                <span className={`absolute left-[11px] top-6 bottom-0 w-0.5 ${i < current ? 'bg-black' : 'bg-gray-200'}`} />
+              )}
+              <span className={`relative z-10 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center border-2
+                ${done ? 'bg-black border-black text-white' : active ? 'bg-white border-black' : 'bg-white border-gray-200'}`}>
+                {done
+                  ? <Check className="w-3.5 h-3.5" strokeWidth={3} />
+                  : active && <span className="w-2 h-2 rounded-full bg-black animate-pulse" />}
+              </span>
+              <div className="min-w-0 -mt-0.5">
+                <p className={`text-sm font-bold ${done || active ? 'text-black' : 'text-gray-400'}`}>
+                  {title}
+                  {i === 0 && (
+                    <span className="ml-2 text-xs font-normal text-gray-400">
+                      {new Date(order.orderDate).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </span>
+                  )}
+                </p>
+                <p className={`text-xs ${done || active ? 'text-gray-500' : 'text-gray-300'}`}>{desc}</p>
+                {step.status === 'Enviado' && order.trackingNumber && (
+                  <p className="mt-1.5 inline-flex items-center gap-1.5 text-xs text-sky-700 bg-sky-50 border border-sky-100 rounded-sm px-2 py-1">
+                    <Truck className="w-3.5 h-3.5" />
+                    {order.carrier ? `${order.carrier} · ` : ''}Guía <span className="font-mono font-bold">{order.trackingNumber}</span>
+                  </p>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
 
 export default function Profile() {
   const navigate   = useNavigate();
@@ -164,16 +231,10 @@ export default function Profile() {
                             ))}
                           </div>
 
-                          {/* Tracking */}
-                          {order.trackingNumber && (
-                            <div className="bg-sky-50 border border-sky-100 rounded-sm px-4 py-3 flex items-center gap-3">
-                              <Truck className="w-4 h-4 text-sky-600 flex-shrink-0" />
-                              <div>
-                                <p className="text-xs font-bold text-sky-600 uppercase tracking-wider">{order.carrier} — Guía de envío</p>
-                                <p className="font-mono font-bold text-sky-900 text-sm">{order.trackingNumber}</p>
-                              </div>
-                            </div>
-                          )}
+                          {/* Línea de tiempo de la entrega */}
+                          <div className="border-t border-gray-100 pt-4">
+                            <DeliveryTimeline order={order} />
+                          </div>
                         </div>
                       )}
                     </div>

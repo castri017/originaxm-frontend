@@ -25,9 +25,7 @@ export default function Footer() {
             <h4 className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-brand-muted">Tienda</h4>
             <ul className="flex flex-col gap-2.5 text-sm text-brand-sand-dark/85">
               <li><Link to="/catalog" className="hover:text-brand-copper-light transition-colors">Todos los productos</Link></li>
-              <li><Link to="/catalog?category=novedades" className="hover:text-brand-copper-light transition-colors">Novedades</Link></li>
-              <li><Link to="/catalog?category=ofertas" className="hover:text-brand-copper-light transition-colors">Ofertas Especiales</Link></li>
-              <li><Link to="/catalog?category=accesorios" className="hover:text-brand-copper-light transition-colors">Accesorios</Link></li>
+              <li><Link to="/#novedades" className="hover:text-brand-copper-light transition-colors">Novedades</Link></li>
             </ul>
           </div>
 
