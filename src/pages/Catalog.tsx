@@ -83,7 +83,7 @@ export default function Catalog() {
   const onImgError = (id: string) => setImgErrors(s => new Set(s).add(id));
 
   const [activeCat,      setActiveCat]      = useState(searchParams.get('category') || '');
-  const [activeType,     setActiveType]     = useState('');
+  const [activeType,     setActiveType]     = useState(searchParams.get('type') || '');
   const [activeSubType,  setActiveSubType]  = useState('');
   const [sortOrder,      setSortOrder]      = useState<SortOption>('');
   const [priceMin,       setPriceMin]       = useState('');
@@ -91,11 +91,14 @@ export default function Catalog() {
   const [priceOpen,      setPriceOpen]      = useState(false);
   const priceRef = useRef<HTMLDivElement>(null);
 
-  /* keep category in sync with the URL (e.g. footer "Todos los productos") */
+  /* keep category/type in sync with the URL (e.g. navbar links, footer "Todos los productos") */
   const urlCat = searchParams.get('category') || '';
+  const urlType = searchParams.get('type') || '';
   const [prevUrlCat, setPrevUrlCat] = useState(urlCat);
-  if (urlCat !== prevUrlCat) {
-    setPrevUrlCat(urlCat); setActiveCat(urlCat); setActiveType(''); setActiveSubType('');
+  const [prevUrlType, setPrevUrlType] = useState(urlType);
+  if (urlCat !== prevUrlCat || urlType !== prevUrlType) {
+    setPrevUrlCat(urlCat); setPrevUrlType(urlType);
+    setActiveCat(urlCat); setActiveType(urlType); setActiveSubType('');
   }
 
   useEffect(() => {

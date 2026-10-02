@@ -188,7 +188,7 @@ export default function Navbar() {
                         Ver todo en {cat.name}
                       </Link>
                       {cat.brands.flatMap(b => b.types).map(type => (
-                        <Link key={type.id} to={`/catalog?category=${cat.id}`} className="block px-4 py-2.5 text-sm text-brand-charcoal-light hover:text-brand-charcoal-dark transition-colors">
+                        <Link key={type.id} to={`/catalog?category=${cat.id}&type=${type.id}`} className="block px-4 py-2.5 text-sm text-brand-charcoal-light hover:text-brand-charcoal-dark transition-colors">
                           {type.name}
                         </Link>
                       ))}
@@ -286,7 +286,7 @@ export default function Navbar() {
                           {cat.brands.flatMap(b => b.types).map(type => (
                             <Link
                               key={type.id}
-                              to={`/catalog?category=${cat.id}`}
+                              to={`/catalog?category=${cat.id}&type=${type.id}`}
                               className="flex items-center justify-between px-5 py-2.5 hover:bg-gray-100 text-sm text-brand-charcoal-light hover:text-brand-charcoal-dark font-medium transition-colors group"
                             >
                               {type.name}
