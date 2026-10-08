@@ -94,15 +94,9 @@ export default function Navbar() {
   /* ── Store navbar ───────────────────────────────────────── */
   return (
     <>
-      {/* Barra superior: promesa de marca + redes */}
+      {/* Barra superior: redes */}
       <div className="bg-brand-charcoal-dark text-brand-sand-dark">
-        <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4 py-2.5">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-copper-light flex-shrink-0" />
-            <span className="text-[12.5px] tracking-[0.02em] truncate">
-              Productos originales · garantía de por vida
-            </span>
-          </div>
+        <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-end gap-4 py-2.5">
           <div className="flex items-center gap-5 flex-shrink-0">
             <Link to="/about" className="hidden sm:inline text-[12.5px] hover:text-brand-copper-light transition-colors">Conócenos</Link>
             <Link to="/shipping" className="hidden sm:inline text-[12.5px] hover:text-brand-copper-light transition-colors">Envíos</Link>
