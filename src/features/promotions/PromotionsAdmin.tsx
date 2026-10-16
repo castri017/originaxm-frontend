@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertCircle, CalendarDays, Edit, Loader2, Megaphone, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { API } from '../../config/api';
 import { deletePromotion, fetchPromotions } from './api';
 import { getPromotionStatus } from './pricing';
-import PromotionForm, { type PromotionProductOption } from './PromotionForm';
+import PromotionForm from './PromotionForm';
+import type { CategoryOption, PromotionProductOption } from './ProductPicker';
 import type { Promotion, PromotionStatus } from './types';
 
 const STATUS_STYLES: Record<PromotionStatus, { label: string; className: string }> = {
@@ -18,22 +19,21 @@ const formatDate = (iso: string) =>
 
 export default function PromotionsAdmin() {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
-  const [products, setProducts] = useState<PromotionProductOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [products, setProducts] = useState<PromotionProductOption[]>([]);
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState('');
   const [editing, setEditing] = useState<Promotion | null>(null);
   const [formOpen, setFormOpen] = useState(false);
 
+  // Promociones y productos se cargan por separado: si falla una consulta, la otra sigue sirviendo.
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const [promos, prods] = await Promise.all([
-        fetchPromotions(),
-        fetch(`${API}/api/products`).then(r => (r.ok ? r.json() : [])),
-      ]);
-      setPromotions(promos);
-      setProducts(prods);
+      setPromotions(await fetchPromotions());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudieron cargar las promociones.');
     } finally {
@@ -41,7 +41,34 @@ export default function PromotionsAdmin() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  const loadProducts = useCallback(async () => {
+    setProductsLoading(true);
+    setProductsError('');
+    try {
+      const [prodRes, catRes] = await Promise.all([fetch(`${API}/api/products`), fetch(`${API}/api/categories`)]);
+      if (!prodRes.ok) throw new Error('No se pudieron cargar los productos.');
+      setProducts(await prodRes.json());
+      setCategories(catRes.ok ? await catRes.json() : []);
+    } catch (err) {
+      setProductsError(err instanceof Error && err.message !== 'Failed to fetch'
+        ? err.message
+        : 'No se pudieron cargar los productos. Revisa tu conexión.');
+    } finally {
+      setProductsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); loadProducts(); }, [load, loadProducts]);
+
+  // Producto → otras promociones activas o programadas que lo incluyen (excluye la que se edita).
+  const otherPromotionsByProduct = useMemo(() => {
+    const map = new Map<string, string[]>();
+    promotions
+      .filter(p => p.id !== editing?.id)
+      .filter(p => ['active', 'scheduled'].includes(getPromotionStatus(p)))
+      .forEach(p => p.productIds.forEach(id => map.set(id, [...(map.get(id) ?? []), p.title])));
+    return map;
+  }, [promotions, editing]);
 
   const openNew = () => { setEditing(null); setFormOpen(true); };
   const openEdit = (promotion: Promotion) => { setEditing(promotion); setFormOpen(true); };
@@ -141,7 +168,13 @@ export default function PromotionsAdmin() {
       </div>
 
       {formOpen && (
-        <PromotionForm promotion={editing} products={products} onClose={closeForm} onSaved={handleSaved} />
+        <PromotionForm
+          promotion={editing}
+          products={{ items: products, categories, loading: productsLoading, error: productsError, reload: loadProducts }}
+          otherPromotionsByProduct={otherPromotionsByProduct}
+          onClose={closeForm}
+          onSaved={handleSaved}
+        />
       )}
     </div>
   );

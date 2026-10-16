@@ -1,19 +1,21 @@
-import { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, Image as ImageIcon, Loader2, Search, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { AlertCircle, Image as ImageIcon, Loader2, X } from 'lucide-react';
 import { uploadPromotionImage, savePromotion } from './api';
 import { DEFAULT_CTA_TEXT, PROMOTION_LIMITS, type Promotion, type PromotionInput } from './types';
+import ProductPicker, { type CategoryOption, type PromotionProductOption } from './ProductPicker';
 
-export interface PromotionProductOption {
-  id: string;
-  name: string;
-  productCode?: string;
-  images?: string[];
-  sellingPrice: number;
+export interface ProductsState {
+  items: PromotionProductOption[];
+  categories: CategoryOption[];
+  loading: boolean;
+  error: string;
+  reload: () => void;
 }
 
 interface Props {
   promotion: Promotion | null;
-  products: PromotionProductOption[];
+  products: ProductsState;
+  otherPromotionsByProduct: Map<string, string[]>;
   onClose: () => void;
   onSaved: () => void;
 }
@@ -83,9 +85,8 @@ const inputClass =
   'w-full px-3 py-2.5 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-gray-400';
 const labelClass = 'block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5';
 
-export default function PromotionForm({ promotion, products, onClose, onSaved }: Props) {
+export default function PromotionForm({ promotion, products, otherPromotionsByProduct, onClose, onSaved }: Props) {
   const [form, setForm] = useState<FormState>(() => initialState(promotion));
-  const [productSearch, setProductSearch] = useState('');
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -98,20 +99,6 @@ export default function PromotionForm({ promotion, products, onClose, onSaved }:
 
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm(prev => ({ ...prev, [key]: value }));
-
-  const filteredProducts = useMemo(() => {
-    const term = productSearch.trim().toLowerCase();
-    if (!term) return products;
-    return products.filter(p =>
-      p.name.toLowerCase().includes(term) || p.productCode?.toLowerCase().includes(term));
-  }, [products, productSearch]);
-
-  const selectedIds = useMemo(() => new Set(form.productIds), [form.productIds]);
-
-  const toggleProduct = (id: string) =>
-    setField('productIds', selectedIds.has(id)
-      ? form.productIds.filter(pid => pid !== id)
-      : [...form.productIds, id]);
 
   const handleImage = async (file: File) => {
     setError('');
@@ -242,35 +229,17 @@ export default function PromotionForm({ promotion, products, onClose, onSaved }:
 
           {/* Productos */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className={labelClass + ' mb-0'}>Productos en promoción *</span>
-              <span className="text-xs text-gray-400">{form.productIds.length} seleccionado{form.productIds.length !== 1 ? 's' : ''}</span>
-            </div>
-            <div className="relative mb-2">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input aria-label="Buscar producto" className={inputClass + ' pl-9'} placeholder="Buscar por nombre o código"
-                value={productSearch} onChange={e => setProductSearch(e.target.value)} />
-            </div>
-            <ul className="border border-gray-100 rounded-sm max-h-56 overflow-y-auto divide-y divide-gray-50">
-              {filteredProducts.length === 0 ? (
-                <li className="px-4 py-6 text-center text-sm text-gray-400">No hay productos que coincidan.</li>
-              ) : filteredProducts.map(p => (
-                <li key={p.id}>
-                  <label className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-50">
-                    <input type="checkbox" className="w-4 h-4 accent-black"
-                      checked={selectedIds.has(p.id)} onChange={() => toggleProduct(p.id)} />
-                    {p.images?.[0]
-                      ? <img src={p.images[0]} alt="" className="w-9 h-9 object-contain rounded-sm border border-gray-100 flex-shrink-0" />
-                      : <span className="w-9 h-9 rounded-sm bg-gray-100 flex-shrink-0" />}
-                    <span className="flex-1 min-w-0">
-                      <span className="block text-sm font-medium text-gray-800 truncate">{p.name}</span>
-                      {p.productCode && <span className="block text-[11px] text-gray-400">#{p.productCode}</span>}
-                    </span>
-                    <span className="text-xs text-gray-500 flex-shrink-0">${p.sellingPrice.toLocaleString('es-CL')}</span>
-                  </label>
-                </li>
-              ))}
-            </ul>
+            <span className={labelClass}>Productos en promoción *</span>
+            <ProductPicker
+              products={products.items}
+              categories={products.categories}
+              loading={products.loading}
+              error={products.error}
+              onRetry={products.reload}
+              selectedIds={form.productIds}
+              onChange={ids => setField('productIds', ids)}
+              otherPromotionsByProduct={otherPromotionsByProduct}
+            />
           </div>
 
           {error && (
