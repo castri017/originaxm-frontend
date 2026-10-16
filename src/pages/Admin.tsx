@@ -1,6 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { API } from '../config/api';
-import { Settings, Tag, Users, Package, TrendingUp, Plus, Edit, Trash2, ClipboardList, Eye, ArrowLeft, X, ShieldCheck, Lock, Mail, Loader2, AlertCircle, LogOut, BarChart3, DollarSign, RefreshCw, ChevronLeft, ChevronDown, Truck, FileBarChart2, Star, Globe, Wallet, Image as ImageIcon, ArrowUp, ArrowDown } from 'lucide-react';
+import { Settings, Tag, Users, Package, TrendingUp, Plus, Edit, Trash2, ClipboardList, Eye, ArrowLeft, X, ShieldCheck, Lock, Mail, Loader2, AlertCircle, LogOut, BarChart3, DollarSign, RefreshCw, ChevronLeft, ChevronDown, Truck, FileBarChart2, Star, Globe, Wallet, Image as ImageIcon, ArrowUp, ArrowDown, Megaphone } from 'lucide-react';
+import PromotionsAdmin from '../features/promotions/PromotionsAdmin';
 import { useAdminAuthStore } from '../store/useAdminAuthStore';
 import { useCatalogStore } from '../store/useCatalogStore';
 
@@ -1638,6 +1639,7 @@ function AdminPanel() {
             { id: 'categories',    Icon: Tag,           label: 'Categorías'      },
             { id: 'carriers',     Icon: Truck,         label: 'Transportadoras' },
             { id: 'banners',      Icon: ImageIcon,     label: 'Banner Principal' },
+            { id: 'promotions',   Icon: Megaphone,     label: 'Promociones'     },
             { id: 'users',        Icon: Users,         label: 'Clientes'        },
             { id: 'recommended',  Icon: Star,          label: 'Recomendados'    },
             { id: 'featured',     Icon: TrendingUp,    label: 'Destacados'      },
@@ -1706,6 +1708,7 @@ function AdminPanel() {
               {activeTab === 'inventory'    && 'Inventario de Productos'}
               {activeTab === 'carriers'     && 'Transportadoras'}
               {activeTab === 'banners'      && 'Banner Principal'}
+              {activeTab === 'promotions'   && 'Promociones'}
               {activeTab === 'users'        && 'Clientes'}
               {activeTab === 'recommended'  && 'Productos Recomendados'}
               {activeTab === 'featured'     && 'Novedades Destacadas'}
@@ -2461,6 +2464,9 @@ function AdminPanel() {
                 )}
               </div>
             </div>
+
+          ) : activeTab === 'promotions' ? (
+            <PromotionsAdmin />
 
           ) : activeTab === 'users' ? (
             <div className="space-y-5">
