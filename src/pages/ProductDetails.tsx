@@ -3,6 +3,7 @@ import { API } from '../config/api';
 import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Package, Loader2, ChevronDown, ShoppingCart } from 'lucide-react';
 import { useCartStore } from '../store/useCartStore';
+import { getEffectiveDiscount, getFinalPrice } from '../features/promotions/pricing';
 
 interface ApiProduct {
   id: string;
@@ -27,6 +28,7 @@ interface ApiProduct {
   images: string[];
   sellingPrice: number;
   discountPercentage: number;
+  effectiveDiscountPercentage?: number;
   stock: number;
   isInternational?: boolean;
   variantGroupId?: string | null;
@@ -148,10 +150,8 @@ export default function ProductDetails() {
 
   const images      = product.images?.length ? product.images : [];
   const outOfStock  = product.stock === 0;
-  const disc        = product.discountPercentage ?? 0;
-  const finalPrice  = disc > 0
-    ? Math.round(product.sellingPrice * (1 - disc / 100))
-    : product.sellingPrice;
+  const disc        = getEffectiveDiscount(product);
+  const finalPrice  = getFinalPrice(product);
 
   const handleAddToCart = () => {
     const cartProduct = {

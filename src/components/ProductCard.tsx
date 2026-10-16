@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Package } from 'lucide-react';
+import { getEffectiveDiscount, getFinalPrice } from '../features/promotions/pricing';
 
 export interface CardProduct {
   id: string;
@@ -8,6 +9,8 @@ export interface CardProduct {
   images?: string[];
   sellingPrice: number;
   discountPercentage: number;
+  /** Descuento final calculado por la API (incluye promociones vigentes). */
+  effectiveDiscountPercentage?: number;
   stock: number;
   isInternational?: boolean;
 }
@@ -34,9 +37,8 @@ export default function ProductCard({
   const raw = product.images?.[0];
   const img = raw ? (raw.startsWith('http') ? raw : `http://localhost:5173${raw}`) : null;
 
-  const finalPrice = product.discountPercentage > 0
-    ? Math.round(product.sellingPrice * (1 - product.discountPercentage / 100))
-    : product.sellingPrice;
+  const discount   = getEffectiveDiscount(product);
+  const finalPrice = getFinalPrice(product);
 
   const soldOut = product.stock <= 0;
 
@@ -68,9 +70,9 @@ export default function ProductCard({
           </span>
         ) : null}
 
-        {product.discountPercentage > 0 && (
+        {discount > 0 && (
           <span className="absolute top-3 right-3 bg-brand-copper-light text-brand-charcoal-dark font-mono text-[10px] font-semibold px-2 py-1">
-            -{product.discountPercentage}%
+            -{discount}%
           </span>
         )}
       </div>
@@ -88,7 +90,7 @@ export default function ProductCard({
             <span className="font-display font-bold text-[19px] text-brand-charcoal-dark">
               ${finalPrice.toLocaleString('es-CL')}
             </span>
-            {product.discountPercentage > 0 && (
+            {discount > 0 && (
               <span className="text-[13px] text-brand-muted line-through">
                 ${product.sellingPrice.toLocaleString('es-CL')}
               </span>
