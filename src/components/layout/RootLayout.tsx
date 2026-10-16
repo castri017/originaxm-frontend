@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import BottomNav from './BottomNav';
+import PromoPopup from '../../features/promotions/PromoPopup';
 
 export default function RootLayout() {
   const location = useLocation();
@@ -25,6 +26,7 @@ export default function RootLayout() {
         <Outlet />
       </main>
       {!isAdmin && <Footer />}
+      {!isAdmin && <PromoPopup />}
       {/* BottomNav: mobile only, hidden on admin routes */}
       {!isAdmin && (
         <div className="sm:hidden">

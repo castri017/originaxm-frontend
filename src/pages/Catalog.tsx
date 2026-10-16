@@ -5,12 +5,15 @@ import { Package, X, ChevronDown } from 'lucide-react';
 import { useCatalogStore } from '../store/useCatalogStore';
 import FloatingCartButton from '../components/layout/FloatingCartButton';
 import ProductCard from '../components/ProductCard';
+import { fetchActivePromotions } from '../features/promotions/api';
+import type { Promotion } from '../features/promotions/types';
 
 /* ── Types ────────────────────────────────────────────────── */
 interface ApiProduct {
   id: string; name: string; manufacturer: string;
   categoryId: string; typeId: string; subTypeId: string;
   images: string[]; sellingPrice: number; discountPercentage: number; stock: number;
+  effectiveDiscountPercentage?: number;
   isInternational?: boolean;
 }
 interface SubType  { id: string; name: string; }
@@ -91,6 +94,23 @@ export default function Catalog() {
   const [priceOpen,      setPriceOpen]      = useState(false);
   const priceRef = useRef<HTMLDivElement>(null);
 
+  /* promoción seleccionada desde el popup (?promo=<id>) */
+  const promoId = searchParams.get('promo') || '';
+  const [activePromotions, setActivePromotions] = useState<Promotion[] | null>(null);
+  useEffect(() => {
+    if (!promoId) return;
+    const controller = new AbortController();
+    fetchActivePromotions(controller.signal)
+      .then(setActivePromotions)
+      .catch(() => setActivePromotions([]));
+    return () => controller.abort();
+  }, [promoId]);
+  const activePromo = useMemo(
+    () => (promoId && activePromotions ? activePromotions.find(p => p.id === promoId) ?? null : null),
+    [promoId, activePromotions],
+  );
+  const promoExpired = !!promoId && activePromotions !== null && !activePromo;
+
   /* keep category/type in sync with the URL (e.g. navbar links, footer "Todos los productos") */
   const urlCat = searchParams.get('category') || '';
   const urlType = searchParams.get('type') || '';
@@ -144,6 +164,10 @@ export default function Catalog() {
 
   const filteredProducts = useMemo(() => {
     let list = [...products];
+    if (activePromo) {
+      const ids = new Set(activePromo.productIds);
+      list = list.filter(p => ids.has(p.id));
+    }
     if (activeCat)     list = list.filter(p => p.categoryId === activeCat);
     if (activeType)    list = list.filter(p => p.typeId     === activeType);
     if (activeSubType) list = list.filter(p => p.subTypeId  === activeSubType);
@@ -156,9 +180,15 @@ export default function Catalog() {
       case 'name_desc':  list.sort((a, b) => b.name.localeCompare(a.name));    break;
     }
     return list;
-  }, [products, activeCat, activeType, activeSubType, priceMin, priceMax, sortOrder]);
+  }, [products, activePromo, activeCat, activeType, activeSubType, priceMin, priceMax, sortOrder]);
+
+  const clearPromo = () => {
+    const p = new URLSearchParams(searchParams); p.delete('promo');
+    setSearchParams(p);
+  };
 
   const activeFilters = [
+    activePromo   && { key: 'promo', label: `${activePromo.title} (-${activePromo.discountPercent}%)`,         clear: clearPromo },
     activeCat     && { key: 'cat',  label: categories.find(c => c.id === activeCat)?.name ?? '',                 clear: () => { setActiveCat('');     setActiveType(''); setActiveSubType(''); } },
     activeType    && { key: 'type', label: availableTypes.find(t => t.id === activeType)?.name ?? '',             clear: () => { setActiveType('');    setActiveSubType(''); } },
     activeSubType && { key: 'sub',  label: availableSubTypes.find(s => s.id === activeSubType)?.name ?? '',       clear: () => setActiveSubType('') },
@@ -169,6 +199,7 @@ export default function Catalog() {
   const selectCat = (id: string) => {
     setActiveCat(id); setActiveType(''); setActiveSubType('');
     const p = new URLSearchParams(); if (id) p.set('category', id);
+    if (promoId) p.set('promo', promoId);
     setSearchParams(p);
   };
 
@@ -187,8 +218,19 @@ export default function Catalog() {
       <div className="mb-7 flex flex-col gap-2">
         <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-brand-muted">Inicio / Catálogo</span>
         <h1 className="font-display font-extrabold text-[32px] sm:text-[38px] tracking-[-0.03em] text-brand-charcoal-dark">
-          Todo el catálogo
+          {activePromo ? activePromo.title : 'Todo el catálogo'}
         </h1>
+        {activePromo && (
+          <p className="inline-flex items-center gap-2 text-[14px] text-brand-charcoal-light">
+            <span className="px-2 py-0.5 bg-brand-copper-light text-brand-charcoal-dark font-display font-bold">-{activePromo.discountPercent}%</span>
+            {activePromo.description || 'Productos en promoción por tiempo limitado.'}
+          </p>
+        )}
+        {promoExpired && (
+          <p role="status" className="text-[14px] text-brand-charcoal-light">
+            Esta promoción ya no está vigente. Te mostramos todo el catálogo.
+          </p>
+        )}
         <p className="text-[14px] text-brand-charcoal-light">
           {loading ? 'Cargando…' : `${filteredProducts.length} producto${filteredProducts.length !== 1 ? 's' : ''}`}
         </p>
