@@ -171,7 +171,7 @@ export default function PromotionForm({ promotion, products, onClose, onSaved }:
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+        <form onSubmit={handleSubmit} noValidate className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           {/* Imagen */}
           <div>
             <span className={labelClass}>Imagen de la promoción *</span>
