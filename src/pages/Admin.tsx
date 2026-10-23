@@ -1,5 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { API } from '../config/api';
+import { adminFetch } from '../lib/adminFetch';
 import { Settings, Tag, Users, Package, TrendingUp, Plus, Edit, Trash2, ClipboardList, Eye, ArrowLeft, X, ShieldCheck, Lock, Mail, Loader2, AlertCircle, LogOut, BarChart3, DollarSign, RefreshCw, ChevronLeft, ChevronDown, Truck, FileBarChart2, Star, Globe, Wallet, Image as ImageIcon, ArrowUp, ArrowDown, Megaphone } from 'lucide-react';
 import PromotionsAdmin from '../features/promotions/PromotionsAdmin';
 import { useAdminAuthStore } from '../store/useAdminAuthStore';
@@ -407,7 +408,7 @@ function AdminPanel() {
       if (status) params.set('status', status);
       if (search) params.set('search', search);
       const url = `${API}/api/orders${params.toString() ? '?' + params.toString() : ''}`;
-      const res = await fetch(url);
+      const res = await adminFetch(url);
       if (res.ok) setOrders(await res.json());
       else setOrdersError('No se pudo cargar los pedidos.');
     } catch {
@@ -420,7 +421,7 @@ function AdminPanel() {
   const fetchAllOrders = async () => {
     setReportAllLoading(true);
     try {
-      const res = await fetch(`${API}/api/orders`);
+      const res = await adminFetch(`${API}/api/orders`);
       if (res.ok) setReportAllOrders(await res.json());
     } catch {}
     finally { setReportAllLoading(false); }
@@ -429,7 +430,7 @@ function AdminPanel() {
   const fetchProducts = async () => {
     setProductsLoading(true);
     try {
-      const res = await fetch(`${API}/api/products`);
+      const res = await adminFetch(`${API}/api/products`);
       if (res.ok) setProducts(await res.json());
     } catch { /* silencioso */ }
     finally { setProductsLoading(false); }
@@ -438,7 +439,7 @@ function AdminPanel() {
   const fetchCategories = async () => {
     setCatLoading(true);
     try {
-      const res = await fetch(`${API}/api/categories`);
+      const res = await adminFetch(`${API}/api/categories`);
       if (res.ok) setCategories(await res.json());
     } finally {
       setCatLoading(false);
@@ -457,7 +458,7 @@ function AdminPanel() {
   const fetchCarriers = async () => {
     setCarriersLoading(true);
     try {
-      const res = await fetch(`${API}/api/carriers`);
+      const res = await adminFetch(`${API}/api/carriers`);
       if (res.ok) setCarriers(await res.json());
     } catch { /* silencioso */ }
     finally { setCarriersLoading(false); }
@@ -490,7 +491,7 @@ function AdminPanel() {
       const body = editingCarrier
         ? { name: carrierForm.name.trim(), contactInfo: carrierForm.contactInfo.trim() || null, isActive: carrierForm.isActive }
         : { name: carrierForm.name.trim(), contactInfo: carrierForm.contactInfo.trim() || null };
-      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const res = await adminFetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       if (!res.ok) { const d = await res.json().catch(() => ({})); setCarrierError(d.message ?? 'Error al guardar.'); return; }
       setShowCarrierModal(false);
       fetchCarriers();
@@ -500,7 +501,7 @@ function AdminPanel() {
 
   const handleDeleteCarrier = async (id: string) => {
     if (!confirm('¿Eliminar esta transportadora?')) return;
-    await fetch(`${API}/api/carriers/${id}`, { method: 'DELETE' });
+    await adminFetch(`${API}/api/carriers/${id}`, { method: 'DELETE' });
     fetchCarriers();
   };
 
@@ -514,7 +515,7 @@ function AdminPanel() {
   const fetchBanners = async () => {
     setBannersLoading(true);
     try {
-      const res = await fetch(`${API}/api/banners`);
+      const res = await adminFetch(`${API}/api/banners`);
       if (res.ok) setBanners(await res.json());
     } catch { /* silencioso */ }
     finally { setBannersLoading(false); }
@@ -527,12 +528,12 @@ function AdminPanel() {
     try {
       const fd = new FormData();
       fd.append('files', file);
-      const upRes = await fetch(`${API}/api/uploads/banners`, { method: 'POST', body: fd });
+      const upRes = await adminFetch(`${API}/api/uploads/banners`, { method: 'POST', body: fd });
       if (!upRes.ok) throw new Error('Error al subir la imagen.');
       const upData = await upRes.json();
       const imageUrl = (upData.paths as string[])[0];
 
-      const res = await fetch(`${API}/api/banners`, {
+      const res = await adminFetch(`${API}/api/banners`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageUrl }),
       });
@@ -547,7 +548,7 @@ function AdminPanel() {
 
   const handleDeleteBanner = async (id: string) => {
     if (!confirm('¿Eliminar esta imagen del banner?')) return;
-    await fetch(`${API}/api/banners/${id}`, { method: 'DELETE' });
+    await adminFetch(`${API}/api/banners/${id}`, { method: 'DELETE' });
     fetchBanners();
   };
 
@@ -557,7 +558,7 @@ function AdminPanel() {
     const reordered = [...banners];
     [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
     setBanners(reordered);
-    await fetch(`${API}/api/banners/reorder`, {
+    await adminFetch(`${API}/api/banners/reorder`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ orderedIds: reordered.map(b => b.id) }),
     });
@@ -580,7 +581,7 @@ function AdminPanel() {
       const url = search
         ? `${API}/api/customers?search=${encodeURIComponent(search)}`
         : `${API}/api/customers`;
-      const res = await fetch(url);
+      const res = await adminFetch(url);
       if (res.ok) setClients(await res.json());
     } catch { /* silencioso */ }
     finally { setClientsLoading(false); }
@@ -613,7 +614,7 @@ function AdminPanel() {
         ? `${API}/api/customers/${editingClient.id}`
         : `${API}/api/customers`;
       const method = editingClient ? 'PUT' : 'POST';
-      const res = await fetch(url, {
+      const res = await adminFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(clientForm),
@@ -638,7 +639,7 @@ function AdminPanel() {
 
   const handleDeleteClient = async (id: string) => {
     if (!confirm('¿Eliminar este cliente? Esta acción no se puede deshacer.')) return;
-    await fetch(`${API}/api/customers/${id}`, { method: 'DELETE' });
+    await adminFetch(`${API}/api/customers/${id}`, { method: 'DELETE' });
     await fetchClients();
   };
 
@@ -676,7 +677,7 @@ function AdminPanel() {
     // Optimista: reflejar el cambio ya mismo en la fila, sin recargar todo el inventario.
     applyLocalStockDelta(product.id, type, 1);
     try {
-      const res = await fetch(`${API}/api/inventory/${product.id}/movements`, {
+      const res = await adminFetch(`${API}/api/inventory/${product.id}/movements`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type, quantity: 1, notes: 'Ajuste rápido desde inventario' }),
@@ -704,7 +705,7 @@ function AdminPanel() {
     setInventoryLoading(true);
     setInventoryError('');
     try {
-      const res = await fetch(`${API}/api/inventory`);
+      const res = await adminFetch(`${API}/api/inventory`);
       if (res.ok) setInventoryProducts(await res.json());
       else setInventoryError('No se pudo cargar el inventario. Verifica que la API esté en línea.');
     } catch {
@@ -724,7 +725,7 @@ function AdminPanel() {
   const refreshHistory = async (productId: string) => {
     setHistoryLoading(true);
     try {
-      const res = await fetch(`${API}/api/inventory/${productId}/movements`);
+      const res = await adminFetch(`${API}/api/inventory/${productId}/movements`);
       if (res.ok) setHistoryMovements(await res.json());
     } finally {
       setHistoryLoading(false);
@@ -741,7 +742,7 @@ function AdminPanel() {
   const handleDeleteMovement = async (movementId: string) => {
     if (!historyProduct) return;
     if (!confirm('¿Eliminar este movimiento? El stock será revertido.')) return;
-    await fetch(`${API}/api/inventory/${historyProduct.id}/movements/${movementId}`, { method: 'DELETE' });
+    await adminFetch(`${API}/api/inventory/${historyProduct.id}/movements/${movementId}`, { method: 'DELETE' });
     await refreshHistory(historyProduct.id);
     await fetchInventory();
     invalidateCatalog();
@@ -760,7 +761,7 @@ function AdminPanel() {
     if (!qty || qty <= 0) { setEditMovError('La cantidad debe ser mayor a 0.'); return; }
     setEditMovSaving(true); setEditMovError('');
     try {
-      const res = await fetch(
+      const res = await adminFetch(
         `${API}/api/inventory/${historyProduct.id}/movements/${editingMovement.id}`,
         {
           method: 'PUT',
@@ -788,7 +789,7 @@ function AdminPanel() {
     setMovError('');
     setMovSaving(true);
     try {
-      const res = await fetch(`${API}/api/inventory/${movementProduct.id}/movements`, {
+      const res = await adminFetch(`${API}/api/inventory/${movementProduct.id}/movements`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: movForm.type, quantity: qty, notes: movForm.notes }),
@@ -857,7 +858,7 @@ function AdminPanel() {
     setCreditSalesLoading(true);
     try {
       const qs = customerId ? `?customerId=${customerId}` : '';
-      const res = await fetch(`${API}/api/creditsales${qs}`);
+      const res = await adminFetch(`${API}/api/creditsales${qs}`);
       if (res.ok) setCreditSales(await res.json());
     } catch { /* silencioso */ }
     finally { setCreditSalesLoading(false); }
@@ -865,14 +866,14 @@ function AdminPanel() {
 
   const fetchCreditSaleDetail = async (id: string) => {
     try {
-      const res = await fetch(`${API}/api/creditsales/${id}`);
+      const res = await adminFetch(`${API}/api/creditsales/${id}`);
       if (res.ok) setSelectedCreditSale(await res.json());
     } catch { /* silencioso */ }
   };
 
   const fetchCreditStats = async () => {
     try {
-      const res = await fetch(`${API}/api/creditsales/summary`);
+      const res = await adminFetch(`${API}/api/creditsales/summary`);
       if (res.ok) setCreditStats(await res.json());
     } catch { /* silencioso */ }
   };
@@ -881,7 +882,7 @@ function AdminPanel() {
     e.preventDefault();
     setCreditSaleSaving(true); setCreditSaleError('');
     try {
-      const res = await fetch(`${API}/api/creditsales`, {
+      const res = await adminFetch(`${API}/api/creditsales`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -907,7 +908,7 @@ function AdminPanel() {
   const handleDeleteCreditSale = async (id: string) => {
     if (!confirm('¿Eliminar esta venta a crédito? Se borrarán también sus abonos.')) return;
     try {
-      await fetch(`${API}/api/creditsales/${id}`, { method: 'DELETE' });
+      await adminFetch(`${API}/api/creditsales/${id}`, { method: 'DELETE' });
       if (selectedCreditSale?.id === id) setSelectedCreditSale(null);
       await Promise.all([fetchCreditSales(creditCustomerFilter || undefined), fetchCreditStats()]);
     } catch { /* silencioso */ }
@@ -918,7 +919,7 @@ function AdminPanel() {
     e.preventDefault();
     setPaymentSaving(true); setPaymentError('');
     try {
-      const res = await fetch(`${API}/api/creditsales/${selectedCreditSale.id}/payments`, {
+      const res = await adminFetch(`${API}/api/creditsales/${selectedCreditSale.id}/payments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -943,7 +944,7 @@ function AdminPanel() {
     if (!selectedCreditSale) return;
     if (!confirm('¿Eliminar este abono?')) return;
     try {
-      await fetch(`${API}/api/creditsales/${selectedCreditSale.id}/payments/${paymentId}`, { method: 'DELETE' });
+      await adminFetch(`${API}/api/creditsales/${selectedCreditSale.id}/payments/${paymentId}`, { method: 'DELETE' });
       await fetchCreditSaleDetail(selectedCreditSale.id);
       await Promise.all([fetchCreditSales(creditCustomerFilter || undefined), fetchCreditStats()]);
     } catch { /* silencioso */ }
@@ -966,7 +967,7 @@ function AdminPanel() {
     setFinanceEntriesLoading(true);
     try {
       const qs = type ? `?type=${type}` : '';
-      const res = await fetch(`${API}/api/financeentries${qs}`);
+      const res = await adminFetch(`${API}/api/financeentries${qs}`);
       if (res.ok) setFinanceEntries(await res.json());
     } catch { /* silencioso */ }
     finally { setFinanceEntriesLoading(false); setFinanceEntriesLoaded(true); }
@@ -974,7 +975,7 @@ function AdminPanel() {
 
   const fetchFinanceStats = async () => {
     try {
-      const res = await fetch(`${API}/api/financeentries/stats`);
+      const res = await adminFetch(`${API}/api/financeentries/stats`);
       if (res.ok) setFinanceStats(await res.json());
     } catch { /* silencioso */ }
   };
@@ -1003,7 +1004,7 @@ function AdminPanel() {
     setFinanceSaving(true); setFinanceError('');
     try {
       const res = editingFinanceEntry
-        ? await fetch(`${API}/api/financeentries/${editingFinanceEntry.id}`, {
+        ? await adminFetch(`${API}/api/financeentries/${editingFinanceEntry.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1014,7 +1015,7 @@ function AdminPanel() {
               date: financeForm.date,
             }),
           })
-        : await fetch(`${API}/api/financeentries`, {
+        : await adminFetch(`${API}/api/financeentries`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1038,7 +1039,7 @@ function AdminPanel() {
   const handleDeleteFinanceEntry = async (id: string) => {
     if (!confirm('¿Eliminar este registro?')) return;
     try {
-      await fetch(`${API}/api/financeentries/${id}`, { method: 'DELETE' });
+      await adminFetch(`${API}/api/financeentries/${id}`, { method: 'DELETE' });
       await Promise.all([fetchFinanceEntries(financeTypeFilter === 'all' ? undefined : financeTypeFilter), fetchFinanceStats()]);
     } catch { /* silencioso */ }
   };
@@ -1114,13 +1115,13 @@ function AdminPanel() {
     if (!editingProduct) return;
     setVariantSavingId(targetId);
     try {
-      const res = await fetch(`${API}/api/variantgroup/${editingProduct.id}/link`, {
+      const res = await adminFetch(`${API}/api/variantgroup/${editingProduct.id}/link`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ linkToProductId: targetId }),
       });
       if (res.ok) {
-        const listRes = await fetch(`${API}/api/products`);
+        const listRes = await adminFetch(`${API}/api/products`);
         if (listRes.ok) {
           const list: ApiProduct[] = await listRes.json();
           setProducts(list);
@@ -1136,9 +1137,9 @@ function AdminPanel() {
     if (!editingProduct) return;
     setVariantSavingId(variantId);
     try {
-      const res = await fetch(`${API}/api/variantgroup/${variantId}/unlink`, { method: 'PATCH' });
+      const res = await adminFetch(`${API}/api/variantgroup/${variantId}/unlink`, { method: 'PATCH' });
       if (res.ok) {
-        const listRes = await fetch(`${API}/api/products`);
+        const listRes = await adminFetch(`${API}/api/products`);
         if (listRes.ok) {
           const list: ApiProduct[] = await listRes.json();
           setProducts(list);
@@ -1183,12 +1184,12 @@ function AdminPanel() {
     setVariantBrandFilter('');
     setVariantTypeFilter('');
     // Cargar imágenes frescas desde la API (bypass caché del listado)
-    fetch(`${API}/api/products/${p.id}`)
+    adminFetch(`${API}/api/products/${p.id}`)
       .then(r => r.ok ? r.json() : null)
       .then(fresh => { if (fresh?.images) setEditExistingImages(fresh.images); })
       .catch(() => {});
     try {
-      const res = await fetch(`${API}/api/pricelists/product/${p.id}`);
+      const res = await adminFetch(`${API}/api/pricelists/product/${p.id}`);
       if (res.ok) {
         const items: ProductPriceListItem[] = await res.json();
         setEditProductPLItems(items);
@@ -1220,14 +1221,14 @@ function AdminPanel() {
       if (editImageFiles.length > 0) {
         const fd = new FormData();
         editImageFiles.forEach(f => fd.append('files', f));
-        const upRes = await fetch(`${API}/api/uploads/products`, { method: 'POST', body: fd });
+        const upRes = await adminFetch(`${API}/api/uploads/products`, { method: 'POST', body: fd });
         if (!upRes.ok) throw new Error('Error al subir imágenes.');
         const upData = await upRes.json();
         newUrls = upData.paths as string[];
       }
       const finalImages = [...editExistingImages, ...newUrls];
 
-      const res = await fetch(`${API}/api/products/${editingProduct.id}`, {
+      const res = await adminFetch(`${API}/api/products/${editingProduct.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1250,7 +1251,7 @@ function AdminPanel() {
         editProductPLItems.map(item => {
           const form = editProductPLForms[item.itemId];
           if (!form) return Promise.resolve();
-          return fetch(`${API}/api/pricelists/${item.priceListId}/items/${item.itemId}`, {
+          return adminFetch(`${API}/api/pricelists/${item.priceListId}/items/${item.itemId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1306,7 +1307,7 @@ function AdminPanel() {
       if (npImageFiles.length > 0) {
         const fd = new FormData();
         npImageFiles.forEach(f => fd.append('files', f));
-        const upRes = await fetch(`${API}/api/uploads/products`, { method: 'POST', body: fd });
+        const upRes = await adminFetch(`${API}/api/uploads/products`, { method: 'POST', body: fd });
         if (!upRes.ok) throw new Error('Error al subir imágenes.');
         const upData = await upRes.json();
         paths = upData.paths as string[];
@@ -1323,7 +1324,7 @@ function AdminPanel() {
         sellingPrice: Number(npForm.sellingPrice) || 0,
         discountPercentage: Number(npForm.discountPercentage) || 0,
       };
-      const res = await fetch(`${API}/api/products`, {
+      const res = await adminFetch(`${API}/api/products`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
@@ -1359,7 +1360,7 @@ function AdminPanel() {
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCategoryName.trim()) return;
-    await fetch(`${API}/api/categories`, {
+    await adminFetch(`${API}/api/categories`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: newCategoryName.trim(), description: newCategoryDesc.trim() }),
@@ -1373,7 +1374,7 @@ function AdminPanel() {
   const handleAddBrand = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBrandName.trim() || !selectedCategoryId) return;
-    await fetch(`${API}/api/categories/${selectedCategoryId}/brands`, {
+    await adminFetch(`${API}/api/categories/${selectedCategoryId}/brands`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: newBrandName.trim() }),
@@ -1387,7 +1388,7 @@ function AdminPanel() {
   const handleAddType = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTypeName.trim() || !selectedCategoryId || !selectedBrandId) return;
-    await fetch(`${API}/api/categories/${selectedCategoryId}/brands/${selectedBrandId}/types`, {
+    await adminFetch(`${API}/api/categories/${selectedCategoryId}/brands/${selectedBrandId}/types`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: newTypeName.trim() }),
@@ -1402,7 +1403,7 @@ function AdminPanel() {
   const handleAddSubType = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSubTypeName.trim() || !selectedCategoryId || !selectedBrandId || !selectedTypeId) return;
-    await fetch(`${API}/api/categories/${selectedCategoryId}/brands/${selectedBrandId}/types/${selectedTypeId}/subtypes`, {
+    await adminFetch(`${API}/api/categories/${selectedCategoryId}/brands/${selectedBrandId}/types/${selectedTypeId}/subtypes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: newSubTypeName.trim() }),
@@ -1416,7 +1417,7 @@ function AdminPanel() {
   const handleEditCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingCategory || !editCategoryName.trim()) return;
-    await fetch(`${API}/api/categories/${editingCategory.id}`, {
+    await adminFetch(`${API}/api/categories/${editingCategory.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: editCategoryName.trim(), description: editCategoryDesc.trim() }),
@@ -1444,7 +1445,7 @@ function AdminPanel() {
 
   const applyStatusChange = async (orderId: string, newStatus: string, tracking: string | null, carrier: string | null) => {
     try {
-      const res = await fetch(`${API}/api/orders/${orderId}/status`, {
+      const res = await adminFetch(`${API}/api/orders/${orderId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus, trackingNumber: tracking, carrier }),
@@ -1472,7 +1473,7 @@ function AdminPanel() {
   const fetchPriceLists = async () => {
     setPriceListLoading(true);
     try {
-      const res = await fetch(`${API}/api/pricelists`);
+      const res = await adminFetch(`${API}/api/pricelists`);
       if (res.ok) setPriceLists(await res.json());
     } finally {
       setPriceListLoading(false);
@@ -1480,7 +1481,7 @@ function AdminPanel() {
   };
 
   const fetchPriceListDetail = async (id: string) => {
-    const res = await fetch(`${API}/api/pricelists/${id}`);
+    const res = await adminFetch(`${API}/api/pricelists/${id}`);
     if (res.ok) setSelectedPriceList(await res.json());
   };
 
@@ -1489,7 +1490,7 @@ function AdminPanel() {
     if (!newPLName.trim()) return;
     setPlSaving(true);
     try {
-      const res = await fetch(`${API}/api/pricelists`, {
+      const res = await adminFetch(`${API}/api/pricelists`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newPLName, description: newPLDesc }),
@@ -1510,7 +1511,7 @@ function AdminPanel() {
     setItemError('');
     setItemSaving(true);
     try {
-      const res = await fetch(`${API}/api/pricelists/${selectedPriceList.id}/items`, {
+      const res = await adminFetch(`${API}/api/pricelists/${selectedPriceList.id}/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1534,7 +1535,7 @@ function AdminPanel() {
 
   const handleDeletePriceListItem = async (itemId: string) => {
     if (!selectedPriceList) return;
-    await fetch(`${API}/api/pricelists/${selectedPriceList.id}/items/${itemId}`, { method: 'DELETE' });
+    await adminFetch(`${API}/api/pricelists/${selectedPriceList.id}/items/${itemId}`, { method: 'DELETE' });
     await fetchPriceListDetail(selectedPriceList.id);
   };
 
@@ -1555,7 +1556,7 @@ function AdminPanel() {
     setPlItemEditError('');
     setPlItemEditSaving(true);
     try {
-      const res = await fetch(`${API}/api/pricelists/${selectedPriceList.id}/items/${editingItem.id}`, {
+      const res = await adminFetch(`${API}/api/pricelists/${selectedPriceList.id}/items/${editingItem.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1571,7 +1572,7 @@ function AdminPanel() {
       const newSellingPrice = Number(plItemEditForm.sellingPrice) || 0;
       const product = products.find(pr => pr.id === editingItem.productId);
       if (product && product.sellingPrice !== newSellingPrice) {
-        await fetch(`${API}/api/products/${editingItem.productId}/price`, {
+        await adminFetch(`${API}/api/products/${editingItem.productId}/price`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newSellingPrice),
@@ -1590,7 +1591,7 @@ function AdminPanel() {
   };
 
   const handleDeletePriceList = async (id: string) => {
-    await fetch(`${API}/api/pricelists/${id}`, { method: 'DELETE' });
+    await adminFetch(`${API}/api/pricelists/${id}`, { method: 'DELETE' });
     if (selectedPriceList?.id === id) setSelectedPriceList(null);
     await fetchPriceLists();
   };
@@ -2163,7 +2164,7 @@ function AdminPanel() {
                               </button>
                               <button
                                 onClick={async () => {
-                                  await fetch(`${API}/api/products/${product.id}`, { method: 'DELETE' });
+                                  await adminFetch(`${API}/api/products/${product.id}`, { method: 'DELETE' });
                                   await fetchProducts();
                                 }}
                                 className="p-1.5 text-gray-400 hover:text-red-500 transition-colors" title="Eliminar">
@@ -2226,7 +2227,7 @@ function AdminPanel() {
                           </button>
                           <button
                             onClick={async () => {
-                              await fetch(`${API}/api/categories/${category.id}`, { method: 'DELETE' });
+                              await adminFetch(`${API}/api/categories/${category.id}`, { method: 'DELETE' });
                               fetchCategories();
                             }}
                             className="p-2 text-slate-300 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
@@ -2255,7 +2256,7 @@ function AdminPanel() {
                                     </button>
                                     <button
                                       onClick={async () => {
-                                        await fetch(`${API}/api/categories/${category.id}/brands/${brand.id}`, { method: 'DELETE' });
+                                        await adminFetch(`${API}/api/categories/${category.id}/brands/${brand.id}`, { method: 'DELETE' });
                                         fetchCategories();
                                       }}
                                       className="p-1.5 text-slate-300 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
@@ -2281,7 +2282,7 @@ function AdminPanel() {
                                           </button>
                                           <button
                                             onClick={async () => {
-                                              await fetch(`${API}/api/categories/${category.id}/brands/${brand.id}/types/${type.id}`, { method: 'DELETE' });
+                                              await adminFetch(`${API}/api/categories/${category.id}/brands/${brand.id}/types/${type.id}`, { method: 'DELETE' });
                                               fetchCategories();
                                             }}
                                             className="text-slate-300 hover:text-red-500 transition-colors"
@@ -2299,7 +2300,7 @@ function AdminPanel() {
                                             <span className="text-[11px] font-medium text-slate-600">{sub.name}</span>
                                             <button
                                               onClick={async () => {
-                                                await fetch(`${API}/api/categories/${category.id}/brands/${brand.id}/types/${type.id}/subtypes/${sub.id}`, { method: 'DELETE' });
+                                                await adminFetch(`${API}/api/categories/${category.id}/brands/${brand.id}/types/${type.id}/subtypes/${sub.id}`, { method: 'DELETE' });
                                                 fetchCategories();
                                               }}
                                               className="text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
@@ -3717,7 +3718,7 @@ function AdminPanel() {
                         const saveRecommended = async (isRec: boolean, order: number) => {
                           setRecSavingId(product.id);
                           try {
-                            await fetch(`${API}/api/recommended/${product.id}`, {
+                            await adminFetch(`${API}/api/recommended/${product.id}`, {
                               method: 'PATCH',
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({ isRecommended: isRec, recommendedOrder: order }),
@@ -3823,7 +3824,7 @@ function AdminPanel() {
                         const saveFeatured = async (isFeat: boolean, order: number) => {
                           setFeatSavingId(product.id);
                           try {
-                            await fetch(`${API}/api/featured/${product.id}`, {
+                            await adminFetch(`${API}/api/featured/${product.id}`, {
                               method: 'PATCH',
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({ isFeatured: isFeat, featuredOrder: order }),
@@ -3927,7 +3928,7 @@ function AdminPanel() {
                         const saveInternational = async (isIntl: boolean) => {
                           setIntlSavingId(product.id);
                           try {
-                            await fetch(`${API}/api/international/${product.id}`, {
+                            await adminFetch(`${API}/api/international/${product.id}`, {
                               method: 'PATCH',
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({ isInternational: isIntl }),
