@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Package, User, MapPin, LogOut, Phone, Mail, ChevronDown, ChevronUp, Truck, Check } from 'lucide-react';
 import { useCustomerAuthStore } from '../store/useCustomerAuthStore';
+import { customerFetch } from '../lib/customerFetch';
 
 import { API } from '../config/api';
 
@@ -114,7 +115,7 @@ export default function Profile() {
 
   useEffect(() => {
     if (!isAuth || !customer) { navigate('/login', { replace: true }); return; }
-    fetch(`${API}/api/customers/${customer.id}/orders`)
+    customerFetch(`${API}/api/customers/me/orders`)
       .then(r => r.ok ? r.json() : [])
       .then(setOrders)
       .catch(() => setOrders([]))
