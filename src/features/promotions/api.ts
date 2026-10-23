@@ -1,13 +1,8 @@
 import { API } from '../../config/api';
-import { useAdminAuthStore } from '../../store/useAdminAuthStore';
+import { adminFetch } from '../../lib/adminFetch';
 import type { Promotion, PromotionInput } from './types';
 
 const BASE = `${API}/api/promotions`;
-
-function authHeaders(): HeadersInit {
-  const token = useAdminAuthStore.getState().token;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 async function readError(res: Response, fallback: string): Promise<Error> {
   const body = await res.json().catch(() => ({}));
@@ -22,22 +17,22 @@ export async function fetchActivePromotions(signal?: AbortSignal): Promise<Promo
 }
 
 export async function fetchPromotions(): Promise<Promotion[]> {
-  const res = await fetch(BASE, { headers: authHeaders() });
+  const res = await adminFetch(BASE);
   if (!res.ok) throw await readError(res, 'No se pudieron cargar las promociones.');
   return res.json();
 }
 
 export async function savePromotion(input: PromotionInput, id?: string): Promise<void> {
-  const res = await fetch(id ? `${BASE}/${id}` : BASE, {
+  const res = await adminFetch(id ? `${BASE}/${id}` : BASE, {
     method: id ? 'PUT' : 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
   if (!res.ok) throw await readError(res, 'No se pudo guardar la promoción.');
 }
 
 export async function deletePromotion(id: string): Promise<void> {
-  const res = await fetch(`${BASE}/${id}`, { method: 'DELETE', headers: authHeaders() });
+  const res = await adminFetch(`${BASE}/${id}`, { method: 'DELETE' });
   if (!res.ok) throw await readError(res, 'No se pudo eliminar la promoción.');
 }
 
@@ -45,9 +40,8 @@ export async function deletePromotion(id: string): Promise<void> {
 export async function uploadPromotionImage(file: File): Promise<string> {
   const fd = new FormData();
   fd.append('files', file);
-  const res = await fetch(`${API}/api/uploads/promotions`, {
+  const res = await adminFetch(`${API}/api/uploads/promotions`, {
     method: 'POST',
-    headers: authHeaders(),
     body: fd,
   });
   if (!res.ok) throw await readError(res, 'Error al subir la imagen.');
