@@ -4,6 +4,7 @@ import { CheckCircle, Truck, Wallet, ArrowRight, X, UserCheck, Loader2, UserPlus
 import { useCartStore } from '../store/useCartStore';
 import { useCatalogStore } from '../store/useCatalogStore';
 import { useCustomerAuthStore, type CustomerSession } from '../store/useCustomerAuthStore';
+import { customerFetch } from '../lib/customerFetch';
 import { COLOMBIA_DATA } from '../data/colombia';
 
 import { API } from '../config/api';
@@ -176,7 +177,6 @@ export default function Checkout() {
         customerAddress:    direccion.trim(),
         customerCity:       city,
         customerDepartment: department,
-        customerId:         customer?.id ?? null,
         notes:              notes.trim(),
         shipping,
         paymentMethod:      payment,
@@ -189,9 +189,9 @@ export default function Checkout() {
         })),
       };
 
-      // 1. Crear el pedido en nuestro backend
+      // 1. Crear el pedido en nuestro backend (con la sesión del cliente, la API lo asocia a su cuenta)
       setPaymentMsg('Registrando pedido…');
-      const res = await fetch(`${API}/api/orders`, {
+      const res = await customerFetch(`${API}/api/orders`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(body),

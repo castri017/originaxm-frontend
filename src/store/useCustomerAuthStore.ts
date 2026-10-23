@@ -9,6 +9,8 @@ export interface CustomerSession {
   phone: string;
   address: string;
   city: string;
+  /** JWT de cliente que devuelve la API al iniciar sesión o registrarse. */
+  token: string;
 }
 
 interface CustomerAuthState {
@@ -26,6 +28,12 @@ export const useCustomerAuthStore = create<CustomerAuthState>()(
       login: (customer) => set({ customer, isAuthenticated: true }),
       logout: () => set({ customer: null, isAuthenticated: false }),
     }),
-    { name: 'origenaxm-customer-auth' }
+    {
+      name: 'origenaxm-customer-auth',
+      // v1: la sesión trae token. Las guardadas antes no lo tienen y no sirven para la API,
+      // así que se descartan y el cliente vuelve a iniciar sesión una vez.
+      version: 1,
+      migrate: () => ({ customer: null, isAuthenticated: false }),
+    }
   )
 );
