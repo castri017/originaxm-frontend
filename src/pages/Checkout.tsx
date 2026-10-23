@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { CheckCircle, Truck, Wallet, ArrowRight, X, UserCheck, Loader2, UserPlus, LogIn } from 'lucide-react';
 import { useCartStore } from '../store/useCartStore';
 import { useCatalogStore } from '../store/useCatalogStore';
-import { useCustomerAuthStore } from '../store/useCustomerAuthStore';
+import { useCustomerAuthStore, type CustomerSession } from '../store/useCustomerAuthStore';
 import { COLOMBIA_DATA } from '../data/colombia';
 
 import { API } from '../config/api';
@@ -26,6 +26,45 @@ interface PlacedOrder {
 const LETTERS_ONLY = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/;
 const DIGITS_ONLY  = /^\d+$/;
 
+interface CheckoutPrefill {
+  nombre: string;
+  apellidos: string;
+  email: string;
+  telefono: string;
+  direccion: string;
+  department: string;
+  city: string;
+  filled: boolean;
+}
+
+const EMPTY_PREFILL: CheckoutPrefill = {
+  nombre: '', apellidos: '', email: '', telefono: '', direccion: '', department: '', city: '', filled: false,
+};
+
+/** Datos de envío a partir de la sesión del cliente logueado; vacío si no hay sesión. */
+function prefillFromSession(customer: CustomerSession | null): CheckoutPrefill {
+  if (!customer) return EMPTY_PREFILL;
+
+  const onlyLetters = (value: string) => value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '').trim();
+  const [first = '', ...rest] = (customer.fullName ?? '').trim().split(/\s+/);
+
+  const cityLower = customer.city?.trim().toLowerCase() ?? '';
+  const dept = cityLower
+    ? COLOMBIA_DATA.find(d => d.cities.some(c => c.toLowerCase() === cityLower))
+    : undefined;
+
+  return {
+    nombre:     onlyLetters(first),
+    apellidos:  onlyLetters(rest.join(' ')),
+    email:      customer.email ?? '',
+    telefono:   (customer.phone ?? '').replace(/\D/g, '').slice(0, 10),
+    direccion:  customer.address ?? '',
+    department: dept?.department ?? '',
+    city:       dept?.cities.find(c => c.toLowerCase() === cityLower) ?? '',
+    filled:     true,
+  };
+}
+
 export default function Checkout() {
   const navigate          = useNavigate();
   const items             = useCartStore((s) => s.items);
@@ -35,14 +74,15 @@ export default function Checkout() {
   const customer          = useCustomerAuthStore((s) => s.customer);
   const isCustomerAuth    = useCustomerAuthStore((s) => s.isAuthenticated);
 
-  // Form state
-  const [nombre,     setNombre]     = useState('');
-  const [apellidos,  setApellidos]  = useState('');
-  const [email,      setEmail]      = useState('');
-  const [telefono,   setTelefono]   = useState('');
-  const [direccion,  setDireccion]  = useState('');
-  const [department, setDepartment] = useState('');
-  const [city,       setCity]       = useState('');
+  // Form state — si el cliente inició sesión, se precarga con los datos de su cuenta.
+  const [prefill] = useState(() => prefillFromSession(isCustomerAuth ? customer : null));
+  const [nombre,     setNombre]     = useState(prefill.nombre);
+  const [apellidos,  setApellidos]  = useState(prefill.apellidos);
+  const [email,      setEmail]      = useState(prefill.email);
+  const [telefono,   setTelefono]   = useState(prefill.telefono);
+  const [direccion,  setDireccion]  = useState(prefill.direccion);
+  const [department, setDepartment] = useState(prefill.department);
+  const [city,       setCity]       = useState(prefill.city);
   const [notes,      setNotes]      = useState('');
   const [payment,    setPayment]    = useState('sistecredito');
 
@@ -57,43 +97,8 @@ export default function Checkout() {
   const [loading,      setLoading]      = useState(false);
   const [apiError,     setApiError]     = useState('');
   const [placedOrder,  setPlacedOrder]  = useState<PlacedOrder | null>(null);
-  const [autoFilled,   setAutoFilled]   = useState(false);
-  const [lookingUp,    setLookingUp]    = useState(false);
+  const [autoFilled,   setAutoFilled]   = useState(prefill.filled);
   const [paymentMsg,   setPaymentMsg]   = useState('');   // mensaje durante el flujo Sistecredito
-
-  async function handleEmailBlur() {
-    const trimmed = email.trim();
-    if (!trimmed || !trimmed.includes('@')) return;
-    setLookingUp(true);
-    setAutoFilled(false);
-    try {
-      const res = await fetch(`${API}/api/customers?search=${encodeURIComponent(trimmed)}`);
-      if (!res.ok) return;
-      const list: any[] = await res.json();
-      const match = list.find(c => c.email?.toLowerCase() === trimmed.toLowerCase());
-      if (!match) return;
-
-      setNombre(match.firstName ?? '');
-      setApellidos(match.lastName ?? '');
-      setTelefono(match.phone ?? '');
-      setDireccion(match.address ?? '');
-
-      if (match.city) {
-        const dept = COLOMBIA_DATA.find(d =>
-          d.cities.some(c => c.toLowerCase() === match.city.toLowerCase())
-        );
-        if (dept) {
-          setDepartment(dept.department);
-          setCity(dept.cities.find(c => c.toLowerCase() === match.city.toLowerCase()) ?? '');
-        }
-      }
-      setAutoFilled(true);
-    } catch {
-      // silently ignore
-    } finally {
-      setLookingUp(false);
-    }
-  }
 
   const shippingThreshold   = 300000;
   const isLocalFreeShipping = department === 'Quindío' && city === 'Armenia';
@@ -442,17 +447,13 @@ export default function Checkout() {
                       type="email"
                       value={email}
                       onChange={e => { setEmail(e.target.value); setAutoFilled(false); }}
-                      onBlur={handleEmailBlur}
                       className={fieldCls('email')}
                       placeholder="tu@email.com"
                     />
-                    {lookingUp && (
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 font-mono text-[10.5px] text-brand-muted">Buscando…</span>
-                    )}
                   </div>
                   {autoFilled && (
                     <p className="flex items-center gap-1.5 text-brand-stock text-[12.5px] mt-1.5 font-semibold">
-                      <UserCheck className="w-3.5 h-3.5" /> Datos completados automáticamente
+                      <UserCheck className="w-3.5 h-3.5" /> Datos completados desde tu cuenta
                     </p>
                   )}
                   {errors.email && <p className="text-brand-copper-dark text-[12.5px] mt-1.5">{errors.email}</p>}
