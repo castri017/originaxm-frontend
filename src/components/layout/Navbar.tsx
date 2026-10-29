@@ -1,15 +1,11 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { API } from '../../config/api';
 import { ShoppingCart, User, Search, Menu, LogOut, ShieldCheck, X, ChevronDown, ArrowRight } from 'lucide-react';
 import { useCartStore } from '../../store/useCartStore';
 import { useAdminAuthStore } from '../../store/useAdminAuthStore';
 import { useCustomerAuthStore } from '../../store/useCustomerAuthStore';
 import { useUIStore } from '../../store/useUIStore';
 import { useEffect, useState, useRef } from 'react';
-
-interface ProdType  { id: string; name: string; }
-interface Brand     { id: string; name: string; types: ProdType[]; }
-interface NavCategory { id: string; name: string; brands: Brand[]; }
+import { useCategories } from '../../features/catalog/queries';
 
 export default function Navbar() {
   const itemsCount    = useCartStore((s) => s.getTotals().itemsCount);
@@ -25,20 +21,13 @@ export default function Navbar() {
   const openSearch  = useUIStore((s) => s.openSearch);
   const closeSearch = useUIStore((s) => s.closeSearch);
 
-  const [categories,   setCategories]   = useState<NavCategory[]>([]);
+  const { data: categories = [] } = useCategories();
   const [activeMenu,   setActiveMenu]   = useState<string | null>(null);
   const [drawerOpen,   setDrawerOpen]   = useState(false);
   const [searchQuery,  setSearchQuery]  = useState('');
   const [drawerCat,    setDrawerCat]    = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    fetch(`${API}/api/categories`)
-      .then(r => r.ok ? r.json() : [])
-      .then((data: NavCategory[]) => setCategories(data))
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     if (searchOpen) setTimeout(() => searchRef.current?.focus(), 50);

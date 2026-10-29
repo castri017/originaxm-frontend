@@ -1,44 +1,15 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { API } from '../config/api';
-import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Package, Loader2, ChevronDown, ShoppingCart } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { NotFoundError } from '../features/catalog/api';
+import { productQuery, useCategories, variantsQuery } from '../features/catalog/queries';
+import type { CatalogProduct } from '../features/catalog/types';
+import { imageUrl } from '../lib/imageUrl';
+import { ArrowLeft, Package, ChevronDown, ShoppingCart } from 'lucide-react';
 import { useCartStore } from '../store/useCartStore';
 import { getEffectiveDiscount, getFinalPrice } from '../features/promotions/pricing';
 
-interface ApiProduct {
-  id: string;
-  productCode: string;
-  name: string;
-  description: string;
-  detailedDescription?: string;
-  components?: string;
-  manufacturer?: string;
-  measurements?: string;
-  materials?: string;
-  color?: string;
-  shape?: string;
-  design?: string;
-  occasion?: string;
-  capacity?: string;
-  size?: string;
-  categoryId: string;
-  brandId?: string;
-  typeId?: string;
-  subTypeId?: string;
-  images: string[];
-  sellingPrice: number;
-  discountPercentage: number;
-  effectiveDiscountPercentage?: number;
-  stock: number;
-  isInternational?: boolean;
-  variantGroupId?: string | null;
-}
-
-interface ApiCategory {
-  id: string;
-  name: string;
-  brands: { id: string; name: string; types: { id: string; name: string; subTypes: { id: string; name: string }[] }[] }[];
-}
+type ApiProduct  = CatalogProduct;
 
 const WA_NUMBER = '573216481430';
 
@@ -48,10 +19,7 @@ const WA_ICON = (
   </svg>
 );
 
-function imgUrl(path: string) {
-  if (!path) return '';
-  return path.startsWith('http') ? path : `http://localhost:5173${path}`;
-}
+const imgUrl = imageUrl;
 
 function Accordion({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -69,69 +37,68 @@ function Accordion({ title, children, defaultOpen = false }: { title: string; ch
   );
 }
 
+function ProductDetailsSkeleton() {
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 lg:py-12 animate-pulse" aria-busy="true" aria-label="Cargando producto">
+      <div className="h-3 w-48 bg-brand-sand-dark mb-8" />
+      <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
+        <div className="aspect-square bg-brand-sand-dark" />
+        <div className="space-y-5">
+          <div className="h-3 w-24 bg-brand-sand-dark" />
+          <div className="h-9 w-3/4 bg-brand-sand-dark" />
+          <div className="h-7 w-32 bg-brand-sand-dark" />
+          <div className="flex gap-3">
+            {Array.from({ length: 4 }).map((_, i) => <div key={i} className="w-12 h-12 bg-brand-sand-dark" />)}
+          </div>
+          <div className="h-12 w-full bg-brand-sand-dark" />
+          <div className="h-24 w-full bg-brand-sand-dark" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ProductDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const addItem = useCartStore(state => state.addItem);
 
-  const [product, setProduct] = useState<ApiProduct | null>(null);
-  const [categories, setCategories] = useState<ApiCategory[]>([]);
-  const [allProducts, setAllProducts] = useState<ApiProduct[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
+  const queryClient = useQueryClient();
+  const productQ  = useQuery({ ...productQuery(queryClient, id ?? ''), enabled: !!id });
+  // Solo las variantes (colores) del producto, no todo el catálogo.
+  const variantsQ = useQuery({ ...variantsQuery(queryClient, id ?? ''), enabled: !!id });
+  const { data: categories = [] } = useCategories();
+
+  const product: ApiProduct | null = productQ.data ?? null;
+  const variants: ApiProduct[] = variantsQ.data ?? [];
+  // Con datos de una lista ya cargada (placeholder) la ficha se pinta sin esperar.
+  const loading  = productQ.isPending && !product;
+  const notFound = productQ.error instanceof NotFoundError;
+
   const [activeImg, setActiveImg] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const addedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const loadedIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    fetch(`${API}/api/categories`)
-      .then(r => r.ok ? r.json() : [])
-      .then(setCategories)
-      .catch(() => {});
-    fetch(`${API}/api/products`)
-      .then(r => r.ok ? r.json() : [])
-      .then(setAllProducts)
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    if (!id || loadedIdRef.current === id) return;
-    loadedIdRef.current = id;
-    setNotFound(false);
+  // Al cambiar de producto (p. ej. otro color) se reinicia la selección, sin un efecto extra.
+  const [shownId, setShownId] = useState(id);
+  if (id !== shownId) {
+    setShownId(id);
     setActiveImg(0);
     setQuantity(1);
     setAdded(false);
-
-    // Si ya tenemos el producto en la lista cacheada (ej. al cambiar de color),
-    // lo mostramos al instante sin spinner, y refrescamos en segundo plano.
-    const cached = allProducts.find(p => p.id === id);
-    if (cached) {
-      setProduct(cached);
-      setLoading(false);
-      fetch(`${API}/api/products/${id}`)
-        .then(r => r.ok ? r.json() : null)
-        .then(fresh => { if (fresh) setProduct(fresh); })
-        .catch(() => {});
-      return;
-    }
-
-    setLoading(true);
-    fetch(`${API}/api/products/${id}`)
-      .then(res => {
-        if (res.status === 404) { setNotFound(true); return null; }
-        return res.json();
-      })
-      .then(data => { if (data) setProduct(data); })
-      .catch(() => setNotFound(true))
-      .finally(() => setLoading(false));
-  }, [id, allProducts]);
+  }
 
   if (loading) {
+    return <ProductDetailsSkeleton />;
+  }
+
+  if (productQ.isError && !notFound && !product) {
     return (
-      <div className="flex items-center justify-center py-40">
-        <Loader2 className="w-7 h-7 animate-spin text-brand-line" />
+      <div role="alert" className="max-w-7xl mx-auto px-4 py-24 text-center">
+        <Package className="w-14 h-14 mx-auto mb-5 text-brand-line" />
+        <h2 className="font-display font-bold text-xl mb-4 text-brand-charcoal">No pudimos cargar el producto</h2>
+        <button onClick={() => productQ.refetch()} className="btn-ghost">Reintentar</button>
       </div>
     );
   }
@@ -175,8 +142,8 @@ export default function ProductDetails() {
   const type     = brand?.types.find(t => t.id === product.typeId);
   const subType  = type?.subTypes.find(s => s.id === product.subTypeId);
 
-  const colorVariants = product.variantGroupId
-    ? allProducts.filter(p => p.variantGroupId === product.variantGroupId)
+  const colorVariants = product.variantGroupId && variants.length > 0
+    ? variants
     : (product.color ? [product] : []);
 
   const specGrid = [

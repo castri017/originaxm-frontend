@@ -1,6 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { API } from '../config/api';
 import { adminFetch } from '../lib/adminFetch';
+import { imageUrl } from '../lib/imageUrl';
 import { Settings, Tag, Users, Package, TrendingUp, Plus, Edit, Trash2, ClipboardList, Eye, ArrowLeft, X, ShieldCheck, Lock, Mail, Loader2, AlertCircle, LogOut, BarChart3, DollarSign, RefreshCw, ChevronLeft, ChevronDown, Truck, FileBarChart2, Star, Globe, Wallet, Image as ImageIcon, ArrowUp, ArrowDown, Megaphone } from 'lucide-react';
 import PromotionsAdmin from '../features/promotions/PromotionsAdmin';
 import { useAdminAuthStore } from '../store/useAdminAuthStore';
@@ -2126,7 +2127,7 @@ function AdminPanel() {
                               <div className="w-10 h-[3.5rem] flex-shrink-0 rounded-sm border border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center">
                                 {product.images?.[0] ? (
                                   <img
-                                    src={product.images[0].startsWith('http') ? product.images[0] : `http://localhost:5173${product.images[0]}`}
+                                    src={imageUrl(product.images[0])}
                                     alt={product.name}
                                     className="w-full h-full object-contain p-0.5"
                                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -2670,7 +2671,7 @@ function AdminPanel() {
                                 <div className="flex items-center gap-3">
                                   <div className="w-12 h-12 flex-shrink-0 rounded-lg border border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center">
                                     {p.image ? (
-                                      <img src={p.image.startsWith('http') ? p.image : `http://localhost:5173${p.image}`}
+                                      <img src={imageUrl(p.image)}
                                         alt={p.name} className="w-full h-full object-contain p-1"
                                         onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
                                     ) : (
@@ -2850,7 +2851,7 @@ function AdminPanel() {
                                   <div className="w-10 h-[3.5rem] flex-shrink-0 rounded-sm border border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center">
                                     {item.productImage ? (
                                       <img
-                                        src={item.productImage.startsWith('http') ? item.productImage : `http://localhost:5173${item.productImage}`}
+                                        src={imageUrl(item.productImage)}
                                         alt={item.productName}
                                         className="w-full h-full object-contain p-0.5"
                                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -3030,7 +3031,7 @@ function AdminPanel() {
                                   <div className="w-10 h-[3.5rem] flex-shrink-0 rounded-sm border border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center">
                                     {s.productImage ? (
                                       <img
-                                        src={s.productImage.startsWith('http') ? s.productImage : `http://localhost:5173${s.productImage}`}
+                                        src={imageUrl(s.productImage)}
                                         alt={s.productName}
                                         className="w-full h-full object-contain p-0.5"
                                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -3737,7 +3738,7 @@ function AdminPanel() {
                                 <div className="w-10 h-[3.5rem] flex-shrink-0 rounded-sm border border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center">
                                   {product.images?.[0] ? (
                                     <img
-                                      src={product.images[0].startsWith('http') ? product.images[0] : `http://localhost:5173${product.images[0]}`}
+                                      src={imageUrl(product.images[0])}
                                       alt={product.name}
                                       className="w-full h-full object-contain p-0.5"
                                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -3843,7 +3844,7 @@ function AdminPanel() {
                                 <div className="w-10 h-[3.5rem] flex-shrink-0 rounded-sm border border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center">
                                   {product.images?.[0] ? (
                                     <img
-                                      src={product.images[0].startsWith('http') ? product.images[0] : `http://localhost:5173${product.images[0]}`}
+                                      src={imageUrl(product.images[0])}
                                       alt={product.name}
                                       className="w-full h-full object-contain p-0.5"
                                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -3947,7 +3948,7 @@ function AdminPanel() {
                                 <div className="w-10 h-[3.5rem] flex-shrink-0 rounded-sm border border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center">
                                   {product.images?.[0] ? (
                                     <img
-                                      src={product.images[0].startsWith('http') ? product.images[0] : `http://localhost:5173${product.images[0]}`}
+                                      src={imageUrl(product.images[0])}
                                       alt={product.name}
                                       className="w-full h-full object-contain p-0.5"
                                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -4839,7 +4840,7 @@ function AdminPanel() {
                       <>
                         <div className="w-8 h-8 flex-shrink-0 rounded-sm border border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center">
                           {img ? (
-                            <img src={img.startsWith('http') ? img : `http://localhost:5173${img}`} alt="" className="w-full h-full object-contain" />
+                            <img src={imageUrl(img)} alt="" className="w-full h-full object-contain" />
                           ) : (
                             <Package className="w-3.5 h-3.5 text-gray-300" />
                           )}
@@ -4874,7 +4875,7 @@ function AdminPanel() {
                             >
                               <div className="w-8 h-8 flex-shrink-0 rounded-sm border border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center">
                                 {img ? (
-                                  <img src={img.startsWith('http') ? img : `http://localhost:5173${img}`} alt="" className="w-full h-full object-contain" />
+                                  <img src={imageUrl(img)} alt="" className="w-full h-full object-contain" />
                                 ) : (
                                   <Package className="w-3.5 h-3.5 text-gray-300" />
                                 )}
@@ -5083,7 +5084,7 @@ function AdminPanel() {
                 <div className="flex gap-2 flex-wrap">
                   {detailProduct.images.map((src, i) => (
                     <div key={i} className="w-20 h-28 border border-gray-100 rounded-sm overflow-hidden bg-gray-50 flex items-center justify-center">
-                      <img src={src.startsWith('http') ? src : `http://localhost:5173${src}`}
+                      <img src={imageUrl(src)}
                         alt={`foto-${i+1}`} className="w-full h-full object-contain p-1" />
                     </div>
                   ))}
@@ -5256,7 +5257,7 @@ function AdminPanel() {
                         <div className="flex flex-wrap gap-2">
                           {editExistingImages.map((src, i) => (
                             <div key={i} className="relative w-20 h-[5.5rem] border border-gray-200 rounded-sm overflow-hidden bg-gray-50 group">
-                              <img src={src.startsWith('http') ? src : `http://localhost:5173${src}`}
+                              <img src={imageUrl(src)}
                                 alt={`img-${i+1}`} className="w-full h-full object-contain p-1" />
                               <button type="button"
                                 onClick={() => setEditExistingImages(prev => prev.filter((_, j) => j !== i))}

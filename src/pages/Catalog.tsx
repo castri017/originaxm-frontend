@@ -1,25 +1,22 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { API } from '../config/api';
 import { useSearchParams } from 'react-router-dom';
 import { Package, X, ChevronDown } from 'lucide-react';
-import { useCatalogStore } from '../store/useCatalogStore';
+import { useCategories, useProducts } from '../features/catalog/queries';
+import type { CatalogCategory, CatalogProduct, CatalogSubType, CatalogType } from '../features/catalog/types';
 import FloatingCartButton from '../components/layout/FloatingCartButton';
 import ProductCard from '../components/ProductCard';
 import { fetchActivePromotions } from '../features/promotions/api';
 import type { Promotion } from '../features/promotions/types';
 
 /* ── Types ────────────────────────────────────────────────── */
-interface ApiProduct {
-  id: string; name: string; manufacturer: string;
-  categoryId: string; typeId: string; subTypeId: string;
-  images: string[]; sellingPrice: number; discountPercentage: number; stock: number;
-  effectiveDiscountPercentage?: number;
-  isInternational?: boolean;
-}
-interface SubType  { id: string; name: string; }
-interface ProdType { id: string; name: string; subTypes: SubType[]; }
-interface Brand    { id: string; name: string; types: ProdType[]; }
-interface ApiCategory { id: string; name: string; brands: Brand[]; }
+type ApiProduct  = CatalogProduct;
+type ApiCategory = CatalogCategory;
+type ProdType    = CatalogType;
+type SubType     = CatalogSubType;
+
+// Referencias estables mientras carga, para no invalidar los useMemo en cada render.
+const NO_PRODUCTS: ApiProduct[] = [];
+const NO_CATEGORIES: ApiCategory[] = [];
 type SortOption = '' | 'price_asc' | 'price_desc' | 'name_asc' | 'name_desc';
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
@@ -77,11 +74,12 @@ function DropItem({ label, count, active, onClick }: { label: string; count?: nu
 /* ── Main ─────────────────────────────────────────────────── */
 export default function Catalog() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const catalogVersion = useCatalogStore((s) => s.version);
-
-  const [products,   setProducts]   = useState<ApiProduct[]>([]);
-  const [categories, setCategories] = useState<ApiCategory[]>([]);
-  const [loading,    setLoading]    = useState(true);
+  // Caché compartida con Inicio y la ficha: si ya se cargó, la grilla aparece al instante.
+  const productsQuery   = useProducts();
+  const categoriesQuery = useCategories();
+  const products: ApiProduct[]    = productsQuery.data ?? NO_PRODUCTS;
+  const categories: ApiCategory[] = categoriesQuery.data ?? NO_CATEGORIES;
+  const loading = productsQuery.isPending;
   const [imgErrors,  setImgErrors]  = useState<Set<string>>(new Set());
   const onImgError = (id: string) => setImgErrors(s => new Set(s).add(id));
 
@@ -127,16 +125,6 @@ export default function Catalog() {
     return () => document.removeEventListener('mousedown', h);
   }, []);
 
-  useEffect(() => {
-    setLoading(true);
-    Promise.all([
-      fetch(`${API}/api/products`).then(r => r.ok ? r.json() : []),
-      fetch(`${API}/api/categories`).then(r => r.ok ? r.json() : []),
-    ])
-      .then(([prods, cats]) => { setProducts(prods); setCategories(cats); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [catalogVersion]);
 
   /* derived options — only show items with products */
   const availableTypes = useMemo<ProdType[]>(() => {
@@ -347,6 +335,14 @@ export default function Catalog() {
               </div>
             </div>
           ))}
+        </div>
+      ) : productsQuery.isError && products.length === 0 ? (
+        <div role="alert" className="flex flex-col items-center justify-center py-28 text-center">
+          <Package className="w-14 h-14 text-brand-line mb-4" />
+          <p className="text-brand-charcoal-light">No pudimos cargar el catálogo. Revisa tu conexión.</p>
+          <button onClick={() => productsQuery.refetch()} className="btn-ghost mt-6">
+            Reintentar
+          </button>
         </div>
       ) : filteredProducts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-28 text-center">
