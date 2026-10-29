@@ -1,31 +1,9 @@
 import { Link } from 'react-router-dom';
-import { API } from '../config/api';
 import { useRef, useEffect, useState } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight, Package } from 'lucide-react';
-import { useCatalogStore } from '../store/useCatalogStore';
+import { useBanners, useFeatured, useProducts, useRecommended } from '../features/catalog/queries';
 import FloatingCartButton from '../components/layout/FloatingCartButton';
 import ProductCard from '../components/ProductCard';
-
-interface ApiBanner {
-  id: string;
-  imageUrl: string;
-  sortOrder: number;
-}
-
-interface ApiProduct {
-  id: string;
-  name: string;
-  description: string;
-  manufacturer: string;
-  categoryId: string;
-  images: string[];
-  sellingPrice: number;
-  discountPercentage: number;
-  stock: number;
-  isRecommended?: boolean;
-  recommendedOrder?: number;
-  isInternational?: boolean;
-}
 
 const TRUST = [
   { title: '100% originales', detail: 'Compra verificada al distribuidor' },
@@ -36,45 +14,15 @@ const TRUST = [
 export default function Home() {
   const sliderRef = useRef<HTMLDivElement>(null);
   const recSliderRef = useRef<HTMLDivElement>(null);
-  const [products, setProducts] = useState<ApiProduct[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [recommended, setRecommended] = useState<ApiProduct[]>([]);
-  const [recLoading, setRecLoading] = useState(true);
-  const [featured, setFeatured] = useState<ApiProduct[]>([]);
-  const [featLoading, setFeatLoading] = useState(true);
   const [imgErrors, setImgErrors] = useState<Set<string>>(new Set());
   const onImgError = (id: string) => setImgErrors(s => new Set(s).add(id));
-  const catalogVersion = useCatalogStore((s) => s.version);
-  const [banners, setBanners] = useState<ApiBanner[]>([]);
   const [bannerIndex, setBannerIndex] = useState(0);
 
-  const loadProducts = () =>
-    fetch(`${API}/api/products`)
-      .then(r => r.ok ? r.json() : [])
-      .then((data: ApiProduct[]) => setProducts(data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-
-  const loadRecommended = () =>
-    fetch(`${API}/api/recommended`)
-      .then(r => r.ok ? r.json() : [])
-      .then((data: ApiProduct[]) => setRecommended(data))
-      .catch(() => {})
-      .finally(() => setRecLoading(false));
-
-  const loadFeatured = () =>
-    fetch(`${API}/api/featured`)
-      .then(r => r.ok ? r.json() : [])
-      .then((data: ApiProduct[]) => setFeatured(data))
-      .catch(() => {})
-      .finally(() => setFeatLoading(false));
-
-  useEffect(() => {
-    fetch(`${API}/api/banners`)
-      .then(r => r.ok ? r.json() : [])
-      .then((data: ApiBanner[]) => setBanners(data))
-      .catch(() => {});
-  }, []);
+  // Caché compartida: al volver a Inicio desde otra página no se repiten las consultas.
+  const { data: products = [], isPending: loading } = useProducts();
+  const { data: recommended = [], isPending: recLoading } = useRecommended();
+  const { data: featured = [], isPending: featLoading } = useFeatured();
+  const { data: banners = [] } = useBanners();
 
   // Rota automáticamente entre las imágenes del banner cuando hay más de una.
   useEffect(() => {
@@ -84,32 +32,6 @@ export default function Home() {
     }, 5000);
     return () => clearInterval(timer);
   }, [banners.length]);
-
-  useEffect(() => {
-    setLoading(true);
-    setRecLoading(true);
-    setFeatLoading(true);
-    loadProducts();
-    loadRecommended();
-    loadFeatured();
-
-    // El catálogo se cachea 10 min en el backend; no tiene sentido consultar más seguido que eso,
-    // y solo mientras la pestaña está visible (evita pings de fondo indefinidos que mantienen la DB activa).
-    const reloadAll = () => { loadProducts(); loadRecommended(); loadFeatured(); };
-    const timer = setInterval(() => {
-      if (document.visibilityState === 'visible') reloadAll();
-    }, 600000);
-
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') reloadAll();
-    };
-    document.addEventListener('visibilitychange', onVisibilityChange);
-
-    return () => {
-      clearInterval(timer);
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-    };
-  }, [catalogVersion]);
 
   const scroll = (direction: 'left' | 'right') => {
     if (sliderRef.current) {

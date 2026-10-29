@@ -1,5 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Package } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { prefetchProduct } from '../features/catalog/queries';
+import { imageUrl } from '../lib/imageUrl';
 import { getEffectiveDiscount, getFinalPrice } from '../features/promotions/pricing';
 
 export interface CardProduct {
@@ -35,7 +38,10 @@ export default function ProductCard({
   product, badge, priority, fit = 'contain', onImgError, imgFailed, className = '',
 }: Props) {
   const raw = product.images?.[0];
-  const img = raw ? (raw.startsWith('http') ? raw : `http://localhost:5173${raw}`) : null;
+  const img = raw ? imageUrl(raw) : null;
+  const queryClient = useQueryClient();
+  // Precarga la ficha con la intención de abrirla (hover, foco o toque), antes del clic.
+  const prefetch = () => prefetchProduct(queryClient, product.id);
 
   const discount   = getEffectiveDiscount(product);
   const finalPrice = getFinalPrice(product);
@@ -43,7 +49,13 @@ export default function ProductCard({
   const soldOut = product.stock <= 0;
 
   return (
-    <Link to={`/product/${product.id}`} className={`group flex flex-col ${className}`}>
+    <Link
+      to={`/product/${product.id}`}
+      className={`group flex flex-col ${className}`}
+      onMouseEnter={prefetch}
+      onFocus={prefetch}
+      onTouchStart={prefetch}
+    >
       {/* Imagen: sin banda negra encima. Las etiquetas viven arriba, el envío abajo del precio. */}
       <div className={`relative aspect-[3/4] overflow-hidden mb-3.5 border border-brand-line flex items-center justify-center ${fit === 'contain' ? 'bg-brand-sand p-4' : 'bg-brand-sand-dark'}`}>
         {img && !imgFailed ? (
