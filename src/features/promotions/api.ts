@@ -1,6 +1,7 @@
 import { API } from '../../config/api';
 import { adminFetch } from '../../lib/adminFetch';
 import type { Promotion, PromotionInput } from './types';
+import { compressImage } from '../../lib/compressImage';
 
 const BASE = `${API}/api/promotions`;
 
@@ -39,7 +40,7 @@ export async function deletePromotion(id: string): Promise<void> {
 /** Sube la imagen y devuelve su URL pública. */
 export async function uploadPromotionImage(file: File): Promise<string> {
   const fd = new FormData();
-  fd.append('files', file);
+  fd.append('files', await compressImage(file, 'promotion'));
   const res = await adminFetch(`${API}/api/uploads/promotions`, {
     method: 'POST',
     body: fd,

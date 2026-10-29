@@ -5,6 +5,7 @@ import { Settings, Tag, Users, Package, TrendingUp, Plus, Edit, Trash2, Clipboar
 import PromotionsAdmin from '../features/promotions/PromotionsAdmin';
 import { useAdminAuthStore } from '../store/useAdminAuthStore';
 import { useCatalogStore } from '../store/useCatalogStore';
+import { compressImage, compressImages } from '../lib/compressImage';
 
 const ORDER_STATUSES = ['Procesando', 'Picking', 'Enviado', 'En Tránsito', 'Entregado', 'Cancelado'];
 
@@ -527,7 +528,7 @@ function AdminPanel() {
     setBannerUploading(true);
     try {
       const fd = new FormData();
-      fd.append('files', file);
+      fd.append('files', await compressImage(file, 'banner'));
       const upRes = await adminFetch(`${API}/api/uploads/banners`, { method: 'POST', body: fd });
       if (!upRes.ok) throw new Error('Error al subir la imagen.');
       const upData = await upRes.json();
@@ -1220,7 +1221,7 @@ function AdminPanel() {
       let newUrls: string[] = [];
       if (editImageFiles.length > 0) {
         const fd = new FormData();
-        editImageFiles.forEach(f => fd.append('files', f));
+        (await compressImages(editImageFiles, 'product')).forEach(f => fd.append('files', f));
         const upRes = await adminFetch(`${API}/api/uploads/products`, { method: 'POST', body: fd });
         if (!upRes.ok) throw new Error('Error al subir imágenes.');
         const upData = await upRes.json();
@@ -1306,7 +1307,7 @@ function AdminPanel() {
       let paths: string[] = [];
       if (npImageFiles.length > 0) {
         const fd = new FormData();
-        npImageFiles.forEach(f => fd.append('files', f));
+        (await compressImages(npImageFiles, 'product')).forEach(f => fd.append('files', f));
         const upRes = await adminFetch(`${API}/api/uploads/products`, { method: 'POST', body: fd });
         if (!upRes.ok) throw new Error('Error al subir imágenes.');
         const upData = await upRes.json();
