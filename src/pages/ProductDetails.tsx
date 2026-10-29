@@ -76,7 +76,8 @@ export default function ProductDetails() {
 
   const [product, setProduct] = useState<ApiProduct | null>(null);
   const [categories, setCategories] = useState<ApiCategory[]>([]);
-  const [allProducts, setAllProducts] = useState<ApiProduct[]>([]);
+  // Solo las variantes (colores) del producto, no todo el catálogo.
+  const [variants, setVariants] = useState<ApiProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
@@ -90,10 +91,6 @@ export default function ProductDetails() {
       .then(r => r.ok ? r.json() : [])
       .then(setCategories)
       .catch(() => {});
-    fetch(`${API}/api/products`)
-      .then(r => r.ok ? r.json() : [])
-      .then(setAllProducts)
-      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -104,9 +101,9 @@ export default function ProductDetails() {
     setQuantity(1);
     setAdded(false);
 
-    // Si ya tenemos el producto en la lista cacheada (ej. al cambiar de color),
-    // lo mostramos al instante sin spinner, y refrescamos en segundo plano.
-    const cached = allProducts.find(p => p.id === id);
+    // Al cambiar de color el producto ya está entre las variantes cargadas:
+    // lo mostramos al instante sin spinner y refrescamos en segundo plano.
+    const cached = variants.find(p => p.id === id);
     if (cached) {
       setProduct(cached);
       setLoading(false);
@@ -118,6 +115,11 @@ export default function ProductDetails() {
     }
 
     setLoading(true);
+    setVariants([]);
+    fetch(`${API}/api/products/${id}/variants`)
+      .then(r => r.ok ? r.json() : [])
+      .then(setVariants)
+      .catch(() => {});
     fetch(`${API}/api/products/${id}`)
       .then(res => {
         if (res.status === 404) { setNotFound(true); return null; }
@@ -126,7 +128,7 @@ export default function ProductDetails() {
       .then(data => { if (data) setProduct(data); })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
-  }, [id, allProducts]);
+  }, [id, variants]);
 
   if (loading) {
     return (
@@ -175,8 +177,8 @@ export default function ProductDetails() {
   const type     = brand?.types.find(t => t.id === product.typeId);
   const subType  = type?.subTypes.find(s => s.id === product.subTypeId);
 
-  const colorVariants = product.variantGroupId
-    ? allProducts.filter(p => p.variantGroupId === product.variantGroupId)
+  const colorVariants = product.variantGroupId && variants.length > 0
+    ? variants
     : (product.color ? [product] : []);
 
   const specGrid = [
