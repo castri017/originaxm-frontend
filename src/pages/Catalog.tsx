@@ -5,6 +5,7 @@ import { useCategories, useProducts } from '../features/catalog/queries';
 import type { CatalogCategory, CatalogProduct, CatalogSubType, CatalogType } from '../features/catalog/types';
 import FloatingCartButton from '../components/layout/FloatingCartButton';
 import ProductCard from '../components/ProductCard';
+import { groupProductsByCategory } from '../features/catalog/grouping';
 import { fetchActivePromotions } from '../features/promotions/api';
 import type { Promotion } from '../features/promotions/types';
 
@@ -169,6 +170,12 @@ export default function Catalog() {
     }
     return list;
   }, [products, activePromo, activeCat, activeType, activeSubType, priceMin, priceMax, sortOrder]);
+
+  /* Con "Relevancia" el muro se muestra por categoría y tipo; si el usuario elige un orden, va en una sola grilla. */
+  const groupedSections = useMemo(
+    () => (sortOrder ? null : groupProductsByCategory(filteredProducts, categories)),
+    [sortOrder, filteredProducts, categories],
+  );
 
   const clearPromo = () => {
     const p = new URLSearchParams(searchParams); p.delete('promo');
@@ -351,6 +358,43 @@ export default function Catalog() {
           <button onClick={clearAll} className="btn-ghost mt-6">
             Ver todos
           </button>
+        </div>
+      ) : groupedSections ? (
+        <div className="flex flex-col gap-16">
+          {groupedSections.map((section, sectionIndex) => (
+            <section key={section.id || 'otros'} aria-labelledby={`cat-${section.id || 'otros'}`}>
+              <div className="flex items-baseline justify-between gap-4 border-b border-brand-line pb-3 mb-7">
+                <h2 id={`cat-${section.id || 'otros'}`} className="font-display font-extrabold text-[24px] sm:text-[28px] tracking-[-0.03em] text-brand-charcoal-dark">
+                  {section.name}
+                </h2>
+                <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-brand-muted shrink-0">
+                  {section.total} producto{section.total !== 1 ? 's' : ''}
+                </span>
+              </div>
+              <div className="flex flex-col gap-10">
+                {section.types.map((group, groupIndex) => (
+                  <div key={group.id || 'otros'}>
+                    {section.types.length > 1 && (
+                      <h3 className="font-mono text-[11px] uppercase tracking-[0.16em] text-brand-charcoal-light mb-5">
+                        {group.name} <span className="text-brand-muted">· {group.products.length}</span>
+                      </h3>
+                    )}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-x-6 gap-y-10">
+                      {group.products.map((product, index) => (
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          priority={sectionIndex === 0 && groupIndex === 0 && index === 0}
+                          imgFailed={imgErrors.has(product.id)}
+                          onImgError={() => onImgError(product.id)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-x-6 gap-y-10">
