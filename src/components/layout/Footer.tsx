@@ -1,5 +1,8 @@
 import { Link } from 'react-router-dom';
-import { Instagram, MessageCircle } from 'lucide-react';
+import { Instagram, MessageCircle, ShieldCheck } from 'lucide-react';
+
+/** Guía en PDF para identificar un termo Stanley original (vive en /public/guias). */
+const GUIA_TERMO_ORIGINAL = '/guias/stanley-original.pdf';
 
 export default function Footer() {
   return (
@@ -47,6 +50,15 @@ export default function Footer() {
             <Link to="/shipping" className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-brand-copper-light hover:text-brand-copper transition-colors">
               Ver el paso a paso
             </Link>
+            <a
+              href={GUIA_TERMO_ORIGINAL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-flex w-fit items-center gap-2 border border-brand-copper px-4 py-2.5 text-[13px] font-semibold text-brand-copper-light hover:bg-brand-copper hover:text-brand-charcoal-dark transition-colors"
+            >
+              <ShieldCheck className="w-4 h-4" aria-hidden="true" />
+              Detecta tu termo original
+            </a>
           </div>
         </div>
 
