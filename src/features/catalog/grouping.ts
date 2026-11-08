@@ -69,3 +69,12 @@ export function groupProductsByCategory(
 
   return sections;
 }
+
+/**
+ * Aplana las secciones en una sola lista, en el mismo orden en que se ven en
+ * "Todo el catálogo" (categoría → tipo → nombre). Útil para mostrar una muestra
+ * del catálogo fuera de él, como la grilla de Inicio.
+ */
+export function flattenSections(sections: ProductCategorySection[]): CatalogProduct[] {
+  return sections.flatMap(section => section.types.flatMap(type => type.products));
+}
