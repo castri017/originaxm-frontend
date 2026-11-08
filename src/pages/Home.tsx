@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useMemo, useState } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight, Package } from 'lucide-react';
-import { useBanners, useFeatured, useProducts, useRecommended } from '../features/catalog/queries';
+import { useBanners, useCategories, useFeatured, useProducts, useRecommended } from '../features/catalog/queries';
+import { flattenSections, groupProductsByCategory } from '../features/catalog/grouping';
 import FloatingCartButton from '../components/layout/FloatingCartButton';
 import ProductCard from '../components/ProductCard';
 
@@ -19,10 +20,19 @@ export default function Home() {
   const [bannerIndex, setBannerIndex] = useState(0);
 
   // Caché compartida: al volver a Inicio desde otra página no se repiten las consultas.
-  const { data: products = [], isPending: loading } = useProducts();
+  const { data: products, isPending: productsLoading } = useProducts();
+  const { data: categories, isPending: categoriesLoading } = useCategories();
+  const loading = productsLoading || categoriesLoading;
   const { data: recommended = [], isPending: recLoading } = useRecommended();
   const { data: featured = [], isPending: featLoading } = useFeatured();
   const { data: banners = [] } = useBanners();
+
+  // Mismo orden que "Todo el catálogo" (categoría → tipo → nombre), para que Inicio
+  // muestre los productos tal como están organizados en el admin.
+  const catalogOrdered = useMemo(
+    () => (products ? flattenSections(groupProductsByCategory(products, categories ?? [])) : []),
+    [products, categories],
+  );
 
   // Rota automáticamente entre las imágenes del banner cuando hay más de una.
   useEffect(() => {
@@ -236,7 +246,7 @@ export default function Home() {
       </section>
 
       {/* ── Grid del catálogo ── */}
-      {!loading && products.length > 0 && (
+      {!loading && catalogOrdered.length > 0 && (
         <section className="py-16 lg:py-20">
           <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-end justify-between gap-4 mb-10">
@@ -249,7 +259,7 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-x-6 gap-y-10">
-              {products.slice(0, 8).map((product) => (
+              {catalogOrdered.slice(0, 8).map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}
