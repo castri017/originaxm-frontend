@@ -58,7 +58,10 @@ export default function Seo({
   noindex = false,
   jsonLd,
 }: SeoProps) {
-  const fullTitle = title ? `${title} | ${SITE.name}` : DEFAULT_TITLE;
+  // Si el título ya menciona la marca (p. ej. un título SEO escrito en el admin) no se repite.
+  const fullTitle = !title
+    ? DEFAULT_TITLE
+    : title.toLowerCase().includes(SITE.name.toLowerCase()) ? title : `${title} | ${SITE.name}`;
   const url = `${SITE.url}${path}`;
   const imageUrl = absolute(image);
   const jsonLdText = jsonLd ? JSON.stringify(jsonLd) : null;

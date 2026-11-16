@@ -28,7 +28,8 @@ export default function ProductSeo({ product, brandName, categoryName }: Props) 
 
   const details = [product.capacity, product.color].filter(Boolean).join(' · ');
   const baseDescription = product.description || product.detailedDescription || '';
-  const description = clip(
+  // El texto SEO escrito en el admin manda; si no hay, se genera con los datos del producto.
+  const description = product.seoDescription?.trim() || clip(
     `${baseDescription} ${details ? `${details}. ` : ''}100% original, envío a todo Colombia.`,
     158,
   );
@@ -49,6 +50,9 @@ export default function ProductSeo({ product, brandName, categoryName }: Props) 
     ...(categoryName && { category: categoryName }),
     ...(product.color && { color: product.color }),
     ...(product.materials && { material: product.materials }),
+    ...(product.weightGrams && {
+      weight: { '@type': 'QuantitativeValue', value: product.weightGrams, unitCode: 'GRM' },
+    }),
     offers: {
       '@type': 'Offer',
       url,
@@ -69,7 +73,7 @@ export default function ProductSeo({ product, brandName, categoryName }: Props) 
 
   return (
     <Seo
-      title={product.name}
+      title={product.seoTitle?.trim() || product.name}
       description={description}
       path={path}
       image={images[0]}
