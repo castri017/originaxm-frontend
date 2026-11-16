@@ -6,6 +6,7 @@ import { productQuery, useCategories, variantsQuery } from '../features/catalog/
 import type { CatalogProduct } from '../features/catalog/types';
 import { imageUrl } from '../lib/imageUrl';
 import { ArrowLeft, Package, ChevronDown, ShieldCheck, ShoppingCart } from 'lucide-react';
+import { ThermalSpecs } from '../features/thermal/ThermalHours';
 import { useCartStore } from '../store/useCartStore';
 import { getEffectiveDiscount, getFinalPrice } from '../features/promotions/pricing';
 
@@ -147,7 +148,7 @@ export default function ProductDetails() {
     : (product.color ? [product] : []);
 
   const specGrid = [
-    { label: 'Frío / calor', value: product.measurements },
+    { label: 'Medidas',      value: product.measurements },
     { label: 'Capacidad',    value: product.capacity     },
     { label: 'Material',     value: product.materials    },
     { label: 'Libre de',     value: product.components   },
@@ -320,6 +321,8 @@ export default function ProductDetails() {
             </div>
           )}
 
+          <ThermalSpecs product={product} />
+
           {/* Compra */}
           <div className="flex flex-col gap-3">
             {outOfStock ? (
@@ -365,13 +368,18 @@ export default function ProductDetails() {
                     {added ? 'Añadido al carrito' : `Añadir al carrito · $${finalPrice.toLocaleString('es-CL')}`}
                   </button>
                 </div>
-                <p className="flex items-center gap-2 text-[13px] text-brand-charcoal-light -mt-1">
-                  <ShieldCheck className="w-4 h-4 text-brand-stock flex-shrink-0" aria-hidden="true" />
-                  <span>
-                    <strong className="font-display font-bold text-brand-stock">Producto 100% original.</strong>{' '}
-                    Compra verificada al distribuidor.
+                <div className="flex items-center gap-3.5 border border-brand-stock/30 bg-brand-stock/[0.06] px-4 py-3">
+                  <span className="w-10 h-10 flex-shrink-0 rounded-full border-2 border-brand-stock flex items-center justify-center">
+                    <ShieldCheck className="w-5 h-5 text-brand-stock" aria-hidden="true" />
                   </span>
-                </p>
+                  <span className="flex flex-col gap-0.5">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-brand-stock">Sello de autenticidad</span>
+                    <span className="font-display font-bold text-[14.5px] text-brand-charcoal-dark leading-snug">
+                      Producto 100% original
+                    </span>
+                    <span className="text-[12.5px] text-brand-charcoal-light leading-snug">Compra verificada al distribuidor oficial.</span>
+                  </span>
+                </div>
                 {added && (
                   <Link to="/cart" className="btn-ghost w-full">
                     Ver carrito
