@@ -5,7 +5,8 @@ import { NotFoundError } from '../features/catalog/api';
 import { productQuery, useCategories, variantsQuery } from '../features/catalog/queries';
 import type { CatalogProduct } from '../features/catalog/types';
 import { imageUrl } from '../lib/imageUrl';
-import { ArrowLeft, Package, ChevronDown, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Package, ChevronDown, ShieldCheck, ShoppingCart } from 'lucide-react';
+import { ThermalSpecs } from '../features/thermal/ThermalHours';
 import { useCartStore } from '../store/useCartStore';
 import { getEffectiveDiscount, getFinalPrice } from '../features/promotions/pricing';
 
@@ -147,7 +148,7 @@ export default function ProductDetails() {
     : (product.color ? [product] : []);
 
   const specGrid = [
-    { label: 'Frío / calor', value: product.measurements },
+    { label: 'Medidas',      value: product.measurements },
     { label: 'Capacidad',    value: product.capacity     },
     { label: 'Material',     value: product.materials    },
     { label: 'Libre de',     value: product.components   },
@@ -320,6 +321,8 @@ export default function ProductDetails() {
             </div>
           )}
 
+          <ThermalSpecs product={product} />
+
           {/* Compra */}
           <div className="flex flex-col gap-3">
             {outOfStock ? (
@@ -364,6 +367,18 @@ export default function ProductDetails() {
                     <ShoppingCart key={String(added)} className={`w-4 h-4 ${added ? 'anim-bump' : ''}`} />
                     {added ? 'Añadido al carrito' : `Añadir al carrito · $${finalPrice.toLocaleString('es-CL')}`}
                   </button>
+                </div>
+                <div className="flex items-center gap-3.5 border border-brand-stock/30 bg-brand-stock/[0.06] px-4 py-3">
+                  <span className="w-10 h-10 flex-shrink-0 rounded-full border-2 border-brand-stock flex items-center justify-center">
+                    <ShieldCheck className="w-5 h-5 text-brand-stock" aria-hidden="true" />
+                  </span>
+                  <span className="flex flex-col gap-0.5">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-brand-stock">Sello de autenticidad</span>
+                    <span className="font-display font-bold text-[14.5px] text-brand-charcoal-dark leading-snug">
+                      Producto 100% original
+                    </span>
+                    <span className="text-[12.5px] text-brand-charcoal-light leading-snug">Compra verificada al distribuidor oficial.</span>
+                  </span>
                 </div>
                 {added && (
                   <Link to="/cart" className="btn-ghost w-full">

@@ -1,5 +1,7 @@
+import type { ThermalHours } from '../thermal/thermal';
+
 /** Producto tal como lo devuelve la API pública (`ProductDto`). */
-export interface CatalogProduct {
+export interface CatalogProduct extends ThermalHours {
   id: string;
   productCode: string;
   name: string;

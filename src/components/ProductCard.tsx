@@ -5,8 +5,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { prefetchProduct } from '../features/catalog/queries';
 import { imageUrl } from '../lib/imageUrl';
 import { getEffectiveDiscount, getFinalPrice } from '../features/promotions/pricing';
+import { ThermalSummary } from '../features/thermal/ThermalHours';
+import type { ThermalHours } from '../features/thermal/thermal';
 
-export interface CardProduct {
+export interface CardProduct extends ThermalHours {
   id: string;
   name: string;
   manufacturer?: string;
@@ -136,6 +138,8 @@ export default function ProductCard({
             )}
           </div>
         )}
+
+        <ThermalSummary product={product} />
 
         {/* Sello de envío discreto */}
         <span className={product.isInternational ? 'ship-note' : 'ship-note-stock'}>
