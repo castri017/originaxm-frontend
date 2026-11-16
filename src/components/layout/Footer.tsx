@@ -39,6 +39,8 @@ export default function Footer() {
                 {SITE.whatsapp.display}
               </a>
               <br />
+              <a href={`mailto:${SITE.email}`} className="hover:text-brand-copper-light transition-colors">{SITE.email}</a>
+              <br />
               Armenia, Quindío · Colombia
             </p>
           </div>
@@ -48,6 +50,7 @@ export default function Footer() {
             <ul className="flex flex-col gap-2.5 text-sm text-brand-sand-dark/85">
               <li><Link to="/catalog" className="hover:text-brand-copper-light transition-colors">Todos los productos</Link></li>
               <li><Link to="/#novedades" className="hover:text-brand-copper-light transition-colors">Novedades</Link></li>
+              <li><Link to="/blog" className="hover:text-brand-copper-light transition-colors">Blog</Link></li>
             </ul>
           </div>
 
