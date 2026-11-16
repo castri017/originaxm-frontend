@@ -267,8 +267,12 @@ export default function ProductDetails() {
                   Agotado
                 </span>
               ) : product.stock <= 5 ? (
-                <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-brand-copper-dark bg-brand-sand-dark px-2.5 py-1">
-                  Solo {product.stock} disponibles
+                <span role="status" className="inline-flex items-center gap-2 bg-brand-urgent text-white font-display font-bold text-[13px] px-3 py-1.5">
+                  <span className="relative flex w-2 h-2" aria-hidden="true">
+                    <span className="absolute inset-0 rounded-full bg-white opacity-75 animate-ping" />
+                    <span className="relative w-2 h-2 rounded-full bg-white" />
+                  </span>
+                  {product.stock === 1 ? '¡Solo queda 1 unidad!' : `¡Solo quedan ${product.stock} unidades!`}
                 </span>
               ) : null}
             </div>

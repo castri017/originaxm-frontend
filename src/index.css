@@ -20,6 +20,8 @@
   --color-brand-line: #e2ddd3;
   --color-brand-muted: #9a9284;
   --color-brand-stock: #2a6b45;
+  /* Urgencia: pocas unidades en stock */
+  --color-brand-urgent: #b3261e;
 
   /* Rendimiento térmico (frío / calor / hielo) */
   --color-thermal-cold: #2f6690;
