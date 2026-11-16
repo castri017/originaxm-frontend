@@ -94,12 +94,12 @@ export default function PromoPopup() {
   };
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-brand-charcoal-dark/60 backdrop-blur-[2px]"
+    <div className="anim-fade fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-brand-charcoal-dark/60 backdrop-blur-[2px]"
       onClick={close}>
       <div
         ref={dialogRef}
         role="dialog" aria-modal="true" aria-labelledby="promo-popup-title"
-        className="relative w-full sm:max-w-md bg-brand-sand shadow-[0_30px_80px_rgba(28,26,22,0.35)] max-h-[92vh] overflow-y-auto"
+        className="anim-sheet relative w-full sm:max-w-md bg-brand-sand shadow-[0_30px_80px_rgba(28,26,22,0.35)] max-h-[92vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         <button ref={closeRef} onClick={close} aria-label="Cerrar promoción"
