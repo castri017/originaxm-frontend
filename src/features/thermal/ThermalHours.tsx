@@ -3,8 +3,8 @@ import { MAX_THERMAL_HOURS, THERMAL_FIELDS, hasThermalHours, type ThermalHours, 
 
 const ICONS: Record<ThermalKey, { icon: LucideIcon; tone: string }> = {
   coldHours: { icon: ThermometerSnowflake, tone: 'text-thermal-cold' },
-  hotHours:  { icon: Flame,                tone: 'text-thermal-hot',  bg: 'bg-thermal-hot/10'  },
-  iceHours:  { icon: Cuboid,               tone: 'text-thermal-ice',  bg: 'bg-thermal-ice/10'  },
+  hotHours:  { icon: Flame,                tone: 'text-thermal-hot' },
+  iceHours:  { icon: Cuboid,               tone: 'text-thermal-ice' },
 };
 
 const present = (p: ThermalHours) => THERMAL_FIELDS.filter(({ key }) => p[key] != null);
