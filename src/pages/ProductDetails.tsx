@@ -5,7 +5,7 @@ import { NotFoundError } from '../features/catalog/api';
 import { productQuery, useCategories, variantsQuery } from '../features/catalog/queries';
 import type { CatalogProduct } from '../features/catalog/types';
 import { imageUrl } from '../lib/imageUrl';
-import { ArrowLeft, Package, ChevronDown, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Package, ChevronDown, ShieldCheck, ShoppingCart } from 'lucide-react';
 import { useCartStore } from '../store/useCartStore';
 import { getEffectiveDiscount, getFinalPrice } from '../features/promotions/pricing';
 
@@ -365,6 +365,13 @@ export default function ProductDetails() {
                     {added ? 'Añadido al carrito' : `Añadir al carrito · $${finalPrice.toLocaleString('es-CL')}`}
                   </button>
                 </div>
+                <p className="flex items-center gap-2 text-[13px] text-brand-charcoal-light -mt-1">
+                  <ShieldCheck className="w-4 h-4 text-brand-stock flex-shrink-0" aria-hidden="true" />
+                  <span>
+                    <strong className="font-display font-bold text-brand-stock">Producto 100% original.</strong>{' '}
+                    Compra verificada al distribuidor.
+                  </span>
+                </p>
                 {added && (
                   <Link to="/cart" className="btn-ghost w-full">
                     Ver carrito
