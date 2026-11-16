@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Package } from 'lucide-react';
+import { ArrowRight, Package } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { prefetchProduct } from '../features/catalog/queries';
 import { imageUrl } from '../lib/imageUrl';
@@ -39,6 +40,12 @@ export default function ProductCard({
 }: Props) {
   const raw = product.images?.[0];
   const img = raw ? imageUrl(raw) : null;
+  // Segunda foto: se funde sobre la primera al pasar el cursor.
+  const rawAlt = product.images?.[1];
+  const altImg = rawAlt ? imageUrl(rawAlt) : null;
+  // Solo la tarjeta que se tocó comparte su foto con la ficha en la transición de página
+  // (el mismo producto puede estar en varias filas de Inicio).
+  const [opening, setOpening] = useState(false);
   const queryClient = useQueryClient();
   // Precarga la ficha con la intención de abrirla (hover, foco o toque), antes del clic.
   const prefetch = () => prefetchProduct(queryClient, product.id);
@@ -51,18 +58,21 @@ export default function ProductCard({
   return (
     <Link
       to={`/product/${product.id}`}
+      viewTransition
+      onClick={() => setOpening(true)}
       className={`group flex flex-col ${className}`}
       onMouseEnter={prefetch}
       onFocus={prefetch}
       onTouchStart={prefetch}
     >
       {/* Imagen: sin banda negra encima. Las etiquetas viven arriba, el envío abajo del precio. */}
-      <div className={`relative aspect-[3/4] overflow-hidden mb-3.5 border border-brand-line flex items-center justify-center ${fit === 'contain' ? 'bg-brand-sand p-4' : 'bg-brand-sand-dark'}`}>
+      <div className={`relative aspect-[3/4] overflow-hidden mb-3.5 border border-brand-line flex items-center justify-center transition-[translate,box-shadow,border-color] duration-300 group-hover:-translate-y-1 group-hover:border-brand-charcoal-light group-hover:shadow-[0_14px_30px_rgba(28,26,22,0.10)] ${fit === 'contain' ? 'bg-brand-sand p-4' : 'bg-brand-sand-dark'}`}>
         {img && !imgFailed ? (
           <img
             src={img}
             alt={product.name}
-            className={`w-full h-full transition-transform duration-700 group-hover:scale-[1.04] ${fit === 'contain' ? 'object-contain' : 'object-cover'}`}
+            style={opening ? { viewTransitionName: 'product-image' } : undefined}
+            className={`w-full h-full transition-[transform,opacity] duration-700 group-hover:scale-[1.04] ${altImg ? 'group-hover:opacity-0' : ''} ${fit === 'contain' ? 'object-contain' : 'object-cover'}`}
             onError={onImgError}
             loading={priority ? 'eager' : 'lazy'}
             fetchPriority={priority ? 'high' : undefined}
@@ -70,6 +80,23 @@ export default function ProductCard({
           />
         ) : (
           <Package className="w-14 h-14 text-brand-line" />
+        )}
+
+        {img && !imgFailed && altImg && (
+          <img
+            src={altImg}
+            alt=""
+            aria-hidden="true"
+            className={`absolute inset-0 w-full h-full opacity-0 scale-[1.04] transition-opacity duration-700 group-hover:opacity-100 ${fit === 'contain' ? 'object-contain p-4' : 'object-cover'}`}
+            loading="lazy"
+            decoding="async"
+          />
+        )}
+
+        {!soldOut && (
+          <span className="hidden sm:flex absolute inset-x-0 bottom-0 items-center justify-center gap-2 bg-brand-charcoal-dark text-brand-sand font-display font-bold text-[13px] py-3 translate-y-full group-hover:translate-y-0 group-focus-visible:translate-y-0 transition-[translate] duration-300">
+            Ver producto <ArrowRight className="w-3.5 h-3.5" />
+          </span>
         )}
 
         {soldOut ? (

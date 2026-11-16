@@ -117,8 +117,8 @@ export default function Navbar() {
 
       {/* Search overlay */}
       {searchOpen && (
-        <div className="fixed inset-0 z-[60] bg-brand-charcoal-dark/60 backdrop-blur-sm flex items-start justify-center pt-24 px-4">
-          <div className="w-full max-w-xl bg-brand-sand shadow-2xl overflow-hidden">
+        <div className="anim-fade fixed inset-0 z-[60] bg-brand-charcoal-dark/60 backdrop-blur-sm flex items-start justify-center pt-24 px-4">
+          <div className="anim-drop w-full max-w-xl bg-brand-sand shadow-2xl overflow-hidden">
             <form onSubmit={handleSearch} className="flex items-center gap-3 px-5 py-4">
               <Search className="w-5 h-5 text-brand-muted flex-shrink-0" />
               <input
@@ -143,8 +143,8 @@ export default function Navbar() {
       {/* Mobile drawer */}
       {drawerOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden">
-          <div className="absolute inset-0 bg-brand-charcoal-dark/50" onClick={() => setDrawerOpen(false)} />
-          <div className="relative w-80 max-w-[90vw] bg-brand-sand h-full flex flex-col shadow-2xl overflow-y-auto">
+          <div className="anim-fade absolute inset-0 bg-brand-charcoal-dark/50" onClick={() => setDrawerOpen(false)} />
+          <div className="anim-drawer relative w-80 max-w-[90vw] bg-brand-sand h-full flex flex-col shadow-2xl overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-brand-line">
               <img src="/logo.png" alt="OrigenAXM" className="h-10 w-auto object-contain" />
               <button onClick={() => setDrawerOpen(false)} className="p-2 hover:bg-brand-sand-dark transition-colors">
@@ -248,7 +248,7 @@ export default function Navbar() {
                   {/* Mega dropdown */}
                   {activeMenu === cat.id && (
                     <div
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-0 bg-brand-sand border border-brand-line shadow-[0_20px_50px_rgba(28,26,22,0.14)] z-50 min-w-[300px] overflow-hidden"
+                      className="anim-drop absolute top-full left-1/2 -translate-x-1/2 mt-0 bg-brand-sand border border-brand-line shadow-[0_20px_50px_rgba(28,26,22,0.14)] z-50 min-w-[300px] overflow-hidden"
                       onMouseEnter={() => handleMouseEnter(cat.id)}
                       onMouseLeave={handleMouseLeave}
                     >
@@ -304,7 +304,7 @@ export default function Navbar() {
               <Link to="/cart" className="p-2.5 hover:bg-brand-sand-dark transition-colors relative flex items-center">
                 <ShoppingCart className="w-5 h-5 stroke-[1.5]" />
                 {itemsCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-brand-copper-light text-brand-charcoal-dark font-mono text-[10px] font-semibold w-[18px] h-[18px] flex items-center justify-center rounded-full">
+                  <span key={itemsCount} className="anim-bump absolute -top-0.5 -right-0.5 bg-brand-copper-light text-brand-charcoal-dark font-mono text-[10px] font-semibold w-[18px] h-[18px] flex items-center justify-center rounded-full">
                     {itemsCount > 9 ? '9+' : itemsCount}
                   </span>
                 )}

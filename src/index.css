@@ -71,3 +71,67 @@
            hover:bg-brand-sand-dark transition-colors;
   }
 }
+
+/* ── Movimiento ───────────────────────────────────────────────
+   Solo transform/opacity, una curva y duraciones cortas.
+   Todo se apaga con prefers-reduced-motion (bloque final). */
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes rise      { from { opacity: 0; transform: translateY(18px); } }
+@keyframes fade-in   { from { opacity: 0; } }
+@keyframes drop-in   { from { opacity: 0; transform: translateY(-8px); } }
+@keyframes pop-in    { from { opacity: 0; transform: scale(0.6); } 60% { transform: scale(1.08); } }
+@keyframes bump      { 40% { transform: scale(1.45); } }
+@keyframes drawer-in { from { transform: translateX(-100%); } }
+@keyframes sheet-up  { from { opacity: 0; transform: translateY(40px); } }
+@keyframes kenburns  { from { transform: scale(1); } to { transform: scale(1.08); } }
+@keyframes fill-x    { from { transform: scaleX(0); } }
+@keyframes shimmer   { to { background-position: -200% 0; } }
+
+@layer utilities {
+  /* Entrada escalonada: --i define el orden (0, 1, 2…) */
+  .anim-rise    { animation: rise 0.7s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 90ms); }
+  .anim-fade    { animation: fade-in 0.25s ease-out both; }
+  .anim-drop    { animation: drop-in 0.22s var(--ease-out) both; }
+  .anim-pop     { animation: pop-in 0.4s var(--ease-out) both; }
+  .anim-bump    { animation: bump 0.4s var(--ease-out); }
+  .anim-drawer  { animation: drawer-in 0.32s var(--ease-out) both; }
+  .anim-sheet   { animation: sheet-up 0.4s var(--ease-out) both; }
+  .anim-kenburns { animation: kenburns 10s ease-in-out infinite alternate; }
+  .anim-fill-x  { animation: fill-x 5s linear both; transform-origin: left; }
+
+  /* Aparición al hacer scroll (ver components/Reveal.tsx) */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-out);
+    transition-delay: calc(var(--i, 0) * 70ms);
+  }
+  .reveal.is-visible { opacity: 1; transform: none; }
+
+  /* Esqueleto con brillo que se desplaza */
+  .skeleton {
+    background: linear-gradient(100deg, var(--color-brand-sand-dark) 40%, #f8f5ef 50%, var(--color-brand-sand-dark) 60%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s linear infinite;
+  }
+}
+
+/* Transición entre páginas (View Transitions API) */
+::view-transition-old(root) { animation: fade-in 0.18s ease-out reverse both; }
+::view-transition-new(root) { animation: fade-in 0.28s ease-out both; }
+::view-transition-group(product-image) { animation-duration: 0.45s; animation-timing-function: var(--ease-out); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+  .reveal { opacity: 1; transform: none; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
