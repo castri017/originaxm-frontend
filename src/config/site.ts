@@ -5,6 +5,7 @@ export const SITE = {
   locale: 'es_CO',
   description:
     'Termos, botellas y vasos Stanley 100% originales en Colombia. Pedidos internacionales con seguimiento, envíos a todo el país y pago seguro.',
+  email: 'originaxm@gmail.com',
   whatsapp: {
     number: '573117473209',
     display: '+57 311 747 3209',

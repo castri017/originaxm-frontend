@@ -91,6 +91,7 @@ export default function Navbar() {
           <div className="flex items-center gap-5 flex-shrink-0">
             <Link to="/about" className="hidden sm:inline text-[12.5px] hover:text-brand-copper-light transition-colors">Conócenos</Link>
             <Link to="/shipping" className="hidden sm:inline text-[12.5px] hover:text-brand-copper-light transition-colors">Envíos</Link>
+            <Link to="/blog" className="hidden sm:inline text-[12.5px] hover:text-brand-copper-light transition-colors">Blog</Link>
             <a
               href={SITE.social.instagram.url}
               target="_blank"

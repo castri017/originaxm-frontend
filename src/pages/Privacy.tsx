@@ -16,7 +16,8 @@ export default function Privacy() {
           body: (
             <p>
               OriginAXM, con sede en Armenia, Quindío (Colombia). Canal para consultas y reclamos sobre datos personales: WhatsApp{' '}
-              <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className="underline">{SITE.whatsapp.display}</a>.
+              <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className="underline">{SITE.whatsapp.display}</a>{' '}o el correo{' '}
+              <a href={`mailto:${SITE.email}`} className="underline">{SITE.email}</a>.
             </p>
           ),
         },
