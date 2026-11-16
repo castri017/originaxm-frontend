@@ -7,6 +7,8 @@ import PromotionsAdmin from '../features/promotions/PromotionsAdmin';
 import { useAdminAuthStore } from '../store/useAdminAuthStore';
 import { useCatalogStore } from '../store/useCatalogStore';
 import { compressImage, compressImages } from '../lib/compressImage';
+import { ThermalHoursFields } from '../features/thermal/ThermalHours';
+import { hoursToInput, parseHours, type ThermalHours } from '../features/thermal/thermal';
 
 const ORDER_STATUSES = ['Procesando', 'Picking', 'Enviado', 'En Tránsito', 'Entregado', 'Cancelado'];
 
@@ -116,7 +118,7 @@ interface ApiProductType { id: string; name: string; subTypes?: ApiSubType[]; }
 interface ApiBrand       { id: string; name: string; types: ApiProductType[]; }
 interface ApiCategory    { id: string; name: string; description: string; createdAt: string; brands: ApiBrand[]; }
 
-interface ApiProduct {
+interface ApiProduct extends ThermalHours {
   id: string;
   productCode: string;
   name: string;
@@ -1067,6 +1069,7 @@ function AdminPanel() {
     name: '', description: '', detailedDescription: '',
     components: '', manufacturer: '', measurements: '', materials: '',
     color: '', shape: '', design: '', occasion: '', size: '', capacity: '',
+    coldHours: '', hotHours: '', iceHours: '',
     sellingPrice: '', discountPercentage: '0',
   });
 
@@ -1094,6 +1097,7 @@ function AdminPanel() {
     name: '', description: '', detailedDescription: '',
     components: '', manufacturer: '', measurements: '', materials: '',
     color: '', shape: '', design: '', occasion: '', size: '', capacity: '',
+    coldHours: '', hotHours: '', iceHours: '',
     sellingPrice: '', discountPercentage: '0',
   });
   const [editCatId,     setEditCatId]     = useState('');
@@ -1168,6 +1172,9 @@ function AdminPanel() {
       occasion: (p as any).occasion ?? '',
       size: (p as any).size ?? '',
       capacity: (p as any).capacity ?? '',
+      coldHours: hoursToInput(p.coldHours),
+      hotHours: hoursToInput(p.hotHours),
+      iceHours: hoursToInput(p.iceHours),
       sellingPrice: String(p.sellingPrice ?? ''),
       discountPercentage: String(p.discountPercentage ?? 0),
     });
@@ -1235,6 +1242,9 @@ function AdminPanel() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...editForm,
+          coldHours: parseHours(editForm.coldHours),
+          hotHours: parseHours(editForm.hotHours),
+          iceHours: parseHours(editForm.iceHours),
           sellingPrice: Number(editForm.sellingPrice) || 0,
           discountPercentage: Number(editForm.discountPercentage) || 0,
           categoryId: editCatId,
@@ -1295,6 +1305,7 @@ function AdminPanel() {
       name: '', description: '', detailedDescription: '',
       components: '', manufacturer: '', measurements: '', materials: '',
       color: '', shape: '', design: '', occasion: '', size: '', capacity: '',
+      coldHours: '', hotHours: '', iceHours: '',
       sellingPrice: '', discountPercentage: '0',
     });
   };
@@ -1321,6 +1332,7 @@ function AdminPanel() {
         materials: npForm.materials, color: npForm.color, shape: npForm.shape,
         design: npForm.design, occasion: npForm.occasion, size: npForm.size,
         capacity: npForm.capacity, categoryId: npCatId,
+        coldHours: parseHours(npForm.coldHours), hotHours: parseHours(npForm.hotHours), iceHours: parseHours(npForm.iceHours),
         brandId: npBrandId || null, typeId: npTypeId || null, subTypeId: npSubTypeId || null,
         images: paths,
         sellingPrice: Number(npForm.sellingPrice) || 0,
@@ -4076,6 +4088,7 @@ function AdminPanel() {
                       </div>
                     ))}
                   </div>
+                  <ThermalHoursFields values={npForm} onChange={handleNpFieldChange} />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Categoría *</label>
@@ -5104,6 +5117,9 @@ function AdminPanel() {
                 ['Ocasión',              (detailProduct as any).occasion],
                 ['Tamaño',               (detailProduct as any).size],
                 ['Capacidad',            (detailProduct as any).capacity],
+                ['Horas en frío',        hoursToInput(detailProduct.coldHours)],
+                ['Horas en calor',       hoursToInput(detailProduct.hotHours)],
+                ['Horas con hielo',      hoursToInput(detailProduct.iceHours)],
               ] as [string, string][]).filter(([, v]) => v).map(([label, value]) => (
                 <div key={label} className="grid grid-cols-3 gap-2 text-sm border-b border-gray-50 pb-2">
                   <span className="font-bold text-gray-400 uppercase text-xs tracking-wider">{label}</span>
@@ -5214,6 +5230,7 @@ function AdminPanel() {
                       </div>
                     ))}
                   </div>
+                  <ThermalHoursFields values={editForm} onChange={(field, value) => setEditForm(p => ({ ...p, [field]: value }))} />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Categoría *</label>
