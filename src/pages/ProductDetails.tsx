@@ -42,7 +42,7 @@ function ProductDetailsSkeleton() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 lg:py-12 animate-pulse" aria-busy="true" aria-label="Cargando producto">
       <div className="h-3 w-48 bg-brand-sand-dark mb-8" />
       <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
-        <div className="aspect-square bg-brand-sand-dark" />
+        <div className="aspect-square bg-brand-sand-dark" style={{ viewTransitionName: 'product-image' }} />
         <div className="space-y-5">
           <div className="h-3 w-24 bg-brand-sand-dark" />
           <div className="h-9 w-3/4 bg-brand-sand-dark" />
@@ -205,9 +205,11 @@ export default function ProductDetails() {
           <div className="relative flex-1 bg-white overflow-hidden w-full aspect-[4/5] sm:aspect-[5/6]">
             {images.length > 0 ? (
               <img
+                key={activeImg}
                 src={imgUrl(images[activeImg])}
                 alt={product.name}
-                className="w-full h-full object-contain p-8"
+                style={{ viewTransitionName: 'product-image' }}
+                className="anim-fade w-full h-full object-contain p-8 transition-transform duration-500 hover:scale-110"
                 loading="eager"
                 fetchPriority="high"
                 decoding="async"
@@ -359,7 +361,7 @@ export default function ProductDetails() {
                       added ? 'bg-brand-stock text-brand-sand' : 'bg-brand-charcoal-dark text-brand-sand hover:bg-brand-charcoal'
                     }`}
                   >
-                    <ShoppingCart className="w-4 h-4" />
+                    <ShoppingCart key={String(added)} className={`w-4 h-4 ${added ? 'anim-bump' : ''}`} />
                     {added ? 'Añadido al carrito' : `Añadir al carrito · $${finalPrice.toLocaleString('es-CL')}`}
                   </button>
                 </div>
