@@ -5,7 +5,7 @@ import { NotFoundError } from '../features/catalog/api';
 import { productQuery, useCategories, variantsQuery } from '../features/catalog/queries';
 import type { CatalogProduct } from '../features/catalog/types';
 import { imageUrl } from '../lib/imageUrl';
-import { ArrowLeft, Package, ChevronDown, GlassWater, Layers, Leaf, Ruler, ShieldCheck, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Package, ChevronDown, GlassWater, Layers, Leaf, ShieldCheck, ShoppingCart } from 'lucide-react';
 import { ThermalSpecs } from '../features/thermal/ThermalHours';
 import { hasThermalHours } from '../features/thermal/thermal';
 import { useCartStore } from '../store/useCartStore';
@@ -151,7 +151,6 @@ export default function ProductDetails() {
   const specGrid = [
     { label: 'Capacidad', value: product.capacity,     icon: GlassWater },
     { label: 'Material',  value: product.materials,    icon: Layers     },
-    { label: 'Medidas',   value: product.measurements, icon: Ruler      },
     { label: 'Libre de',  value: product.components,   icon: Leaf       },
   ].filter(s => s.value);
 
@@ -319,7 +318,7 @@ export default function ProductDetails() {
           <div className="flex flex-col gap-4 border-y border-brand-line py-4">
           <ThermalSpecs product={product} />
           {specGrid.length > 0 && (
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+            <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
               {specGrid.map(({ label, value, icon: Icon }) => (
                 <div key={label} className="flex items-start gap-2.5 min-w-0">
                   <span className="w-8 h-8 flex-shrink-0 rounded-full bg-brand-sand-dark flex items-center justify-center">
