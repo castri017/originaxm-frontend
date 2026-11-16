@@ -41,7 +41,7 @@ function Block({ block }: { block: BlogBlock }) {
         </aside>
       );
     case 'cta': {
-      const cls = 'btn-ghost inline-flex items-center gap-2';
+      const cls = 'btn-ghost inline-flex items-center justify-center gap-2 min-h-[48px]';
       return block.href ? (
         <a href={block.href} target={block.external ? '_blank' : undefined} rel="noopener noreferrer" className={cls}>
           <Download className="w-4 h-4" aria-hidden="true" /> {block.label}
@@ -51,6 +51,18 @@ function Block({ block }: { block: BlogBlock }) {
       );
     }
   }
+}
+
+/** Agrupa los botones (`cta`) consecutivos para pintarlos juntos en una fila. */
+function groupBlocks(blocks: BlogBlock[]): (BlogBlock | BlogBlock[])[] {
+  const out: (BlogBlock | BlogBlock[])[] = [];
+  for (const block of blocks) {
+    const last = out[out.length - 1];
+    if (block.type !== 'cta') out.push(block);
+    else if (Array.isArray(last)) last.push(block);
+    else out.push([block]);
+  }
+  return out;
 }
 
 export default function BlogPost() {
@@ -113,7 +125,16 @@ export default function BlogPost() {
       )}
 
       <div className="space-y-5">
-        {post.blocks.map((block, i) => <Block key={i} block={block} />)}
+        {groupBlocks(post.blocks).map((group, i) =>
+          Array.isArray(group) ? (
+            // Los botones seguidos van en una misma fila (o en columna en pantallas angostas), con espacio entre ellos.
+            <div key={i} className="flex flex-col sm:flex-row sm:flex-wrap gap-3 pt-2">
+              {group.map((block, j) => <Block key={j} block={block} />)}
+            </div>
+          ) : (
+            <Block key={i} block={group} />
+          ),
+        )}
       </div>
 
       <div className="mt-12 border border-brand-line bg-brand-sand-dark/50 px-6 py-5 flex flex-wrap items-center justify-between gap-4">
