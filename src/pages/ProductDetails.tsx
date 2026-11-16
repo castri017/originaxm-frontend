@@ -5,8 +5,9 @@ import { NotFoundError } from '../features/catalog/api';
 import { productQuery, useCategories, variantsQuery } from '../features/catalog/queries';
 import type { CatalogProduct } from '../features/catalog/types';
 import { imageUrl } from '../lib/imageUrl';
-import { ArrowLeft, Package, ChevronDown, ShieldCheck, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Package, ChevronDown, GlassWater, Layers, Leaf, Ruler, ShieldCheck, ShoppingCart } from 'lucide-react';
 import { ThermalSpecs } from '../features/thermal/ThermalHours';
+import { hasThermalHours } from '../features/thermal/thermal';
 import { useCartStore } from '../store/useCartStore';
 import { getEffectiveDiscount, getFinalPrice } from '../features/promotions/pricing';
 
@@ -148,10 +149,10 @@ export default function ProductDetails() {
     : (product.color ? [product] : []);
 
   const specGrid = [
-    { label: 'Medidas',      value: product.measurements },
-    { label: 'Capacidad',    value: product.capacity     },
-    { label: 'Material',     value: product.materials    },
-    { label: 'Libre de',     value: product.components   },
+    { label: 'Capacidad', value: product.capacity,     icon: GlassWater },
+    { label: 'Material',  value: product.materials,    icon: Layers     },
+    { label: 'Medidas',   value: product.measurements, icon: Ruler      },
+    { label: 'Libre de',  value: product.components,   icon: Leaf       },
   ].filter(s => s.value);
 
   const allSpecs = [
@@ -309,19 +310,27 @@ export default function ProductDetails() {
             </div>
           )}
 
-          {/* Especificaciones rápidas */}
+          {/* Rendimiento térmico + especificaciones rápidas, en un solo bloque compacto */}
+          {(specGrid.length > 0 || hasThermalHours(product)) && (
+          <div className="flex flex-col gap-4 border-y border-brand-line py-4">
+          <ThermalSpecs product={product} />
           {specGrid.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-[1px] bg-white border border-brand-line">
-              {specGrid.map(({ label, value }) => (
-                <div key={label} className="bg-brand-sand px-4 py-3.5 flex flex-col gap-1">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-brand-muted">{label}</span>
-                  <span className="font-display font-bold text-[15px] text-brand-charcoal-dark leading-snug">{value}</span>
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+              {specGrid.map(({ label, value, icon: Icon }) => (
+                <div key={label} className="flex items-start gap-2.5 min-w-0">
+                  <span className="w-8 h-8 flex-shrink-0 rounded-full bg-brand-sand-dark flex items-center justify-center">
+                    <Icon className="w-4 h-4 text-brand-charcoal" aria-hidden="true" />
+                  </span>
+                  <div className="flex flex-col min-w-0">
+                    <dt className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-brand-muted">{label}</dt>
+                    <dd className="font-display font-bold text-[13.5px] text-brand-charcoal-dark leading-snug break-words">{value}</dd>
+                  </div>
                 </div>
               ))}
-            </div>
+            </dl>
           )}
-
-          <ThermalSpecs product={product} />
+          </div>
+          )}
 
           {/* Compra */}
           <div className="flex flex-col gap-3">

@@ -9,30 +9,30 @@ const ICONS: Record<ThermalKey, { icon: LucideIcon; tone: string; bg: string }> 
 
 const present = (p: ThermalHours) => THERMAL_FIELDS.filter(({ key }) => p[key] != null);
 
-/** Bloque destacado de la ficha de producto: una celda por cada dato registrado. */
+/** Fila compacta de la ficha de producto: una pastilla por cada dato registrado. 0 h = no apto. */
 export function ThermalSpecs({ product }: { product: ThermalHours }) {
   if (!hasThermalHours(product)) return null;
-  const fields = present(product);
 
   return (
-    <section aria-label="Rendimiento térmico" className="flex flex-col gap-2.5">
-      <span className="meta-label">Rendimiento térmico</span>
-      <div className={`grid gap-[1px] bg-brand-line border border-brand-line ${fields.length === 3 ? 'grid-cols-3' : fields.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-        {fields.map(({ key, label }) => {
-          const { icon: Icon, tone, bg } = ICONS[key];
-          return (
-            <div key={key} className="bg-brand-sand px-3 py-4 flex flex-col items-center text-center gap-2">
-              <span className={`w-10 h-10 rounded-full flex items-center justify-center ${bg}`}>
-                <Icon className={`w-5 h-5 ${tone}`} aria-hidden="true" />
+    <section aria-label="Rendimiento térmico" className="flex flex-wrap gap-2">
+      {present(product).map(({ key, label }) => {
+        const { icon: Icon, tone, bg } = ICONS[key];
+        const hours = product[key] ?? 0;
+        return (
+          <div key={key} className={`flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full ${hours > 0 ? bg : 'bg-brand-sand-dark'}`}>
+            <span className="w-7 h-7 rounded-full bg-brand-sand flex items-center justify-center">
+              <Icon className={`w-4 h-4 ${hours > 0 ? tone : 'text-brand-muted'}`} aria-hidden="true" />
+            </span>
+            {hours > 0 ? (
+              <span className="text-[13px] text-brand-charcoal-dark leading-none">
+                <strong className="font-display font-extrabold text-[15px]">{hours} h</strong> {label.toLowerCase()}
               </span>
-              <span className="font-display font-extrabold text-[24px] leading-none text-brand-charcoal-dark">
-                {product[key]}<span className="text-[14px] font-bold ml-0.5">h</span>
-              </span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-brand-muted">{label}</span>
-            </div>
-          );
-        })}
-      </div>
+            ) : (
+              <span className="text-[12.5px] text-brand-muted leading-none">No apto {label === 'Calor' ? 'para calor' : label.toLowerCase()}</span>
+            )}
+          </div>
+        );
+      })}
     </section>
   );
 }
@@ -42,7 +42,7 @@ export function ThermalSummary({ product }: { product: ThermalHours }) {
   if (!hasThermalHours(product)) return null;
   return (
     <span className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] text-brand-charcoal-light">
-      {present(product).map(({ key, label }) => {
+      {present(product).filter(({ key }) => (product[key] ?? 0) > 0).map(({ key, label }) => {
         const { icon: Icon, tone } = ICONS[key];
         return (
           <span key={key} className="inline-flex items-center gap-1" title={`${label}: ${product[key]} horas`}>
