@@ -2,8 +2,9 @@
 import { API } from '../config/api';
 import { adminFetch } from '../lib/adminFetch';
 import { imageUrl } from '../lib/imageUrl';
-import { Settings, Tag, Users, Package, TrendingUp, Plus, Edit, Trash2, ClipboardList, Eye, ArrowLeft, X, ShieldCheck, Lock, Mail, Loader2, AlertCircle, LogOut, BarChart3, DollarSign, RefreshCw, ChevronLeft, ChevronDown, Truck, FileBarChart2, Star, Globe, Wallet, Image as ImageIcon, ArrowUp, ArrowDown, Megaphone } from 'lucide-react';
+import { Settings, Tag, Users, Package, TrendingUp, Plus, Edit, Trash2, ClipboardList, Eye, ArrowLeft, X, ShieldCheck, Lock, Mail, Loader2, AlertCircle, LogOut, BarChart3, DollarSign, RefreshCw, ChevronLeft, ChevronDown, Truck, FileBarChart2, Star, Globe, Wallet, Image as ImageIcon, ArrowUp, ArrowDown, Megaphone, MessageSquare } from 'lucide-react';
 import PromotionsAdmin from '../features/promotions/PromotionsAdmin';
+import ReviewsAdmin from '../features/reviews/ReviewsAdmin';
 import { useAdminAuthStore } from '../store/useAdminAuthStore';
 import { useCatalogStore } from '../store/useCatalogStore';
 import { compressImage, compressImages } from '../lib/compressImage';
@@ -1655,6 +1656,7 @@ function AdminPanel() {
             { id: 'carriers',     Icon: Truck,         label: 'Transportadoras' },
             { id: 'banners',      Icon: ImageIcon,     label: 'Banner Principal' },
             { id: 'promotions',   Icon: Megaphone,     label: 'Promociones'     },
+            { id: 'reviews',      Icon: MessageSquare, label: 'Reseñas'         },
             { id: 'users',        Icon: Users,         label: 'Clientes'        },
             { id: 'recommended',  Icon: Star,          label: 'Recomendados'    },
             { id: 'featured',     Icon: TrendingUp,    label: 'Destacados'      },
@@ -1724,6 +1726,7 @@ function AdminPanel() {
               {activeTab === 'carriers'     && 'Transportadoras'}
               {activeTab === 'banners'      && 'Banner Principal'}
               {activeTab === 'promotions'   && 'Promociones'}
+              {activeTab === 'reviews'      && 'Reseñas de Productos'}
               {activeTab === 'users'        && 'Clientes'}
               {activeTab === 'recommended'  && 'Productos Recomendados'}
               {activeTab === 'featured'     && 'Novedades Destacadas'}
@@ -2482,6 +2485,9 @@ function AdminPanel() {
 
           ) : activeTab === 'promotions' ? (
             <PromotionsAdmin />
+
+          ) : activeTab === 'reviews' ? (
+            <ReviewsAdmin />
 
           ) : activeTab === 'users' ? (
             <div className="space-y-5">

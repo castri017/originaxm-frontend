@@ -8,6 +8,7 @@ import { imageUrl } from '../lib/imageUrl';
 import { ArrowLeft, Package, ChevronDown, GlassWater, Layers, Leaf, ShieldCheck, ShoppingCart } from 'lucide-react';
 import { ThermalSpecs } from '../features/thermal/ThermalHours';
 import { hasThermalHours } from '../features/thermal/thermal';
+import ProductReviews, { RatingLink } from '../features/reviews/ProductReviews';
 import { useCartStore } from '../store/useCartStore';
 import { getEffectiveDiscount, getFinalPrice } from '../features/promotions/pricing';
 
@@ -250,6 +251,7 @@ export default function ProductDetails() {
             <h1 className="font-display font-extrabold text-[30px] sm:text-[38px] leading-[1.08] tracking-[-0.03em] text-brand-charcoal-dark">
               {product.name}
             </h1>
+            <RatingLink productId={product.id} />
 
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2 mt-1">
               {product.sellingPrice > 0 && (
@@ -478,6 +480,8 @@ export default function ProductDetails() {
           <p className="text-[15px] text-brand-charcoal-light leading-relaxed max-w-2xl">{product.description}</p>
         </div>
       )}
+
+      <ProductReviews productId={product.id} />
 
       {/* Barra de compra fija en móvil */}
       <div

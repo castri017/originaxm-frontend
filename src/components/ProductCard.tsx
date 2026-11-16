@@ -6,6 +6,7 @@ import { prefetchProduct } from '../features/catalog/queries';
 import { imageUrl } from '../lib/imageUrl';
 import { getEffectiveDiscount, getFinalPrice } from '../features/promotions/pricing';
 import { ThermalSummary } from '../features/thermal/ThermalHours';
+import { CardRating } from '../features/reviews/ProductReviews';
 import type { ThermalHours } from '../features/thermal/thermal';
 
 export interface CardProduct extends ThermalHours {
@@ -139,6 +140,7 @@ export default function ProductCard({
           </div>
         )}
 
+        <CardRating productId={product.id} />
         <ThermalSummary product={product} />
 
         {/* Sello de envío discreto */}
