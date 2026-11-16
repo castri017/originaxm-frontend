@@ -315,26 +315,22 @@ export default function ProductDetails() {
             </div>
           )}
 
-          {/* Rendimiento térmico + especificaciones rápidas, en un solo bloque compacto */}
+          {/* Ficha rápida: horas térmicas y especificaciones en la misma cuadrícula de 3 columnas */}
           {(specGrid.length > 0 || hasThermalHours(product)) && (
-          <div className="flex flex-col gap-4 border-y border-brand-line py-4">
-          <ThermalSpecs product={product} />
-          {specGrid.length > 0 && (
-            <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
-              {specGrid.map(({ label, value, icon: Icon }) => (
-                <div key={label} className="flex items-start gap-2.5 min-w-0">
-                  <span className="w-8 h-8 flex-shrink-0 rounded-full bg-brand-sand-dark flex items-center justify-center">
-                    <Icon className="w-4 h-4 text-brand-charcoal" aria-hidden="true" />
-                  </span>
-                  <div className="flex flex-col min-w-0">
-                    <dt className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-brand-muted">{label}</dt>
-                    <dd className="font-display font-bold text-[13.5px] text-brand-charcoal-dark leading-snug break-words">{value}</dd>
-                  </div>
-                </div>
-              ))}
-            </dl>
-          )}
-          </div>
+            <div className="border border-brand-line divide-y divide-brand-line">
+              <ThermalSpecs product={product} />
+              {specGrid.length > 0 && (
+                <dl className="grid grid-cols-3 divide-x divide-brand-line">
+                  {specGrid.map(({ label, value, icon: Icon }) => (
+                    <div key={label} className="flex flex-col items-center text-center gap-1 px-2 py-3 min-w-0">
+                      <Icon className="w-5 h-5 text-brand-charcoal-light order-1" aria-hidden="true" />
+                      <dt className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-brand-muted order-3">{label}</dt>
+                      <dd className="font-display font-bold text-[14px] leading-snug text-brand-charcoal-dark break-words order-2">{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+            </div>
           )}
 
           {/* Compra */}
