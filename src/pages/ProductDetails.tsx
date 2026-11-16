@@ -1,4 +1,7 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { whatsappLink } from '../config/site';
+import { productIdFromParam, productPath } from '../lib/productUrl';
+import ProductSeo from '../features/catalog/ProductSeo';
 import { useState, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { NotFoundError } from '../features/catalog/api';
@@ -14,7 +17,6 @@ import { getEffectiveDiscount, getFinalPrice } from '../features/promotions/pric
 
 type ApiProduct  = CatalogProduct;
 
-const WA_NUMBER = '573216481430';
 
 const WA_ICON = (
   <svg className="w-[18px] h-[18px] fill-current flex-shrink-0" viewBox="0 0 24 24">
@@ -62,7 +64,9 @@ function ProductDetailsSkeleton() {
 }
 
 export default function ProductDetails() {
-  const { id } = useParams<{ id: string }>();
+  const { id: idParam } = useParams<{ id: string }>();
+  // Acepta la URL legible (`nombre-<id>`) y la antigua (solo `<id>`).
+  const id = productIdFromParam(idParam);
   const navigate = useNavigate();
   const addItem = useCartStore(state => state.addItem);
 
@@ -173,6 +177,7 @@ export default function ProductDetails() {
 
   return (
     <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-40 sm:pb-12">
+      <ProductSeo product={product} brandName={brand?.name} categoryName={category?.name} />
 
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.12em] text-brand-muted mb-6">
@@ -294,7 +299,7 @@ export default function ProductDetails() {
                 {colorVariants.map(v => (
                   <button
                     key={v.id}
-                    onClick={() => v.id !== product.id && navigate(`/product/${v.id}`)}
+                    onClick={() => v.id !== product.id && navigate(productPath(v))}
                     title={v.color || v.name}
                     className={`w-[52px] h-[52px] overflow-hidden bg-white border-2 flex-shrink-0 transition-colors ${
                       v.id === product.id
@@ -342,7 +347,7 @@ export default function ProductDetails() {
                   Producto agotado
                 </button>
                 <a
-                  href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`¡Hola! Quisiera realizar un pedido del producto: ${product.name}`)}`}
+                  href={whatsappLink(`¡Hola! Quisiera realizar un pedido del producto: ${product.name}`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-ghost w-full"
@@ -396,7 +401,7 @@ export default function ProductDetails() {
                   </Link>
                 )}
                 <a
-                  href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`¡Hola! Tengo una duda sobre: ${product.name}`)}`}
+                  href={whatsappLink(`¡Hola! Tengo una duda sobre: ${product.name}`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-brand-copper hover:text-brand-copper-dark transition-colors self-start"
@@ -497,7 +502,7 @@ export default function ProductDetails() {
         )}
         {outOfStock ? (
           <a
-            href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`¡Hola! Quisiera realizar un pedido del producto: ${product.name}`)}`}
+            href={whatsappLink(`¡Hola! Quisiera realizar un pedido del producto: ${product.name}`)}
             target="_blank"
             rel="noopener noreferrer"
             className="flex-1 min-h-[48px] border border-brand-charcoal-dark text-brand-charcoal-dark font-display font-bold text-[14px] flex items-center justify-center gap-2"

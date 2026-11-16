@@ -8,6 +8,7 @@ import ProductCard from '../components/ProductCard';
 import { groupProductsByCategory } from '../features/catalog/grouping';
 import { fetchActivePromotions } from '../features/promotions/api';
 import type { Promotion } from '../features/promotions/types';
+import Seo from '../components/Seo';
 
 /* ── Types ────────────────────────────────────────────────── */
 type ApiProduct  = CatalogProduct;
@@ -208,6 +209,7 @@ export default function Catalog() {
 
   return (
     <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <Seo title="Catálogo de termos y botellas Stanley" description="Explora termos, botellas, vasos y accesorios Stanley 100% originales. Filtra por categoría, capacidad y color. Envíos a todo Colombia." path="/catalog" />
 
       {/* Encabezado */}
       <div className="mb-7 flex flex-col gap-2">
