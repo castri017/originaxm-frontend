@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { SITE, whatsappLink } from '../../config/site';
 import { ShoppingCart, User, Search, Menu, LogOut, ShieldCheck, X, ChevronDown, ArrowRight } from 'lucide-react';
 import { useCartStore } from '../../store/useCartStore';
 import { useAdminAuthStore } from '../../store/useAdminAuthStore';
@@ -90,7 +91,7 @@ export default function Navbar() {
             <Link to="/about" className="hidden sm:inline text-[12.5px] hover:text-brand-copper-light transition-colors">Conócenos</Link>
             <Link to="/shipping" className="hidden sm:inline text-[12.5px] hover:text-brand-copper-light transition-colors">Envíos</Link>
             <a
-              href="https://www.instagram.com"
+              href={SITE.social.instagram.url}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"
@@ -101,7 +102,7 @@ export default function Navbar() {
               </svg>
             </a>
             <a
-              href="https://wa.me/573216481430"
+              href={whatsappLink()}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="WhatsApp"

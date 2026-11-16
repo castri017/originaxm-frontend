@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { whatsappLink } from '../config/site';
+import { productPath } from '../lib/productUrl';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Package } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -36,7 +38,6 @@ interface Props {
   className?: string;
 }
 
-const WHATSAPP = '573216481430';
 
 export default function ProductCard({
   product, badge, priority, fit = 'contain', onImgError, imgFailed, className = '',
@@ -60,7 +61,7 @@ export default function ProductCard({
 
   return (
     <Link
-      to={`/product/${product.id}`}
+      to={productPath(product)}
       viewTransition
       onClick={() => setOpening(true)}
       className={`group flex flex-col ${className}`}
@@ -153,7 +154,7 @@ export default function ProductCard({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`¡Hola! Quisiera realizar un pedido del producto: ${product.name}`)}`, '_blank');
+              window.open(whatsappLink(`¡Hola! Quisiera realizar un pedido del producto: ${product.name}`), '_blank');
             }}
             className="mt-2 w-full min-h-[44px] border border-brand-charcoal-dark text-brand-charcoal-dark font-display font-bold text-[13.5px] hover:bg-brand-sand-dark transition-colors"
           >
