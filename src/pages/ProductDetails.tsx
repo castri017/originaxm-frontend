@@ -2,6 +2,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { whatsappLink } from '../config/site';
 import { productIdFromParam, productPath } from '../lib/productUrl';
 import ProductSeo from '../features/catalog/ProductSeo';
+import { formatWeight } from '../features/productMeta/productMeta';
 import { useState, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { NotFoundError } from '../features/catalog/api';
@@ -172,6 +173,7 @@ export default function ProductDetails() {
     { label: 'Diseño',     value: product.design       },
     { label: 'Ocasión',    value: product.occasion     },
     { label: 'Medidas',    value: product.measurements },
+    { label: 'Peso',       value: formatWeight(product.weightGrams) },
     { label: 'Materiales', value: product.materials    },
   ].filter(s => s.value);
 

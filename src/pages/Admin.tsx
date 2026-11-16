@@ -10,6 +10,8 @@ import { useCatalogStore } from '../store/useCatalogStore';
 import { compressImage, compressImages } from '../lib/compressImage';
 import { ThermalHoursFields } from '../features/thermal/ThermalHours';
 import { hoursToInput, parseHours, type ThermalHours } from '../features/thermal/thermal';
+import { ProductMetaFields } from '../features/productMeta/ProductMetaFields';
+import { formatWeight, parseWeight, textOrNull, weightToInput, type ProductMeta } from '../features/productMeta/productMeta';
 
 const ORDER_STATUSES = ['Procesando', 'Picking', 'Enviado', 'En Tránsito', 'Entregado', 'Cancelado'];
 
@@ -119,7 +121,7 @@ interface ApiProductType { id: string; name: string; subTypes?: ApiSubType[]; }
 interface ApiBrand       { id: string; name: string; types: ApiProductType[]; }
 interface ApiCategory    { id: string; name: string; description: string; createdAt: string; brands: ApiBrand[]; }
 
-interface ApiProduct extends ThermalHours {
+interface ApiProduct extends ThermalHours, ProductMeta {
   id: string;
   productCode: string;
   name: string;
@@ -1071,6 +1073,7 @@ function AdminPanel() {
     components: '', manufacturer: '', measurements: '', materials: '',
     color: '', shape: '', design: '', occasion: '', size: '', capacity: '',
     coldHours: '', hotHours: '', iceHours: '',
+    weightGrams: '', seoTitle: '', seoDescription: '',
     sellingPrice: '', discountPercentage: '0',
   });
 
@@ -1099,6 +1102,7 @@ function AdminPanel() {
     components: '', manufacturer: '', measurements: '', materials: '',
     color: '', shape: '', design: '', occasion: '', size: '', capacity: '',
     coldHours: '', hotHours: '', iceHours: '',
+    weightGrams: '', seoTitle: '', seoDescription: '',
     sellingPrice: '', discountPercentage: '0',
   });
   const [editCatId,     setEditCatId]     = useState('');
@@ -1176,6 +1180,9 @@ function AdminPanel() {
       coldHours: hoursToInput(p.coldHours),
       hotHours: hoursToInput(p.hotHours),
       iceHours: hoursToInput(p.iceHours),
+      weightGrams: weightToInput(p.weightGrams),
+      seoTitle: p.seoTitle ?? '',
+      seoDescription: p.seoDescription ?? '',
       sellingPrice: String(p.sellingPrice ?? ''),
       discountPercentage: String(p.discountPercentage ?? 0),
     });
@@ -1246,6 +1253,9 @@ function AdminPanel() {
           coldHours: parseHours(editForm.coldHours),
           hotHours: parseHours(editForm.hotHours),
           iceHours: parseHours(editForm.iceHours),
+          weightGrams: parseWeight(editForm.weightGrams),
+          seoTitle: textOrNull(editForm.seoTitle),
+          seoDescription: textOrNull(editForm.seoDescription),
           sellingPrice: Number(editForm.sellingPrice) || 0,
           discountPercentage: Number(editForm.discountPercentage) || 0,
           categoryId: editCatId,
@@ -1307,6 +1317,7 @@ function AdminPanel() {
       components: '', manufacturer: '', measurements: '', materials: '',
       color: '', shape: '', design: '', occasion: '', size: '', capacity: '',
       coldHours: '', hotHours: '', iceHours: '',
+    weightGrams: '', seoTitle: '', seoDescription: '',
       sellingPrice: '', discountPercentage: '0',
     });
   };
@@ -1334,6 +1345,7 @@ function AdminPanel() {
         design: npForm.design, occasion: npForm.occasion, size: npForm.size,
         capacity: npForm.capacity, categoryId: npCatId,
         coldHours: parseHours(npForm.coldHours), hotHours: parseHours(npForm.hotHours), iceHours: parseHours(npForm.iceHours),
+        weightGrams: parseWeight(npForm.weightGrams), seoTitle: textOrNull(npForm.seoTitle), seoDescription: textOrNull(npForm.seoDescription),
         brandId: npBrandId || null, typeId: npTypeId || null, subTypeId: npSubTypeId || null,
         images: paths,
         sellingPrice: Number(npForm.sellingPrice) || 0,
@@ -4095,6 +4107,7 @@ function AdminPanel() {
                     ))}
                   </div>
                   <ThermalHoursFields values={npForm} onChange={handleNpFieldChange} />
+                  <ProductMetaFields values={npForm} onChange={handleNpFieldChange} />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Categoría *</label>
@@ -5126,6 +5139,9 @@ function AdminPanel() {
                 ['Horas en frío',        hoursToInput(detailProduct.coldHours)],
                 ['Horas en calor',       hoursToInput(detailProduct.hotHours)],
                 ['Horas con hielo',      hoursToInput(detailProduct.iceHours)],
+                ['Peso',                 formatWeight(detailProduct.weightGrams)],
+                ['Título SEO',           detailProduct.seoTitle ?? ''],
+                ['Descripción SEO',      detailProduct.seoDescription ?? ''],
               ] as [string, string][]).filter(([, v]) => v).map(([label, value]) => (
                 <div key={label} className="grid grid-cols-3 gap-2 text-sm border-b border-gray-50 pb-2">
                   <span className="font-bold text-gray-400 uppercase text-xs tracking-wider">{label}</span>
@@ -5237,6 +5253,7 @@ function AdminPanel() {
                     ))}
                   </div>
                   <ThermalHoursFields values={editForm} onChange={(field, value) => setEditForm(p => ({ ...p, [field]: value }))} />
+                  <ProductMetaFields values={editForm} onChange={(field, value) => setEditForm(p => ({ ...p, [field]: value }))} />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Categoría *</label>
