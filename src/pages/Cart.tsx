@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Trash2, ArrowRight, Clock } from 'lucide-react';
 import { useCartStore } from '../store/useCartStore';
+import { productPath } from '../lib/productUrl';
 
 export default function Cart() {
   const items = useCartStore((state) => state.items);
@@ -52,7 +53,7 @@ export default function Cart() {
                       className="w-20 h-24 object-contain rounded-sm border border-gray-100 p-1 hidden sm:block"
                     />
                     <div>
-                      <Link to={`/product/${item.product.id}`} className="font-bold text-black hover:text-gray-500 transition-colors block leading-tight">
+                      <Link to={productPath(item.product)} className="font-bold text-black hover:text-gray-500 transition-colors block leading-tight">
                         {item.product.name}
                       </Link>
                       <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest font-bold">Capacidad: <span className="text-black">{item.size}</span></p>

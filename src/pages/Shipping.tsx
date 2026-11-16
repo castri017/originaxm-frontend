@@ -1,8 +1,11 @@
 import { Package, RefreshCw, Clock, CheckCircle, XCircle, Truck, AlertTriangle } from 'lucide-react';
+import { whatsappLink } from '../config/site';
+import Seo from '../components/Seo';
 
 export default function Shipping() {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <Seo title="Envíos y devoluciones" description="Enviamos a todo Colombia en 3 a 10 días hábiles. Envío gratis desde $300.000 y en Armenia. Conoce las condiciones de cambios y devoluciones." path="/shipping" />
       {/* Header */}
       <div className="text-center mb-14">
         <h1 className="text-4xl font-extrabold tracking-tight text-black uppercase">
@@ -76,7 +79,7 @@ export default function Shipping() {
       <div className="mt-14 text-center bg-gray-50 border border-gray-100 rounded-sm p-8">
         <p className="text-sm text-gray-600 mb-4">¿Necesitas iniciar una devolución o tienes alguna duda?</p>
         <a
-          href="https://wa.me/56912345678"
+          href={whatsappLink()}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-block bg-black text-white text-sm font-extrabold uppercase tracking-widest px-8 py-3 rounded-full hover:bg-gray-800 transition-colors"

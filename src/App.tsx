@@ -21,6 +21,9 @@ const FAQ            = lazy(() => import('./pages/FAQ'));
 const Shipping       = lazy(() => import('./pages/Shipping'));
 const Contact        = lazy(() => import('./pages/Contact'));
 const PaymentResult  = lazy(() => import('./pages/PaymentResult'));
+const Terms          = lazy(() => import('./pages/Terms'));
+const Privacy        = lazy(() => import('./pages/Privacy'));
+const Warranty       = lazy(() => import('./pages/Warranty'));
 
 function PageFallback() {
   return (
@@ -68,6 +71,9 @@ function App() {
             <Route path="shipping" element={page(<Shipping />)} />
             <Route path="contact" element={page(<Contact />)} />
             <Route path="payment-result" element={page(<PaymentResult />)} />
+            <Route path="terms" element={page(<Terms />)} />
+            <Route path="privacy" element={page(<Privacy />)} />
+            <Route path="warranty" element={page(<Warranty />)} />
           </Route>
         </Routes>
       </BrowserRouter>

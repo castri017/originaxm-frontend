@@ -6,6 +6,7 @@ import { flattenSections, groupProductsByCategory } from '../features/catalog/gr
 import FloatingCartButton from '../components/layout/FloatingCartButton';
 import ProductCard from '../components/ProductCard';
 import Reveal from '../components/Reveal';
+import Seo from '../components/Seo';
 
 /** Posición dentro de una entrada escalonada (ver .anim-rise en index.css). */
 const step = (i: number) => ({ '--i': i }) as CSSProperties;
@@ -63,6 +64,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen bg-brand-sand">
+      <Seo path="/" />
 
       {/* ── Hero partido: el titular vive sobre tinta, la foto al lado ── */}
       <section className="grid lg:grid-cols-[0.86fr_1.14fr] border-b border-brand-line">

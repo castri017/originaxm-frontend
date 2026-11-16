@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { whatsappLink } from '../config/site';
 import { ChevronDown } from 'lucide-react';
+import Seo from '../components/Seo';
 
 const FAQS = [
   {
@@ -33,6 +35,20 @@ export default function FAQ() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <Seo
+        title="Preguntas frecuentes"
+        description="Resolvemos tus dudas sobre autenticidad, pedidos, métodos de pago, envíos y devoluciones de los productos Stanley de OriginAXM."
+        path="/faq"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: FAQS.map(f => ({
+            '@type': 'Question',
+            name: f.q,
+            acceptedAnswer: { '@type': 'Answer', text: f.a },
+          })),
+        }}
+      />
       {/* Header */}
       <div className="text-center mb-14">
         <h1 className="text-4xl font-extrabold tracking-tight text-black uppercase">
@@ -71,7 +87,7 @@ export default function FAQ() {
       <div className="mt-14 text-center bg-gray-50 border border-gray-100 rounded-sm p-8">
         <p className="text-sm text-gray-600 mb-4">¿No encontraste lo que buscabas?</p>
         <a
-          href="https://wa.me/56912345678"
+          href={whatsappLink()}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-block bg-black text-white text-sm font-extrabold uppercase tracking-widest px-8 py-3 rounded-full hover:bg-gray-800 transition-colors"

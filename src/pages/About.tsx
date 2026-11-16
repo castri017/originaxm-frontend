@@ -1,6 +1,9 @@
+import Seo from '../components/Seo';
+
 export default function About() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <Seo title="Sobre nosotros" description="Somos OriginAXM, una tienda de Armenia, Quindío, que trae productos Stanley 100% originales y los envía a todo Colombia." path="/about" />
       {/* Header */}
       <div className="text-center mb-14">
         <img src="/logo.png" alt="OriginAXM" className="h-24 w-auto object-contain mx-auto mb-8" />
