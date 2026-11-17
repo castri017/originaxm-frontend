@@ -1,9 +1,10 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { trackViewItem, trackAddToCart } from '../lib/analytics';
 import { whatsappLink } from '../config/site';
 import { productIdFromParam, productPath } from '../lib/productUrl';
 import ProductSeo from '../features/catalog/ProductSeo';
 import { formatWeight } from '../features/productMeta/productMeta';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { NotFoundError } from '../features/catalog/api';
 import { productQuery, useCategories, variantsQuery } from '../features/catalog/queries';
@@ -83,6 +84,14 @@ export default function ProductDetails() {
   const loading  = productQ.isPending && !product;
   const notFound = productQ.error instanceof NotFoundError;
 
+  // GA4: una vista de producto por cada producto (o color) que se muestra.
+  const viewedId = product?.id;
+  useEffect(() => {
+    if (!product) return;
+    trackViewItem({ item_id: product.id, item_name: product.name, price: getFinalPrice(product) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewedId]);
+
   const [activeImg, setActiveImg] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -140,6 +149,7 @@ export default function ProductDetails() {
       description: product.description,
     } as any;
     addItem(cartProduct, quantity, product.capacity || product.size || '');
+    trackAddToCart({ item_id: product.id, item_name: product.name, price: finalPrice, quantity, item_variant: product.capacity || product.size || undefined });
     setAdded(true);
     if (addedTimer.current) clearTimeout(addedTimer.current);
     addedTimer.current = setTimeout(() => setAdded(false), 2500);

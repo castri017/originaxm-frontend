@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import { queryClient } from './lib/queryClient';
 import { catalogKeys } from './features/catalog/queries';
 import { useCatalogStore } from './store/useCatalogStore';
+import AnalyticsTracker from './components/AnalyticsTracker';
 
 // Inicio carga con el bundle principal; el resto de páginas se descarga al visitarlas.
 // Así quien entra a la tienda no descarga el panel de administración.
@@ -58,6 +59,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <CatalogInvalidation />
       <BrowserRouter>
+        <AnalyticsTracker />
         <Routes>
           <Route path="/" element={<RootLayout />}>
             <Route index element={<Home />} />

@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { CheckCircle, XCircle, Clock, Loader2, ShoppingBag } from 'lucide-react';
 
 import { API } from '../config/api';
+import { flushPendingPurchase } from '../lib/analytics';
 
 type ResultState = 'loading' | 'approved' | 'pending' | 'rejected';
 
@@ -25,12 +26,12 @@ export default function PaymentResult() {
       .then(data => {
         const s: string = data.status ?? '';
         setStatus(s);
-        if (s === 'Approved') setState('approved');
+        if (s === 'Approved') { setState('approved'); flushPendingPurchase(orderNumber); }
         else if (s === 'Rejected' || s === 'Cancelled' || s === 'Expired' || s === 'Failed') setState('rejected');
         else setState('pending');
       })
       .catch(() => setState('pending'));
-  }, [transactionId]);
+  }, [transactionId, orderNumber]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">

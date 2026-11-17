@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CheckCircle, Truck, Wallet, ArrowRight, X, UserCheck, Loader2, UserPlus, LogIn } from 'lucide-react';
 import { useCartStore } from '../store/useCartStore';
@@ -8,6 +8,7 @@ import { customerFetch } from '../lib/customerFetch';
 import { COLOMBIA_DATA } from '../data/colombia';
 
 import { API } from '../config/api';
+import { trackBeginCheckout, trackPurchase, savePendingPurchase, type AnalyticsItem } from '../lib/analytics';
 
 interface PlacedOrder {
   orderNumber: string;
@@ -106,6 +107,20 @@ export default function Checkout() {
   const shipping = (subtotal >= shippingThreshold || isLocalFreeShipping) ? 0 : 15000;
   const total    = subtotal + shipping;
   const missingForFreeShipping = Math.max(0, shippingThreshold - subtotal);
+
+  const gaItems = (): AnalyticsItem[] => items.map(i => ({
+    item_id: i.product.id,
+    item_name: i.product.name,
+    price: i.product.price,
+    quantity: i.quantity,
+    item_variant: i.size || undefined,
+  }));
+
+  // GA4: se inicia el checkout una sola vez al entrar con productos en el carrito.
+  useEffect(() => {
+    if (items.length > 0) trackBeginCheckout(gaItems(), subtotal);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const cities = useMemo(() => {
     const dept = COLOMBIA_DATA.find(d => d.department === department);
@@ -226,6 +241,7 @@ export default function Checkout() {
 
         // Si ya tenemos la URL de redireccion
         if (payData.paymentRedirectUrl) {
+          savePendingPurchase({ transaction_id: String(created.orderNumber ?? created.id), value: total, shipping, items: gaItems() });
           clearCart();
           invalidateCatalog();
           window.location.href = payData.paymentRedirectUrl;
@@ -234,6 +250,7 @@ export default function Checkout() {
 
         // Hacer polling hasta obtener la URL
         const redirectUrl = await pollSistecreditoStatus(payData.transactionId);
+        savePendingPurchase({ transaction_id: String(created.orderNumber ?? created.id), value: total, shipping, items: gaItems() });
         clearCart();
         invalidateCatalog();
         window.location.href = redirectUrl;
@@ -262,6 +279,7 @@ export default function Checkout() {
         })),
       });
 
+      trackPurchase({ transaction_id: String(created.orderNumber ?? created.id), value: total, shipping, items: gaItems() });
       clearCart();
       invalidateCatalog();
     } catch (err: any) {
