@@ -84,11 +84,11 @@ export default function ProductDetails() {
   const loading  = productQ.isPending && !product;
   const notFound = productQ.error instanceof NotFoundError;
 
-  // GA4: una vista de producto por cada producto (o color) que se muestra.
+  // GA4 y TikTok: una vista de producto por cada producto (o color) que se muestra.
   const viewedId = product?.id;
   useEffect(() => {
     if (!product) return;
-    trackViewItem({ item_id: product.id, item_name: product.name, price: getFinalPrice(product) });
+    trackViewItem({ item_id: product.id, item_name: product.name, price: getFinalPrice(product), sku: product.productCode });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewedId]);
 
@@ -149,7 +149,7 @@ export default function ProductDetails() {
       description: product.description,
     } as any;
     addItem(cartProduct, quantity, product.capacity || product.size || '');
-    trackAddToCart({ item_id: product.id, item_name: product.name, price: finalPrice, quantity, item_variant: product.capacity || product.size || undefined });
+    trackAddToCart({ item_id: product.id, item_name: product.name, price: finalPrice, quantity, item_variant: product.capacity || product.size || undefined, sku: product.productCode });
     setAdded(true);
     if (addedTimer.current) clearTimeout(addedTimer.current);
     addedTimer.current = setTimeout(() => setAdded(false), 2500);

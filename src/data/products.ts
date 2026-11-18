@@ -1,5 +1,7 @@
 export interface Product {
   id: string;
+  /** Código del producto; los carritos guardados antes de este campo no lo tienen. */
+  productCode?: string;
   name: string;
   description: string;
   price: number;

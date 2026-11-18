@@ -1,8 +1,11 @@
 /**
- * Google Analytics 4 (gtag.js).
- * Solo se activa si existe VITE_GA_MEASUREMENT_ID (formato G-XXXXXXXXXX);
- * sin esa variable todas las funciones son no-ops, así que en local no envía datos.
+ * Medición del sitio: Google Analytics 4 (gtag.js) y píxel de TikTok.
+ * GA4 solo se activa si existe VITE_GA_MEASUREMENT_ID (formato G-XXXXXXXXXX) y
+ * TikTok si existe VITE_TIKTOK_PIXEL_ID; sin ellas las funciones son no-ops,
+ * así que en local no se envían datos.
  */
+import { initTikTok, ttPageView, ttTrack, type TikTokContent } from './tiktok';
+
 const GA_ID = import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined;
 const CURRENCY = 'COP';
 
@@ -20,11 +23,30 @@ export interface AnalyticsItem {
   quantity?: number;
   item_variant?: string;
   item_category?: string;
+  /** Código del producto (ProductCode): es el id del catálogo en Merchant Center y TikTok. */
+  sku?: string;
+}
+
+/** Los ítems de GA4 no aceptan campos desconocidos: se quita `sku` antes de enviarlos. */
+function gaItem(item: AnalyticsItem): Omit<AnalyticsItem, 'sku'> {
+  const ga: Partial<AnalyticsItem> = { ...item };
+  delete ga.sku;
+  return ga as Omit<AnalyticsItem, 'sku'>;
+}
+
+function ttContents(items: AnalyticsItem[]): TikTokContent[] {
+  return items.map(i => ({
+    content_id: i.sku || i.item_id,
+    content_name: i.item_name,
+    price: i.price,
+    quantity: i.quantity ?? 1,
+  }));
 }
 
 let initialized = false;
 
 export function initAnalytics(): void {
+  initTikTok();
   if (!GA_ID || initialized || typeof document === 'undefined') return;
   initialized = true;
 
@@ -51,26 +73,31 @@ export function trackPageView(path: string): void {
     page_location: window.location.href,
     page_title: document.title,
   });
+  ttPageView();
 }
 
 export function trackViewItem(item: AnalyticsItem): void {
   window.gtag?.('event', 'view_item', {
     currency: CURRENCY,
     value: item.price,
-    items: [item],
+    items: [gaItem(item)],
   });
+  ttTrack('ViewContent', ttContents([item]), item.price, CURRENCY);
 }
 
 export function trackAddToCart(item: AnalyticsItem): void {
+  const value = item.price * (item.quantity ?? 1);
   window.gtag?.('event', 'add_to_cart', {
     currency: CURRENCY,
-    value: item.price * (item.quantity ?? 1),
-    items: [item],
+    value,
+    items: [gaItem(item)],
   });
+  ttTrack('AddToCart', ttContents([item]), value, CURRENCY);
 }
 
 export function trackBeginCheckout(items: AnalyticsItem[], value: number): void {
-  window.gtag?.('event', 'begin_checkout', { currency: CURRENCY, value, items });
+  window.gtag?.('event', 'begin_checkout', { currency: CURRENCY, value, items: items.map(gaItem) });
+  ttTrack('InitiateCheckout', ttContents(items), value, CURRENCY);
 }
 
 export interface PurchasePayload {
@@ -81,7 +108,9 @@ export interface PurchasePayload {
 }
 
 export function trackPurchase(p: PurchasePayload): void {
-  window.gtag?.('event', 'purchase', { currency: CURRENCY, ...p });
+  window.gtag?.('event', 'purchase', { currency: CURRENCY, ...p, items: p.items.map(gaItem) });
+  // event_id = número de pedido: evita contar dos veces la misma compra.
+  ttTrack('Purchase', ttContents(p.items), p.value, CURRENCY, p.transaction_id);
 }
 
 /** Compra pendiente de confirmar (pago con redirección): se guarda para reportarla al volver. */

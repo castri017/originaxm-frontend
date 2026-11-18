@@ -114,6 +114,7 @@ export default function Checkout() {
     price: i.product.price,
     quantity: i.quantity,
     item_variant: i.size || undefined,
+    sku: i.product.productCode,
   }));
 
   // GA4: se inicia el checkout una sola vez al entrar con productos en el carrito.
