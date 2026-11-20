@@ -1,7 +1,9 @@
 /** Formato de la cartera: pesos colombianos y días de Colombia. */
 
-export const money = (value: number) =>
-  `$${Math.round(value).toLocaleString('es-CO')}`;
+export const money = (value: number) => {
+  const n = Math.round(value) || 0;   // evita "-0"
+  return `${n < 0 ? '-' : ''}$${Math.abs(n).toLocaleString('es-CO')}`;
+};
 
 /**
  * Día de una fecha de la API como "YYYY-MM-DD". Las que traen zona (guardadas en UTC) se pasan a

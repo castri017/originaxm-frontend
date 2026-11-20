@@ -163,3 +163,63 @@ export interface RegisteredCustomer {
   lastName: string;
   phone?: string;
 }
+
+export type LoanStatus = 'AlDia' | 'EnMora' | 'Saldado';
+
+export interface LoanInterestPayment {
+  id: string;
+  loanId: string;
+  amount: number;
+  method: PaymentMethod;
+  paymentDate: string;
+  notes: string | null;
+}
+
+export interface Loan {
+  id: string;
+  borrowerName: string;
+  principal: number;
+  monthlyRatePercent: number;
+  loanDate: string;
+  collectionDay: number;
+  paidOffDate: string | null;
+  notes: string;
+  monthlyInterest: number;
+  interestDue: number;
+  interestCollected: number;
+  interestPending: number;
+  nextCollectionDate: string | null;
+  status: LoanStatus;
+  payments: LoanInterestPayment[];
+}
+
+export interface LoanInput {
+  borrowerName: string;
+  principal: number;
+  monthlyRatePercent: number;
+  loanDate: string;
+  collectionDay: number;
+  paidOffDate: string | null;
+  notes: string;
+}
+
+export interface LoansSummary {
+  totalLent: number;
+  activeCount: number;
+  interestCollected: number;
+  expectedMonthlyInterest: number;
+  interestPending: number;
+}
+
+export interface CreditExpense {
+  id: string;
+  description: string;
+  amount: number;
+  date: string;
+}
+
+export interface ExpenseInput {
+  description: string;
+  amount: number;
+  date: string;
+}

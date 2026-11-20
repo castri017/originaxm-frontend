@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertCircle, Edit, Loader2, Trash2 } from 'lucide-react';
+import { AlertCircle, Edit, Loader2, ShoppingBag, Trash2 } from 'lucide-react';
 import { carteraApi } from './api';
 import { formatDay, money, todayInColombia } from './format';
 import { inputClass, labelClass, parseMoney, PAYMENT_METHODS, primaryButton, SALE_TYPE_LABEL, secondaryButton } from './styles';
@@ -11,11 +11,13 @@ interface Props {
   sale: CreditSaleDetail;
   onClose: () => void;
   onEdit: (sale: CreditSaleDetail) => void;
+  /** Vender un termo que está sin vender. */
+  onSell: (sale: CreditSaleDetail) => void;
   /** Se llama tras cada cambio, con la venta actualizada (o null si se eliminó). */
   onChanged: (sale: CreditSaleDetail | null) => void;
 }
 
-export default function SaleDetailModal({ sale, onClose, onEdit, onChanged }: Props) {
+export default function SaleDetailModal({ sale, onClose, onEdit, onSell, onChanged }: Props) {
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(todayInColombia());
   const [method, setMethod] = useState<PaymentMethod>('Nequi');
@@ -152,9 +154,16 @@ export default function SaleDetailModal({ sale, onClose, onEdit, onChanged }: Pr
           <button onClick={() => setPendingDelete({ kind: 'sale' })} disabled={busy} className={`${secondaryButton} text-red-600 hover:bg-red-50`}>
             <Trash2 className="w-3.5 h-3.5" /> Eliminar
           </button>
-          <button onClick={() => onEdit(sale)} disabled={busy} className={secondaryButton}>
-            <Edit className="w-3.5 h-3.5" /> Editar venta
-          </button>
+          <div className="flex gap-2">
+            <button onClick={() => onEdit(sale)} disabled={busy} className={secondaryButton}>
+              <Edit className="w-3.5 h-3.5" /> Editar
+            </button>
+            {sale.status === 'SinVender' && (
+              <button onClick={() => onSell(sale)} disabled={busy} className={primaryButton}>
+                <ShoppingBag className="w-4 h-4" /> Vender
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

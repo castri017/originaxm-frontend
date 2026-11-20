@@ -10,6 +10,8 @@ import type {
 
 interface Props {
   sale: CreditSaleDetail | null;         // null = nueva
+  /** "purchase": solo la compra del termo (queda sin vender). "sale": compra y venta a la vez, o editar. */
+  mode?: 'sale' | 'purchase';
   products: CatalogProductOption[];
   registeredCustomers: RegisteredCustomer[];
   knownCustomerNames: string[];          // nombres ya usados en la cartera, para sugerirlos
@@ -19,7 +21,8 @@ interface Props {
 
 const customerLabel = (c: RegisteredCustomer) => c.fullName || `${c.firstName} ${c.lastName}`.trim();
 
-export default function SaleFormModal({ sale, products, registeredCustomers, knownCustomerNames, onClose, onSaved }: Props) {
+export default function SaleFormModal({ sale, mode = 'sale', products, registeredCustomers, knownCustomerNames, onClose, onSaved }: Props) {
+  const purchaseOnly = mode === 'purchase';
   const [productText, setProductText] = useState(sale?.productName ?? '');
   const [customerText, setCustomerText] = useState(sale?.customerName ?? '');
   const [type, setType] = useState<SaleType>(sale?.type ?? 'Normal');
@@ -42,20 +45,22 @@ export default function SaleFormModal({ sale, products, registeredCustomers, kno
     () => registeredCustomers.find(c => customerLabel(c).toLowerCase() === customerText.trim().toLowerCase()) ?? null,
     [registeredCustomers, customerText]);
 
-  const sold = customerText.trim().length > 0;
+  const sold = !purchaseOnly && customerText.trim().length > 0;
   const buy = type === 'Bono' ? 0 : parseMoney(purchasePrice);
   const sell = type === 'Devolucion' ? 0 : parseMoney(sellingPrice);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!productText.trim()) { setError('Indica el producto.'); return; }
-    if (type !== 'Devolucion' && sell <= 0) { setError('Indica el valor de venta.'); return; }
+    if (!purchaseOnly && !sale && !customerText.trim()) { setError('Indica el cliente. Si aún no lo vendes, usa "Registrar compra".'); return; }
+    if (!purchaseOnly && sold && type !== 'Devolucion' && sell <= 0) { setError('Indica el valor de venta.'); return; }
+    if (purchaseOnly && type !== 'Bono' && buy <= 0) { setError('Indica el valor de compra.'); return; }
 
     const input: SaleInput = {
       productId: matchedProduct?.id ?? null,
       productName: matchedProduct ? null : productText.trim(),
-      customerId: matchedCustomer?.id ?? null,
-      customerName: matchedCustomer ? null : customerText.trim() || null,
+      customerId: purchaseOnly ? null : matchedCustomer?.id ?? null,
+      customerName: purchaseOnly || matchedCustomer ? null : customerText.trim() || null,
       purchasePrice: buy,
       sellingPrice: sell,
       purchaseDate,
@@ -80,7 +85,7 @@ export default function SaleFormModal({ sale, products, registeredCustomers, kno
   };
 
   return (
-    <Modal title={sale ? 'Editar venta' : 'Nueva venta'} onClose={onClose} busy={saving}>
+    <Modal title={purchaseOnly ? 'Registrar compra' : sale ? 'Editar venta' : 'Nueva venta'} onClose={onClose} busy={saving}>
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
         <div>
           <label className={labelClass} htmlFor="cartera-product">Producto *</label>
@@ -94,10 +99,11 @@ export default function SaleFormModal({ sale, products, registeredCustomers, kno
           </p>
         </div>
 
+        {!purchaseOnly && (
         <div>
-          <label className={labelClass} htmlFor="cartera-customer">Cliente</label>
+          <label className={labelClass} htmlFor="cartera-customer">Cliente{sale ? '' : ' *'}</label>
           <input id="cartera-customer" list="cartera-customers" value={customerText} onChange={e => setCustomerText(e.target.value)}
-            className={inputClass} placeholder="Déjalo vacío si el termo aún no se vende" autoComplete="off" />
+            className={inputClass} placeholder={sale ? 'Vacío = sin vender' : 'Escribe el nombre o elige un cliente registrado'} autoComplete="off" />
           <datalist id="cartera-customers">
             {registeredCustomers.map(c => <option key={c.id} value={customerLabel(c)}>Registrado</option>)}
             {knownCustomerNames
@@ -108,12 +114,15 @@ export default function SaleFormModal({ sale, products, registeredCustomers, kno
             {matchedCustomer ? 'Cliente registrado en la tienda.' : sold ? 'Cliente sin cuenta (solo el nombre).' : 'Sin cliente: queda como "sin vender".'}
           </p>
         </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={labelClass} htmlFor="cartera-type">Tipo</label>
             <select id="cartera-type" value={type} onChange={e => setType(e.target.value as SaleType)} className={inputClass}>
-              {(Object.keys(SALE_TYPE_LABEL) as SaleType[]).map(t => <option key={t} value={t}>{SALE_TYPE_LABEL[t]}</option>)}
+              {(Object.keys(SALE_TYPE_LABEL) as SaleType[])
+                .filter(t => !purchaseOnly || t !== 'Devolucion')
+                .map(t => <option key={t} value={t}>{SALE_TYPE_LABEL[t]}</option>)}
             </select>
           </div>
           {type === 'Devolucion' ? (
@@ -125,7 +134,7 @@ export default function SaleFormModal({ sale, products, registeredCustomers, kno
                 <option value="Usado">Usado</option>
               </select>
             </div>
-          ) : (
+          ) : purchaseOnly ? <div /> : (
             <div>
               <label className={labelClass} htmlFor="cartera-collection">Forma de cobro</label>
               <select id="cartera-collection" value={collection} onChange={e => setCollection(e.target.value as CollectionMethod)} className={inputClass}>
@@ -144,7 +153,7 @@ export default function SaleFormModal({ sale, products, registeredCustomers, kno
             {type === 'Bono' && <p className="text-xs text-gray-400 mt-1">Comprado con bono: no salió dinero.</p>}
           </div>
           <div>
-            <label className={labelClass} htmlFor="cartera-sell">Valor venta</label>
+            <label className={labelClass} htmlFor="cartera-sell">{purchaseOnly ? 'Precio de venta previsto' : 'Valor venta'}</label>
             <input id="cartera-sell" inputMode="numeric" value={type === 'Devolucion' ? '0' : sellingPrice}
               onChange={e => setSellingPrice(e.target.value)} disabled={type === 'Devolucion'} className={inputClass} placeholder="0" />
           </div>
@@ -155,12 +164,12 @@ export default function SaleFormModal({ sale, products, registeredCustomers, kno
             <label className={labelClass} htmlFor="cartera-buy-date">Fecha compra Amazon</label>
             <input id="cartera-buy-date" type="date" value={purchaseDate} onChange={e => setPurchaseDate(e.target.value)} className={inputClass} />
           </div>
-          <div>
+          {!purchaseOnly && <div>
             <label className={labelClass} htmlFor="cartera-sale-date">Fecha venta</label>
             <input id="cartera-sale-date" type="date" value={sold ? saleDate : ''} onChange={e => setSaleDate(e.target.value)}
               disabled={!sold} className={inputClass} />
             {sold && !saleDate && <p className="text-xs text-gray-400 mt-1">Sin fecha: vence contando desde la compra.</p>}
-          </div>
+          </div>}
         </div>
 
         <div>
@@ -183,7 +192,7 @@ export default function SaleFormModal({ sale, products, registeredCustomers, kno
 
         <div className="flex justify-end pt-2">
           <button type="submit" disabled={saving} className={primaryButton}>
-            {saving && <Loader2 className="w-4 h-4 animate-spin" />} {sale ? 'Guardar cambios' : 'Registrar venta'}
+            {saving && <Loader2 className="w-4 h-4 animate-spin" />} {purchaseOnly ? 'Registrar compra' : sale ? 'Guardar cambios' : 'Registrar venta'}
           </button>
         </div>
       </form>

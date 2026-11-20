@@ -1,11 +1,14 @@
 import { API } from '../../config/api';
 import { adminFetch } from '../../lib/adminFetch';
 import type {
-  CashAccount, CatalogProductOption, CreditCustomer, CreditSale, CreditSaleDetail, CreditStats,
-  ImportResult, ImportRow, PaymentInput, PaymentMethod, RegisteredCustomer, SaleInput,
+  CashAccount, CatalogProductOption, CreditCustomer, CreditExpense, CreditSale, CreditSaleDetail, CreditStats,
+  ExpenseInput, ImportResult, ImportRow, Loan, LoanInput, LoansSummary, PaymentInput, PaymentMethod,
+  RegisteredCustomer, SaleInput,
 } from './types';
 
 const BASE = `${API}/api/creditsales`;
+const LOANS = `${API}/api/loans`;
+const EXPENSES = `${API}/api/creditexpenses`;
 
 async function readError(res: Response, fallback: string): Promise<Error> {
   const body = await res.json().catch(() => ({}));
@@ -54,6 +57,23 @@ export const carteraApi = {
 
   importRows: (rows: ImportRow[]) =>
     sendJson<ImportResult>(`${BASE}/import`, 'POST', { rows }, 'No se pudo importar el archivo.'),
+
+  loans: () => getJson<Loan[]>(LOANS, 'No se pudieron cargar los préstamos.'),
+  loansSummary: () => getJson<LoansSummary>(`${LOANS}/summary`, 'No se pudo cargar el resumen de préstamos.'),
+  createLoan: (input: LoanInput) => sendJson<Loan>(LOANS, 'POST', input, 'No se pudo registrar el préstamo.'),
+  updateLoan: (id: string, input: LoanInput) => sendJson<Loan>(`${LOANS}/${id}`, 'PUT', input, 'No se pudo guardar el préstamo.'),
+  deleteLoan: (id: string, code: string) =>
+    sendJson<void>(`${LOANS}/${id}`, 'DELETE', undefined, 'No se pudo eliminar el préstamo.', { 'X-Verification-Code': code }),
+  addLoanPayment: (loanId: string, input: PaymentInput) =>
+    sendJson<Loan>(`${LOANS}/${loanId}/payments`, 'POST', input, 'No se pudo registrar el recaudo.'),
+  deleteLoanPayment: (loanId: string, paymentId: string, code: string) =>
+    sendJson<void>(`${LOANS}/${loanId}/payments/${paymentId}`, 'DELETE', undefined, 'No se pudo eliminar el recaudo.', { 'X-Verification-Code': code }),
+
+  expenses: () => getJson<CreditExpense[]>(EXPENSES, 'No se pudieron cargar los gastos.'),
+  createExpense: (input: ExpenseInput) => sendJson<CreditExpense>(EXPENSES, 'POST', input, 'No se pudo registrar el gasto.'),
+  updateExpense: (id: string, input: ExpenseInput) => sendJson<CreditExpense>(`${EXPENSES}/${id}`, 'PUT', input, 'No se pudo guardar el gasto.'),
+  deleteExpense: (id: string, code: string) =>
+    sendJson<void>(`${EXPENSES}/${id}`, 'DELETE', undefined, 'No se pudo eliminar el gasto.', { 'X-Verification-Code': code }),
 
   catalogProducts: () => getJson<CatalogProductOption[]>(`${API}/api/products`, 'No se pudieron cargar los productos.'),
   registeredCustomers: () => getJson<RegisteredCustomer[]>(`${API}/api/customers`, 'No se pudieron cargar los clientes.'),

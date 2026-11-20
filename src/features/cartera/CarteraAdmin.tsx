@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertCircle, CheckCircle2, Loader2, Plus, RefreshCw, Search, Trash2, Wallet } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, PackagePlus, Plus, RefreshCw, Search, ShoppingBag, Trash2, Wallet } from 'lucide-react';
 import { carteraApi } from './api';
 import CustomerPaymentModal from './CustomerPaymentModal';
+import ExpensesPanel from './ExpensesPanel';
+import LoansPanel from './LoansPanel';
+import SellModal from './SellModal';
 import { formatDay, money } from './format';
 import ImportPanel from './ImportPanel';
 import NequiPanel from './NequiPanel';
@@ -11,10 +14,11 @@ import { inputClass, primaryButton, SALE_TYPE_LABEL, secondaryButton } from './s
 import { StatCard, StatusBadge } from './ui';
 import VerifyDeleteModal from './VerifyDeleteModal';
 import type {
-  CashAccount, CatalogProductOption, CreditCustomer, CreditSale, CreditSaleDetail, CreditStats, RegisteredCustomer, SaleStatus,
+  CashAccount, CatalogProductOption, CreditCustomer, CreditExpense, CreditSale, CreditSaleDetail, CreditStats, Loan,
+  LoansSummary, RegisteredCustomer, SaleStatus,
 } from './types';
 
-type Tab = 'ventas' | 'clientes' | 'nequi' | 'importar';
+type Tab = 'ventas' | 'clientes' | 'prestamos' | 'gastos' | 'nequi' | 'importar';
 type SaleFilter = 'pendientes' | 'vencidas' | 'sistecredito' | 'sinvender' | 'pagadas' | 'devoluciones' | 'todas';
 
 const SALE_FILTERS: { value: SaleFilter; label: string; test: (s: CreditSale) => boolean }[] = [
@@ -37,6 +41,9 @@ export default function CarteraAdmin() {
   const [sales, setSales] = useState<CreditSale[]>([]);
   const [customers, setCustomers] = useState<CreditCustomer[]>([]);
   const [nequi, setNequi] = useState<CashAccount | null>(null);
+  const [loans, setLoans] = useState<Loan[]>([]);
+  const [loansSummary, setLoansSummary] = useState<LoansSummary | null>(null);
+  const [expenses, setExpenses] = useState<CreditExpense[]>([]);
   const [products, setProducts] = useState<CatalogProductOption[]>([]);
   const [registered, setRegistered] = useState<RegisteredCustomer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,6 +55,8 @@ export default function CarteraAdmin() {
   const [customerFilter, setCustomerFilter] = useState<CreditCustomer | null>(null);
 
   const [formSale, setFormSale] = useState<CreditSaleDetail | null | undefined>(undefined);  // undefined = cerrado
+  const [formMode, setFormMode] = useState<'sale' | 'purchase'>('sale');
+  const [selling, setSelling] = useState<CreditSale | null>(null);
   const [detail, setDetail] = useState<CreditSaleDetail | null>(null);
   const [payingCustomer, setPayingCustomer] = useState<CreditCustomer | null>(null);
   const [deletingSale, setDeletingSale] = useState<CreditSale | null>(null);
@@ -55,8 +64,12 @@ export default function CarteraAdmin() {
   const reload = useCallback(async () => {
     setError('');
     try {
-      const [s, list, c, n] = await Promise.all([carteraApi.stats(), carteraApi.sales(), carteraApi.customers(), carteraApi.nequi()]);
+      const [s, list, c, n, l, ls, ex] = await Promise.all([
+        carteraApi.stats(), carteraApi.sales(), carteraApi.customers(), carteraApi.nequi(),
+        carteraApi.loans(), carteraApi.loansSummary(), carteraApi.expenses(),
+      ]);
       setStats(s); setSales(list); setCustomers(c); setNequi(n);
+      setLoans(l); setLoansSummary(ls); setExpenses(ex);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo cargar la cartera.');
     } finally {
@@ -94,6 +107,9 @@ export default function CarteraAdmin() {
   }, [sales, filter, search, customerFilter]);
 
   const visibleTotal = visibleSales.reduce((sum, s) => sum + s.balance, 0);
+  const expensesTotal = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const interestCollected = loansSummary?.interestCollected ?? 0;
+  const netProfit = (stats?.expectedProfit ?? 0) + interestCollected - expensesTotal;
   const knownNames = useMemo(() => [...new Set(sales.map(s => s.customerName).filter(Boolean))].sort(), [sales]);
   const filterCount = (f: SaleFilter) => sales.filter(SALE_FILTERS.find(x => x.value === f)!.test).length;
 
@@ -118,22 +134,28 @@ export default function CarteraAdmin() {
       {stats && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <StatCard label="Cartera por cobrar" value={money(stats.totalBalance)}
-            hint={`${stats.customersWithBalance} cliente${stats.customersWithBalance !== 1 ? 's' : ''} · ${stats.pendingCount} ventas`} tone="warning" />
+            hint={`${stats.customersWithBalance} cliente${stats.customersWithBalance !== 1 ? 's' : ''} · ${stats.pendingCount} venta${stats.pendingCount !== 1 ? 's' : ''}`} tone="warning" />
           <StatCard label="Cartera vencida" value={money(stats.overdueBalance)}
-            hint={`${stats.customersOverdue} cliente${stats.customersOverdue !== 1 ? 's' : ''} · ${stats.overdueCount} ventas`} tone={stats.overdueBalance > 0 ? 'danger' : 'default'} />
+            hint={`${stats.customersOverdue} cliente${stats.customersOverdue !== 1 ? 's' : ''} · ${stats.overdueCount} venta${stats.overdueCount !== 1 ? 's' : ''}`} tone={stats.overdueBalance > 0 ? 'danger' : 'default'} />
           <StatCard label="Sistecrédito por recibir" value={money(stats.sistecreditoPending)} hint="Desembolsa a 60 días" />
           <StatCard label="Saldo Nequi esperado" value={money(nequi?.expectedBalance ?? 0)} hint="Con compras, 4×1000 y abonos" />
           <StatCard label="Ganancia de lo vendido" value={money(stats.expectedProfit)} hint={`Cobrado: ${money(stats.totalCollected)}`} tone="success" />
-          <StatCard label="Sin vender" value={`${stats.inventoryCount} termos`}
+          <StatCard label="Sin vender" value={`${stats.inventoryCount} termo${stats.inventoryCount !== 1 ? 's' : ''}`}
             hint={`Costo ${money(stats.inventoryCost)} · venta ${money(stats.inventoryExpectedSale)}`} />
           <StatCard label="Bonos Amazon pendientes" value={money(stats.pendingVouchers)} hint="Por devoluciones" />
-          <StatCard label="Comprado en Amazon" value={money(stats.totalPurchased)} hint={`${sales.length} registros`} />
+          <StatCard label="Comprado en Amazon" value={money(stats.totalPurchased)} hint={`${sales.length} registro${sales.length !== 1 ? 's' : ''}`} />
+          <StatCard label="Prestado" value={money(loansSummary?.totalLent ?? 0)}
+            hint={`${loansSummary?.activeCount ?? 0} préstamo${loansSummary?.activeCount !== 1 ? 's' : ''} · ${money(loansSummary?.expectedMonthlyInterest ?? 0)} de interés al mes`} />
+          <StatCard label="Intereses recaudados" value={money(interestCollected)}
+            hint={loansSummary?.interestPending ? `Pendiente por recaudar: ${money(loansSummary.interestPending)}` : 'Sin intereses pendientes'} tone="success" />
+          <StatCard label="Gastos" value={money(expensesTotal)} hint={`${expenses.length} gasto${expenses.length !== 1 ? 's' : ''}`} tone={expensesTotal > 0 ? 'danger' : 'default'} />
+          <StatCard label="Ganancia neta" value={money(netProfit)} hint="Ventas + intereses − gastos" tone={netProfit >= 0 ? 'success' : 'danger'} />
         </div>
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100">
-        <div className="flex gap-1">
-          {([['ventas', 'Ventas'], ['clientes', 'Clientes'], ['nequi', 'Nequi'], ['importar', 'Importar Excel']] as [Tab, string][]).map(([value, label]) => (
+        <div className="flex gap-1 overflow-x-auto">
+          {([['ventas', 'Ventas'], ['clientes', 'Clientes'], ['prestamos', 'Préstamos'], ['gastos', 'Gastos'], ['nequi', 'Nequi'], ['importar', 'Importar Excel']] as [Tab, string][]).map(([value, label]) => (
             <button key={value} onClick={() => setTab(value)}
               className={`px-4 py-2.5 text-sm font-bold border-b-2 -mb-px transition-colors ${tab === value ? 'border-black text-black' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
               {label}
@@ -141,9 +163,14 @@ export default function CarteraAdmin() {
           ))}
         </div>
         {tab === 'ventas' && (
-          <button onClick={() => setFormSale(null)} className={`${primaryButton} mb-2`}>
-            <Plus className="w-4 h-4" /> Nueva venta
-          </button>
+          <div className="flex gap-2 mb-2">
+            <button onClick={() => { setFormMode('purchase'); setFormSale(null); }} className={secondaryButton}>
+              <PackagePlus className="w-4 h-4" /> Registrar compra
+            </button>
+            <button onClick={() => { setFormMode('sale'); setFormSale(null); }} className={primaryButton}>
+              <Plus className="w-4 h-4" /> Nueva venta
+            </button>
+          </div>
         )}
       </div>
 
@@ -207,7 +234,13 @@ export default function CarteraAdmin() {
                       <td className={`px-4 py-2.5 text-right font-bold ${s.balance > 0 ? 'text-red-600' : 'text-gray-400'}`}>{money(s.balance)}</td>
                       <td className="px-4 py-2.5"><StatusBadge status={s.status} daysOverdue={s.daysOverdue} /></td>
                       <td className="px-4 py-2.5 text-xs text-gray-500 whitespace-nowrap">{formatDay(s.dueDate)}</td>
-                      <td className="px-2 py-2.5 text-right">
+                      <td className="px-2 py-2.5 text-right whitespace-nowrap">
+                        {s.status === 'SinVender' && (
+                          <button onClick={e => { e.stopPropagation(); setSelling(s); }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 mr-1 text-xs font-bold bg-black text-white rounded-full hover:bg-gray-800">
+                            <ShoppingBag className="w-3.5 h-3.5" /> Vender
+                          </button>
+                        )}
                         <button onClick={e => { e.stopPropagation(); setDeletingSale(s); }}
                           aria-label={`Eliminar ${s.productName}${s.customerName ? ` de ${s.customerName}` : ''}`} title="Eliminar"
                           className="p-1.5 text-gray-300 hover:text-red-600 rounded-sm hover:bg-red-50 transition-colors">
@@ -273,6 +306,10 @@ export default function CarteraAdmin() {
         </div>
       )}
 
+      {tab === 'prestamos' && <LoansPanel loans={loans} onChanged={message => { if (message) flash(message); reload(); }} />}
+
+      {tab === 'gastos' && <ExpensesPanel expenses={expenses} onChanged={message => { if (message) flash(message); reload(); }} />}
+
       {tab === 'nequi' && <NequiPanel key={nequi ? 'loaded' : 'loading'} account={nequi} onSaved={a => { setNequi(a); flash('Cuenta Nequi actualizada.'); }} />}
 
       {tab === 'importar' && (
@@ -283,11 +320,12 @@ export default function CarteraAdmin() {
       {formSale !== undefined && (
         <SaleFormModal
           sale={formSale}
+          mode={formMode}
           products={products}
           registeredCustomers={registered}
           knownCustomerNames={knownNames}
           onClose={() => setFormSale(undefined)}
-          onSaved={() => { setFormSale(undefined); setDetail(null); flash('Venta guardada.'); reload(); }}
+          onSaved={() => { setFormSale(undefined); setDetail(null); flash(formMode === 'purchase' ? 'Compra registrada: queda en "Sin vender".' : 'Venta guardada.'); reload(); }}
         />
       )}
 
@@ -295,12 +333,23 @@ export default function CarteraAdmin() {
         <SaleDetailModal
           sale={detail}
           onClose={() => setDetail(null)}
-          onEdit={sale => { setDetail(null); setFormSale(sale); }}
+          onEdit={sale => { setDetail(null); setFormMode('sale'); setFormSale(sale); }}
+          onSell={sale => { setDetail(null); setSelling(sale); }}
           onChanged={updated => {
             setDetail(updated);
             if (!updated) flash('Venta eliminada.');
             reload();
           }}
+        />
+      )}
+
+      {selling && (
+        <SellModal
+          sale={selling}
+          registeredCustomers={registered}
+          knownCustomerNames={knownNames}
+          onClose={() => setSelling(null)}
+          onSold={message => { setSelling(null); flash(message); reload(); }}
         />
       )}
 
