@@ -11,7 +11,7 @@ import NequiPanel from './NequiPanel';
 import SaleDetailModal from './SaleDetailModal';
 import SaleFormModal from './SaleFormModal';
 import { inputClass, primaryButton, SALE_TYPE_LABEL, secondaryButton } from './styles';
-import { StatCard, StatusBadge } from './ui';
+import { ProductThumb, StatCard, StatusBadge } from './ui';
 import VerifyDeleteModal from './VerifyDeleteModal';
 import type {
   CashAccount, CatalogProductOption, CreditCustomer, CreditExpense, CreditSale, CreditSaleDetail, CreditStats, Loan,
@@ -257,13 +257,18 @@ export default function CarteraAdmin() {
                   {visibleSales.map(s => (
                     <tr key={s.id} onClick={() => openDetail(s.id)} className="cursor-pointer hover:bg-gray-50">
                       <td className="px-4 py-2.5 font-semibold">{s.customerName || <span className="text-gray-400 font-normal">—</span>}</td>
-                      <td className="px-4 py-2.5 max-w-[22rem]">
-                        <p className="truncate" title={s.productName}>{s.productName}</p>
-                        <p className="text-xs text-gray-400">
-                          {s.type !== 'Normal' && `${SALE_TYPE_LABEL[s.type]} · `}
-                          {s.collectionMethod === 'Sistecredito' && 'Sistecrédito · '}
-                          Compra {money(s.purchasePrice)} · ganancia {money(s.margin)}
-                        </p>
+                      <td className="px-4 py-2.5 max-w-[26rem]">
+                        <div className="flex items-center gap-3">
+                          <ProductThumb src={s.productImage} alt={s.productName} />
+                          <div className="min-w-0">
+                            <p className="truncate" title={s.productName}>{s.productName}</p>
+                            <p className="text-xs text-gray-400">
+                              {s.type !== 'Normal' && `${SALE_TYPE_LABEL[s.type]} · `}
+                              {s.collectionMethod === 'Sistecredito' && 'Sistecrédito · '}
+                              Compra {money(s.purchasePrice)} · ganancia {money(s.margin)}
+                            </p>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-4 py-2.5 text-right">{money(s.sellingPrice)}</td>
                       <td className="px-4 py-2.5 text-right text-gray-500">{money(s.amountPaid)}</td>

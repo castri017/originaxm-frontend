@@ -3,7 +3,7 @@ import { AlertCircle, Edit, Loader2, ShoppingBag, Trash2 } from 'lucide-react';
 import { carteraApi } from './api';
 import { formatDay, money, todayInColombia } from './format';
 import { inputClass, labelClass, parseMoney, PAYMENT_METHODS, primaryButton, SALE_TYPE_LABEL, secondaryButton } from './styles';
-import { Modal, StatusBadge } from './ui';
+import { Modal, ProductThumb, StatusBadge } from './ui';
 import VerifyDeleteModal from './VerifyDeleteModal';
 import type { CreditPayment, CreditSaleDetail, PaymentMethod } from './types';
 
@@ -72,6 +72,7 @@ export default function SaleDetailModal({ sale, onClose, onEdit, onSell, onChang
     <Modal title={sale.productName} onClose={onClose} busy={busy} wide>
       <div className="space-y-5">
         <div className="flex flex-wrap items-center gap-2">
+          <ProductThumb src={sale.productImage} alt={sale.productName} size="lg" />
           <StatusBadge status={sale.status} daysOverdue={sale.daysOverdue} />
           <span className="text-xs text-gray-500">{SALE_TYPE_LABEL[sale.type]}</span>
           {sale.type === 'Devolucion' && <span className="text-xs text-gray-500">· Bono Amazon {sale.voucherStatus?.toLowerCase()}</span>}

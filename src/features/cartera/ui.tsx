@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
-import { X } from 'lucide-react';
+import { useState } from 'react';
+import { CupSoda, X } from 'lucide-react';
+import { imageUrl } from '../../lib/imageUrl';
 import type { CustomerStatus, SaleStatus } from './types';
 
 const STATUS_STYLE: Record<SaleStatus, { label: string; className: string }> = {
@@ -57,6 +59,20 @@ export function StatCard({ label, value, hint, tone = 'default' }: {
       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{label}</p>
       <p className={`text-2xl font-extrabold ${color.split(' ')[0]}`}>{value}</p>
       {hint && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
+    </div>
+  );
+}
+
+/** Miniatura del producto; si no tiene foto (producto escrito a mano) o no carga, un ícono. */
+export function ProductThumb({ src, alt, size = 'md' }: { src: string; alt: string; size?: 'md' | 'lg' }) {
+  const [failed, setFailed] = useState(false);
+  const box = size === 'lg' ? 'w-16 h-16' : 'w-11 h-11';
+  const url = imageUrl(src);
+  return (
+    <div className={`${box} flex-shrink-0 rounded-sm border border-gray-100 bg-gray-50 overflow-hidden flex items-center justify-center`}>
+      {url && !failed
+        ? <img src={url} alt={alt} loading="lazy" onError={() => setFailed(true)} className="w-full h-full object-contain" />
+        : <CupSoda className="w-5 h-5 text-gray-300" aria-hidden="true" />}
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { AlertCircle, Loader2, ShoppingBag } from 'lucide-react';
 import { carteraApi } from './api';
 import { dayOf, formatDay, money, todayInColombia } from './format';
 import { inputClass, labelClass, parseMoney, primaryButton } from './styles';
-import { Modal } from './ui';
+import { Modal, ProductThumb } from './ui';
 import type { CollectionMethod, CreditSale, CreditSaleDetail, RegisteredCustomer } from './types';
 
 interface Props {
@@ -69,9 +69,12 @@ export default function SellModal({ sale, registeredCustomers, knownCustomerName
   return (
     <Modal title="Vender termo" onClose={onClose} busy={saving}>
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
-        <div className="bg-gray-50 border border-gray-100 rounded-sm px-4 py-3 text-sm">
-          <p className="font-semibold">{sale.productName}</p>
-          <p className="text-xs text-gray-500">Comprado el {formatDay(sale.purchaseDate)} por {money(sale.purchasePrice)}</p>
+        <div className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-sm px-4 py-3 text-sm">
+          <ProductThumb src={sale.productImage} alt={sale.productName} />
+          <div className="min-w-0">
+            <p className="font-semibold">{sale.productName}</p>
+            <p className="text-xs text-gray-500">Comprado el {formatDay(sale.purchaseDate)} por {money(sale.purchasePrice)}</p>
+          </div>
         </div>
         <div>
           <label className={labelClass} htmlFor="sell-customer">Cliente *</label>
