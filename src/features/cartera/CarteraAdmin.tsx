@@ -130,7 +130,11 @@ export default function CarteraAdmin() {
   const visibleCustomers = customers.filter(c => !clientQuery.trim() || normalize(c.customerName).includes(normalize(clientQuery.trim())));
   const expensesTotal = expenses.reduce((sum, e) => sum + e.amount, 0);
   const interestCollected = loansSummary?.interestCollected ?? 0;
-  const netProfit = (stats?.expectedProfit ?? 0) + interestCollected - expensesTotal;
+  // Capital total: prestado + saldo Nequi + lo que deben los clientes + lo que debe Sistecrédito.
+  // "Cartera por cobrar" ya incluye Sistecrédito, así que se separa para no contarlo dos veces.
+  const sistecredito = stats?.sistecreditoPending ?? 0;
+  const clientsReceivable = (stats?.totalBalance ?? 0) - sistecredito;
+  const totalCapital = (loansSummary?.totalLent ?? 0) + (nequi?.expectedBalance ?? 0) + clientsReceivable + sistecredito;
   const knownNames = useMemo(() => [...new Set(sales.map(s => s.customerName).filter(Boolean))].sort(), [sales]);
   const filterCount = (f: SaleFilter) => sales.filter(SALE_FILTERS.find(x => x.value === f)!.test).length;
 
@@ -170,7 +174,8 @@ export default function CarteraAdmin() {
           <StatCard label="Intereses recaudados" value={money(interestCollected)}
             hint={loansSummary?.interestPending ? `Pendiente por recaudar: ${money(loansSummary.interestPending)}` : 'Sin intereses pendientes'} tone="success" />
           <StatCard label="Gastos" value={money(expensesTotal)} hint={`${expenses.length} gasto${expenses.length !== 1 ? 's' : ''}`} tone={expensesTotal > 0 ? 'danger' : 'default'} />
-          <StatCard label="Ganancia neta" value={money(netProfit)} hint="Ventas + intereses − gastos" tone={netProfit >= 0 ? 'success' : 'danger'} />
+          <StatCard label="Capital total" value={money(totalCapital)} tone="success"
+            hint={`Prestado ${money(loansSummary?.totalLent ?? 0)} + Nequi ${money(nequi?.expectedBalance ?? 0)} + clientes ${money(clientsReceivable)} + Sistecrédito ${money(sistecredito)}`} />
         </div>
       )}
 
