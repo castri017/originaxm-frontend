@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertCircle, CheckCircle2, Loader2, PackagePlus, Plus, RefreshCw, Search, ShoppingBag, Trash2, Wallet } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, PackagePlus, Plus, RefreshCw, Search, ShoppingBag, Trash2, Wallet, X } from 'lucide-react';
 import { carteraApi } from './api';
 import CustomerPaymentModal from './CustomerPaymentModal';
 import ExpensesPanel from './ExpensesPanel';
@@ -35,6 +35,23 @@ const STATUS_ORDER: Record<SaleStatus, number> = { Vencida: 0, AlDia: 1, SinVend
 
 const normalize = (text: string) => text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
+/** Campo para filtrar por nombre de cliente, en el encabezado de la columna; sugiere los nombres conocidos. */
+function ClientFilter({ value, onChange, names }: { value: string; onChange: (v: string) => void; names: string[] }) {
+  return (
+    <div className="relative normal-case tracking-normal font-normal">
+      <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+      <input value={value} onChange={e => onChange(e.target.value)} list="cartera-client-names"
+        placeholder="Filtrar por cliente" aria-label="Filtrar por nombre de cliente" autoComplete="off"
+        className="w-44 pl-8 pr-7 py-1.5 text-xs text-gray-800 border border-gray-200 rounded-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/10" />
+      {value && (
+        <button type="button" onClick={() => onChange('')} aria-label="Quitar filtro de cliente"
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-black"><X className="w-3.5 h-3.5" /></button>
+      )}
+      <datalist id="cartera-client-names">{names.map(n => <option key={n} value={n} />)}</datalist>
+    </div>
+  );
+}
+
 export default function CarteraAdmin() {
   const [tab, setTab] = useState<Tab>('ventas');
   const [stats, setStats] = useState<CreditStats | null>(null);
@@ -52,6 +69,7 @@ export default function CarteraAdmin() {
 
   const [filter, setFilter] = useState<SaleFilter>('pendientes');
   const [search, setSearch] = useState('');
+  const [clientQuery, setClientQuery] = useState('');   // filtro por nombre de cliente (ventas y clientes)
   const [customerFilter, setCustomerFilter] = useState<CreditCustomer | null>(null);
 
   const [formSale, setFormSale] = useState<CreditSaleDetail | null | undefined>(undefined);  // undefined = cerrado
@@ -97,16 +115,19 @@ export default function CarteraAdmin() {
   const visibleSales = useMemo(() => {
     const rule = SALE_FILTERS.find(f => f.value === filter)!;
     const q = normalize(search.trim());
+    const cq = normalize(clientQuery.trim());
     return sales
       .filter(rule.test)
       .filter(s => !customerFilter || (customerFilter.customerId
         ? s.customerId === customerFilter.customerId
         : !s.customerId && normalize(s.customerName.trim()) === normalize(customerFilter.customerName.trim())))
       .filter(s => !q || normalize(`${s.customerName} ${s.productName}`).includes(q))
+      .filter(s => !cq || normalize(s.customerName).includes(cq))
       .sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status] || b.daysOverdue - a.daysOverdue);
-  }, [sales, filter, search, customerFilter]);
+  }, [sales, filter, search, clientQuery, customerFilter]);
 
   const visibleTotal = visibleSales.reduce((sum, s) => sum + s.balance, 0);
+  const visibleCustomers = customers.filter(c => !clientQuery.trim() || normalize(c.customerName).includes(normalize(clientQuery.trim())));
   const expensesTotal = expenses.reduce((sum, e) => sum + e.amount, 0);
   const interestCollected = loansSummary?.interestCollected ?? 0;
   const netProfit = (stats?.expectedProfit ?? 0) + interestCollected - expensesTotal;
@@ -198,16 +219,19 @@ export default function CarteraAdmin() {
           )}
 
           <div className="bg-white border border-gray-100 rounded-sm shadow-sm overflow-x-auto">
-            {visibleSales.length === 0 ? (
+            {sales.length === 0 ? (
               <div className="text-center py-16 text-gray-400">
                 <Wallet className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p className="text-sm font-medium">{sales.length === 0 ? 'Aún no hay ventas. Regístralas o importa tu Excel.' : 'No hay ventas con este filtro.'}</p>
+                <p className="text-sm font-medium">Aún no hay ventas. Regístralas o importa tu Excel.</p>
               </div>
             ) : (
               <table className="w-full text-sm min-w-[860px]">
                 <thead className="bg-gray-50 text-[10px] uppercase tracking-wider text-gray-500">
                   <tr>
-                    <th className="px-4 py-2.5 text-left">Cliente</th>
+                    <th className="px-4 py-2.5 text-left align-top">
+                    <span className="block mb-1.5">Cliente</span>
+                    <ClientFilter value={clientQuery} onChange={setClientQuery} names={knownNames} />
+                  </th>
                     <th className="px-4 py-2.5 text-left">Producto</th>
                     <th className="px-4 py-2.5 text-right">Venta</th>
                     <th className="px-4 py-2.5 text-right">Abonado</th>
@@ -218,6 +242,11 @@ export default function CarteraAdmin() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
+                  {visibleSales.length === 0 && (
+                    <tr><td colSpan={8} className="px-4 py-12 text-center text-sm text-gray-400">
+                      No hay ventas {clientQuery.trim() ? `de "${clientQuery.trim()}" ` : ''}con este filtro.
+                    </td></tr>
+                  )}
                   {visibleSales.map(s => (
                     <tr key={s.id} onClick={() => openDetail(s.id)} className="cursor-pointer hover:bg-gray-50">
                       <td className="px-4 py-2.5 font-semibold">{s.customerName || <span className="text-gray-400 font-normal">—</span>}</td>
@@ -271,7 +300,10 @@ export default function CarteraAdmin() {
             <table className="w-full text-sm min-w-[760px]">
               <thead className="bg-gray-50 text-[10px] uppercase tracking-wider text-gray-500">
                 <tr>
-                  <th className="px-4 py-2.5 text-left">Cliente</th>
+                  <th className="px-4 py-2.5 text-left align-top">
+                    <span className="block mb-1.5">Cliente</span>
+                    <ClientFilter value={clientQuery} onChange={setClientQuery} names={knownNames} />
+                  </th>
                   <th className="px-4 py-2.5 text-right">Debe</th>
                   <th className="px-4 py-2.5 text-right">Vencido</th>
                   <th className="px-4 py-2.5 text-left">Estado</th>
@@ -281,7 +313,10 @@ export default function CarteraAdmin() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {customers.map(c => (
+                {visibleCustomers.length === 0 && (
+                  <tr><td colSpan={7} className="px-4 py-12 text-center text-sm text-gray-400">No hay clientes que coincidan con "{clientQuery.trim()}".</td></tr>
+                )}
+                {visibleCustomers.map(c => (
                   <tr key={c.key}>
                     <td className="px-4 py-2.5">
                       <p className="font-semibold">{c.customerName}</p>
