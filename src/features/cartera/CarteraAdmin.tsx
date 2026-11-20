@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertCircle, CheckCircle2, Loader2, Plus, RefreshCw, Search, Wallet } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, Plus, RefreshCw, Search, Trash2, Wallet } from 'lucide-react';
 import { carteraApi } from './api';
 import CustomerPaymentModal from './CustomerPaymentModal';
 import { formatDay, money } from './format';
@@ -9,6 +9,7 @@ import SaleDetailModal from './SaleDetailModal';
 import SaleFormModal from './SaleFormModal';
 import { inputClass, primaryButton, SALE_TYPE_LABEL, secondaryButton } from './styles';
 import { StatCard, StatusBadge } from './ui';
+import VerifyDeleteModal from './VerifyDeleteModal';
 import type {
   CashAccount, CatalogProductOption, CreditCustomer, CreditSale, CreditSaleDetail, CreditStats, RegisteredCustomer, SaleStatus,
 } from './types';
@@ -49,6 +50,7 @@ export default function CarteraAdmin() {
   const [formSale, setFormSale] = useState<CreditSaleDetail | null | undefined>(undefined);  // undefined = cerrado
   const [detail, setDetail] = useState<CreditSaleDetail | null>(null);
   const [payingCustomer, setPayingCustomer] = useState<CreditCustomer | null>(null);
+  const [deletingSale, setDeletingSale] = useState<CreditSale | null>(null);
 
   const reload = useCallback(async () => {
     setError('');
@@ -185,6 +187,7 @@ export default function CarteraAdmin() {
                     <th className="px-4 py-2.5 text-right">Saldo</th>
                     <th className="px-4 py-2.5 text-left">Estado</th>
                     <th className="px-4 py-2.5 text-left">Vence</th>
+                    <th className="px-2 py-2.5"><span className="sr-only">Eliminar</span></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -204,6 +207,13 @@ export default function CarteraAdmin() {
                       <td className={`px-4 py-2.5 text-right font-bold ${s.balance > 0 ? 'text-red-600' : 'text-gray-400'}`}>{money(s.balance)}</td>
                       <td className="px-4 py-2.5"><StatusBadge status={s.status} daysOverdue={s.daysOverdue} /></td>
                       <td className="px-4 py-2.5 text-xs text-gray-500 whitespace-nowrap">{formatDay(s.dueDate)}</td>
+                      <td className="px-2 py-2.5 text-right">
+                        <button onClick={e => { e.stopPropagation(); setDeletingSale(s); }}
+                          aria-label={`Eliminar ${s.productName}${s.customerName ? ` de ${s.customerName}` : ''}`} title="Eliminar"
+                          className="p-1.5 text-gray-300 hover:text-red-600 rounded-sm hover:bg-red-50 transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -211,7 +221,7 @@ export default function CarteraAdmin() {
                   <tr>
                     <td className="px-4 py-2.5 font-bold" colSpan={4}>{visibleSales.length} registro{visibleSales.length !== 1 ? 's' : ''}</td>
                     <td className="px-4 py-2.5 text-right font-extrabold">{money(visibleTotal)}</td>
-                    <td colSpan={2} />
+                    <td colSpan={3} />
                   </tr>
                 </tfoot>
               </table>
@@ -291,6 +301,20 @@ export default function CarteraAdmin() {
             if (!updated) flash('Venta eliminada.');
             reload();
           }}
+        />
+      )}
+
+      {deletingSale && (
+        <VerifyDeleteModal
+          title="Eliminar venta"
+          description={`Se eliminará "${deletingSale.productName}"${deletingSale.customerName ? ` de ${deletingSale.customerName}` : ''}${deletingSale.paymentCount ? ` con sus ${deletingSale.paymentCount} abono${deletingSale.paymentCount !== 1 ? 's' : ''}` : ''}.`}
+          onConfirm={async code => {
+            await carteraApi.deleteSale(deletingSale.id, code);
+            setDeletingSale(null);
+            flash('Venta eliminada.');
+            reload();
+          }}
+          onClose={() => setDeletingSale(null)}
         />
       )}
 

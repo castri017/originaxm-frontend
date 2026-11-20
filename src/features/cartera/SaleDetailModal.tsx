@@ -4,7 +4,8 @@ import { carteraApi } from './api';
 import { formatDay, money, todayInColombia } from './format';
 import { inputClass, labelClass, parseMoney, PAYMENT_METHODS, primaryButton, SALE_TYPE_LABEL, secondaryButton } from './styles';
 import { Modal, StatusBadge } from './ui';
-import type { CreditSaleDetail, PaymentMethod } from './types';
+import VerifyDeleteModal from './VerifyDeleteModal';
+import type { CreditPayment, CreditSaleDetail, PaymentMethod } from './types';
 
 interface Props {
   sale: CreditSaleDetail;
@@ -21,6 +22,8 @@ export default function SaleDetailModal({ sale, onClose, onEdit, onChanged }: Pr
   const [notes, setNotes] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // Lo que se va a eliminar, a la espera del código de verificación.
+  const [pendingDelete, setPendingDelete] = useState<{ kind: 'sale' } | { kind: 'payment'; payment: CreditPayment } | null>(null);
 
   const receivable = sale.status !== 'Devolucion' && sale.status !== 'SinVender';
 
@@ -49,20 +52,18 @@ export default function SaleDetailModal({ sale, onClose, onEdit, onChanged }: Pr
     });
   };
 
-  const deletePayment = (paymentId: string) => {
-    if (!confirm('¿Eliminar este abono?')) return;
-    run(async () => {
-      await carteraApi.deletePayment(sale.id, paymentId);
-      return carteraApi.sale(sale.id);
-    });
-  };
-
-  const deleteSale = () => {
-    if (!confirm(`¿Eliminar "${sale.productName}"${sale.customerName ? ` de ${sale.customerName}` : ''}? Se borran también sus abonos. No se puede deshacer.`)) return;
-    run(async () => {
-      await carteraApi.deleteSale(sale.id);
-      return null;
-    });
+  // El servidor valida el código; si es incorrecto, el error se muestra en la ventana del código.
+  const confirmDelete = async (code: string) => {
+    if (!pendingDelete) return;
+    if (pendingDelete.kind === 'sale') {
+      await carteraApi.deleteSale(sale.id, code);
+      setPendingDelete(null);
+      onChanged(null);
+    } else {
+      await carteraApi.deletePayment(sale.id, pendingDelete.payment.id, code);
+      setPendingDelete(null);
+      onChanged(await carteraApi.sale(sale.id));
+    }
   };
 
   return (
@@ -99,7 +100,7 @@ export default function SaleDetailModal({ sale, onClose, onEdit, onChanged }: Pr
                   <span className="font-semibold w-28">{money(p.amount)}</span>
                   <span className="text-xs text-gray-500 w-24">{p.method}</span>
                   <span className="flex-1 text-xs text-gray-400 truncate">{p.notes}</span>
-                  <button onClick={() => deletePayment(p.id)} disabled={busy} aria-label="Eliminar abono"
+                  <button onClick={() => setPendingDelete({ kind: 'payment', payment: p })} disabled={busy} aria-label="Eliminar abono"
                     className="p-1.5 text-gray-400 hover:text-red-600 rounded-sm hover:bg-red-50">
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -148,7 +149,7 @@ export default function SaleDetailModal({ sale, onClose, onEdit, onChanged }: Pr
         )}
 
         <div className="flex justify-between pt-2 border-t border-gray-100">
-          <button onClick={deleteSale} disabled={busy} className={`${secondaryButton} text-red-600 hover:bg-red-50`}>
+          <button onClick={() => setPendingDelete({ kind: 'sale' })} disabled={busy} className={`${secondaryButton} text-red-600 hover:bg-red-50`}>
             <Trash2 className="w-3.5 h-3.5" /> Eliminar
           </button>
           <button onClick={() => onEdit(sale)} disabled={busy} className={secondaryButton}>
@@ -156,6 +157,17 @@ export default function SaleDetailModal({ sale, onClose, onEdit, onChanged }: Pr
           </button>
         </div>
       </div>
+
+      {pendingDelete && (
+        <VerifyDeleteModal
+          title={pendingDelete.kind === 'sale' ? 'Eliminar venta' : 'Eliminar abono'}
+          description={pendingDelete.kind === 'sale'
+            ? `Se eliminará "${sale.productName}"${sale.customerName ? ` de ${sale.customerName}` : ''} con todos sus abonos.`
+            : `Se eliminará el abono de ${money(pendingDelete.payment.amount)} del ${formatDay(pendingDelete.payment.paymentDate)}.`}
+          onConfirm={confirmDelete}
+          onClose={() => setPendingDelete(null)}
+        />
+      )}
     </Modal>
   );
 }

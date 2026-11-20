@@ -18,11 +18,11 @@ async function getJson<T>(url: string, fallback: string): Promise<T> {
   return res.json();
 }
 
-async function sendJson<T>(url: string, method: string, body: unknown, fallback: string): Promise<T> {
+async function sendJson<T>(url: string, method: string, body: unknown, fallback: string, headers: Record<string, string> = {}): Promise<T> {
   const res = await adminFetch(url, {
     method,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (!res.ok) throw await readError(res, fallback);
   return res.status === 204 ? (undefined as T) : res.json();
@@ -37,12 +37,14 @@ export const carteraApi = {
 
   createSale: (input: SaleInput) => sendJson<CreditSaleDetail>(BASE, 'POST', input, 'No se pudo registrar la venta.'),
   updateSale: (id: string, input: SaleInput) => sendJson<CreditSaleDetail>(`${BASE}/${id}`, 'PUT', input, 'No se pudo guardar la venta.'),
-  deleteSale: (id: string) => sendJson<void>(`${BASE}/${id}`, 'DELETE', undefined, 'No se pudo eliminar la venta.'),
+  /** Eliminar exige el código de verificación del administrador; el servidor lo valida. */
+  deleteSale: (id: string, code: string) =>
+    sendJson<void>(`${BASE}/${id}`, 'DELETE', undefined, 'No se pudo eliminar la venta.', { 'X-Verification-Code': code }),
 
   addPayment: (saleId: string, input: PaymentInput) =>
     sendJson<CreditSaleDetail>(`${BASE}/${saleId}/payments`, 'POST', input, 'No se pudo registrar el abono.'),
-  deletePayment: (saleId: string, paymentId: string) =>
-    sendJson<void>(`${BASE}/${saleId}/payments/${paymentId}`, 'DELETE', undefined, 'No se pudo eliminar el abono.'),
+  deletePayment: (saleId: string, paymentId: string, code: string) =>
+    sendJson<void>(`${BASE}/${saleId}/payments/${paymentId}`, 'DELETE', undefined, 'No se pudo eliminar el abono.', { 'X-Verification-Code': code }),
 
   addCustomerPayment: (input: { customerId: string | null; customerName: string | null; amount: number; paymentDate: string; method: PaymentMethod; notes: string | null }) =>
     sendJson<{ applied: number; salesAffected: number }>(`${BASE}/customers/payments`, 'POST', input, 'No se pudo registrar el abono.'),
