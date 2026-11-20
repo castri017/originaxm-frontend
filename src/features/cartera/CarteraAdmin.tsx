@@ -138,7 +138,7 @@ export default function CarteraAdmin() {
           <StatCard label="Cartera vencida" value={money(stats.overdueBalance)}
             hint={`${stats.customersOverdue} cliente${stats.customersOverdue !== 1 ? 's' : ''} · ${stats.overdueCount} venta${stats.overdueCount !== 1 ? 's' : ''}`} tone={stats.overdueBalance > 0 ? 'danger' : 'default'} />
           <StatCard label="Sistecrédito por recibir" value={money(stats.sistecreditoPending)} hint="Desembolsa a 60 días" />
-          <StatCard label="Saldo Nequi esperado" value={money(nequi?.expectedBalance ?? 0)} hint="Con compras, 4×1000 y abonos" />
+          <StatCard label="Saldo Nequi esperado" value={money(nequi?.expectedBalance ?? 0)} hint="Con compras, 4×1000, abonos e intereses" />
           <StatCard label="Ganancia de lo vendido" value={money(stats.expectedProfit)} hint={`Cobrado: ${money(stats.totalCollected)}`} tone="success" />
           <StatCard label="Sin vender" value={`${stats.inventoryCount} termo${stats.inventoryCount !== 1 ? 's' : ''}`}
             hint={`Costo ${money(stats.inventoryCost)} · venta ${money(stats.inventoryExpectedSale)}`} />

@@ -43,6 +43,7 @@ export default function NequiPanel({ account, onSaved }: Props) {
     ['Compras en Amazon', -account.purchasesOut, 'text-red-600'],
     [`4×1000 (${(account.gmfRate * 1000).toLocaleString('es-CO')} por mil)`, -account.gmfOut, 'text-red-600'],
     ['Abonos recibidos por Nequi', account.paymentsIn, 'text-emerald-600'],
+    ['Intereses de préstamos por Nequi', account.interestIn ?? 0, 'text-emerald-600'],
   ];
 
   return (
@@ -78,7 +79,7 @@ export default function NequiPanel({ account, onSaved }: Props) {
               <dd className="font-extrabold text-black text-lg">{money(account.expectedBalance)}</dd>
             </div>
           </dl>
-          <p className="text-xs text-gray-400 mt-3">Compáralo con el saldo real de la app de Nequi. Si no cuadra, falta registrar un abono o una compra.</p>
+          <p className="text-xs text-gray-400 mt-3">Compáralo con el saldo real de la app de Nequi. Si no cuadra, falta registrar un abono, un recaudo de interés o una compra.</p>
         </div>
       </div>
 
@@ -91,7 +92,7 @@ export default function NequiPanel({ account, onSaved }: Props) {
             {account.movements.map((m, i) => (
               <li key={i} className="flex items-center gap-3 px-5 py-2.5 text-sm">
                 <span className="w-24 text-xs text-gray-500">{formatDay(m.date)}</span>
-                <span className="w-16 text-xs font-bold text-gray-500 uppercase">{m.kind}</span>
+                <span className="w-16 text-xs font-bold text-gray-500 uppercase">{m.kind === 'Interes' ? 'Interés' : m.kind}</span>
                 <span className="flex-1 truncate text-gray-700">{m.description}</span>
                 <span className={`font-semibold ${m.amount < 0 ? 'text-red-600' : 'text-emerald-600'}`}>{money(m.amount)}</span>
               </li>

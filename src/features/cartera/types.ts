@@ -86,7 +86,7 @@ export interface CreditCustomer {
 
 export interface CashMovement {
   date: string;
-  kind: 'Compra' | 'GMF' | 'Abono';
+  kind: 'Compra' | 'GMF' | 'Abono' | 'Interes';
   description: string;
   amount: number;
 }
@@ -99,6 +99,7 @@ export interface CashAccount {
   purchasesOut: number;
   gmfOut: number;
   paymentsIn: number;
+  interestIn: number;
   expectedBalance: number;
   movements: CashMovement[];
 }
