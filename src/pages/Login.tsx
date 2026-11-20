@@ -309,7 +309,15 @@ export default function Login() {
           )}
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-6">
+        <p className="text-center text-xs text-gray-500 mt-6 leading-relaxed">
+          Al {isLogin ? 'iniciar sesión' : 'crear tu cuenta'} aceptas los{' '}
+          <Link to="/terms" className="underline hover:text-black transition-colors">Términos y condiciones</Link>{' '}
+          y la{' '}
+          <Link to="/privacy" className="underline hover:text-black transition-colors">Política de privacidad</Link>{' '}
+          de Origin AXM.
+        </p>
+
+        <p className="text-center text-xs text-gray-400 mt-4">
           <Link to="/" className="hover:text-black transition-colors">← Volver a la tienda</Link>
         </p>
       </div>

@@ -87,6 +87,7 @@ export default function Checkout() {
   const [city,       setCity]       = useState(prefill.city);
   const [notes,      setNotes]      = useState('');
   const [payment,    setPayment]    = useState('sistecredito');
+  const [acceptTerms, setAcceptTerms] = useState(false);
 
   // Sistecredito: datos adicionales
   const [docType,       setDocType]       = useState('CC');
@@ -140,6 +141,7 @@ export default function Checkout() {
     if (!direccion.trim())                       e.direccion = 'La dirección es requerida.';
     if (!department)                             e.department = 'Selecciona un departamento.';
     if (!city)                                   e.city      = 'Selecciona una ciudad.';
+    if (!acceptTerms)                            e.terms     = 'Debes aceptar los Términos y condiciones para continuar.';
 
     if (payment === 'sistecredito') {
       if (!document.trim())                          e.document = 'El número de documento es requerido para Sistecredito.';
@@ -675,6 +677,29 @@ export default function Checkout() {
           <div className="bg-brand-sand px-4 py-3.5 flex flex-col gap-1">
             <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-brand-muted">Tiempo de entrega</span>
             <span className="font-display font-bold text-[14.5px] text-brand-charcoal-dark">5 a 10 días hábiles</span>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="flex items-start gap-3 cursor-pointer text-[13px] text-brand-charcoal leading-relaxed">
+              <input
+                type="checkbox"
+                checked={acceptTerms}
+                onChange={e => {
+                  setAcceptTerms(e.target.checked);
+                  if (e.target.checked && errors.terms) setErrors(prev => { const next = { ...prev }; delete next.terms; return next; });
+                }}
+                className="mt-1 w-4 h-4 shrink-0 accent-[#1c1a16]"
+                aria-invalid={!!errors.terms}
+              />
+              <span>
+                He leído y acepto los{' '}
+                <Link to="/terms" target="_blank" rel="noopener noreferrer" className="underline font-semibold">Términos y condiciones</Link>{' '}
+                y la{' '}
+                <Link to="/privacy" target="_blank" rel="noopener noreferrer" className="underline font-semibold">Política de privacidad</Link>{' '}
+                de Origin AXM, incluido el tratamiento de mis datos personales para gestionar mi pedido.
+              </span>
+            </label>
+            {errors.terms && <p className="text-brand-copper-dark text-[12.5px] pl-7">{errors.terms}</p>}
           </div>
 
           <button
