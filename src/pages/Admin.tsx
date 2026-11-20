@@ -2,8 +2,9 @@
 import { API } from '../config/api';
 import { adminFetch } from '../lib/adminFetch';
 import { imageUrl } from '../lib/imageUrl';
-import { Settings, Tag, Users, Package, TrendingUp, Plus, Edit, Trash2, ClipboardList, Eye, ArrowLeft, X, ShieldCheck, Lock, Mail, Loader2, AlertCircle, LogOut, BarChart3, DollarSign, RefreshCw, ChevronLeft, ChevronDown, Truck, FileBarChart2, Star, Globe, Wallet, Image as ImageIcon, ArrowUp, ArrowDown, Megaphone, MessageSquare } from 'lucide-react';
+import { Settings, Tag, Users, Package, TrendingUp, Plus, Edit, Trash2, ClipboardList, Eye, ArrowLeft, X, ShieldCheck, Lock, Mail, Loader2, AlertCircle, LogOut, BarChart3, DollarSign, RefreshCw, ChevronLeft, ChevronDown, Truck, FileBarChart2, Star, Globe, Wallet, Image as ImageIcon, ArrowUp, ArrowDown, Megaphone, MessageSquare, HandCoins } from 'lucide-react';
 import PromotionsAdmin from '../features/promotions/PromotionsAdmin';
+import CarteraAdmin from '../features/cartera/CarteraAdmin';
 import ReviewsAdmin from '../features/reviews/ReviewsAdmin';
 import { useAdminAuthStore } from '../store/useAdminAuthStore';
 import { useCatalogStore } from '../store/useCatalogStore';
@@ -1663,6 +1664,7 @@ function AdminPanel() {
             { id: 'products',   Icon: Package,       label: 'Productos'     },
             { id: 'inventory',  Icon: BarChart3,     label: 'Inventario'    },
             { id: 'pricelists',  Icon: DollarSign,    label: 'Lista de Precios' },
+            { id: 'cartera',     Icon: HandCoins,     label: 'Cartera'          },
             { id: 'gastos',      Icon: Wallet,        label: 'Gastos'           },
             { id: 'categories',    Icon: Tag,           label: 'Categorías'      },
             { id: 'carriers',     Icon: Truck,         label: 'Transportadoras' },
@@ -1738,6 +1740,7 @@ function AdminPanel() {
               {activeTab === 'carriers'     && 'Transportadoras'}
               {activeTab === 'banners'      && 'Banner Principal'}
               {activeTab === 'promotions'   && 'Promociones'}
+              {activeTab === 'cartera'      && 'Cartera'}
               {activeTab === 'reviews'      && 'Reseñas de Productos'}
               {activeTab === 'users'        && 'Clientes'}
               {activeTab === 'recommended'  && 'Productos Recomendados'}
@@ -2497,6 +2500,9 @@ function AdminPanel() {
 
           ) : activeTab === 'promotions' ? (
             <PromotionsAdmin />
+
+          ) : activeTab === 'cartera' ? (
+            <CarteraAdmin />
 
           ) : activeTab === 'reviews' ? (
             <ReviewsAdmin />
