@@ -186,7 +186,7 @@ export const BLOG_POSTS: BlogPost[] = [
           'Elige tu producto. En cada ficha verás capacidad, color, horas térmicas y si es de pedido internacional. El stock es limitado: cuando quedan pocas unidades te lo avisamos en la ficha.',
           'Agrégalo al carrito y ve al checkout. Ingresas tus datos de contacto y la dirección de entrega.',
           'Paga con el medio que prefieras. Los pagos en línea se procesan en plataformas autorizadas, así que no guardamos los datos completos de tu tarjeta.',
-          'Preparamos e importamos tu pedido. Los productos de pedido internacional llegan en 10 a 15 días y les hacemos seguimiento.',
+          'Preparamos e importamos tu pedido. Los productos de pedido internacional llegan en 10 a 15 días hábiles y les hacemos seguimiento.',
           'Recibe en tu casa. Enviamos a todo Colombia, y el envío es gratis en compras superiores a $300.000 o dentro de Armenia, Quindío.',
         ],
       },

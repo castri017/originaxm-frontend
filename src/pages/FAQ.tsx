@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { whatsappLink } from '../config/site';
+import { DELIVERY, whatsappLink } from '../config/site';
 import { ChevronDown } from 'lucide-react';
 import Seo from '../components/Seo';
 
@@ -26,7 +26,7 @@ const FAQS = [
   },
   {
     q: '¿Cuánto tarda en llegar mi pedido?',
-    a: 'El tiempo de entrega es entre 3 a 10 días hábiles, dependiendo de tu ubicación y el stock del producto.',
+    a: `El tiempo de entrega es de ${DELIVERY.main} para ciudades principales y de ${DELIVERY.special} para trayectos especiales o extendidos, contados desde la confirmación del pago.`,
   },
 ];
 

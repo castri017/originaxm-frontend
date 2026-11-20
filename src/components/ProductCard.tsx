@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { whatsappLink } from '../config/site';
+import { DELIVERY, whatsappLink } from '../config/site';
 import { productPath } from '../lib/productUrl';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Package } from 'lucide-react';
@@ -146,7 +146,7 @@ export default function ProductCard({
 
         {/* Sello de envío discreto */}
         <span className={product.isInternational ? 'ship-note' : 'ship-note-stock'}>
-          {product.isInternational ? '· pedido internacional · 10-15 días' : '· entrega inmediata · 2-4 días'}
+          {product.isInternational ? `· pedido internacional · ${DELIVERY.specialShort}` : `· en stock · ${DELIVERY.mainShort}`}
         </span>
 
         {soldOut && (

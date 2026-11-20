@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Trash2, ArrowRight, Clock } from 'lucide-react';
 import { useCartStore } from '../store/useCartStore';
 import { productPath } from '../lib/productUrl';
+import { DELIVERY } from '../config/site';
 
 export default function Cart() {
   const items = useCartStore((state) => state.items);
@@ -143,7 +144,7 @@ export default function Cart() {
 
             <div className="flex items-center gap-2 bg-gray-100 rounded-sm px-3 py-2 mb-6">
               <Clock className="w-4 h-4 text-gray-400 shrink-0" />
-              <p className="text-xs text-gray-500">Tiempo de entrega: <span className="font-bold text-black">5 a 10 días hábiles</span></p>
+              <p className="text-xs text-gray-500">Tiempo de entrega: <span className="font-bold text-black">{DELIVERY.main}</span> ({DELIVERY.special} en trayectos especiales)</p>
             </div>
             
             <Link 

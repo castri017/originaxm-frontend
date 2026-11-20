@@ -1,11 +1,11 @@
 import { Package, RefreshCw, Clock, CheckCircle, XCircle, Truck, AlertTriangle } from 'lucide-react';
-import { whatsappLink } from '../config/site';
+import { DELIVERY, whatsappLink } from '../config/site';
 import Seo from '../components/Seo';
 
 export default function Shipping() {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-      <Seo title="Envíos y devoluciones" description="Enviamos a todo Colombia en 3 a 10 días hábiles. Envío gratis desde $300.000 y en Armenia. Conoce las condiciones de cambios y devoluciones." path="/shipping" />
+      <Seo title="Envíos y devoluciones" description={`Enviamos a todo Colombia en ${DELIVERY.main} (${DELIVERY.special} en trayectos especiales). Envío gratis desde $300.000 y en Armenia. Conoce las condiciones de cambios y devoluciones.`} path="/shipping" />
       {/* Header */}
       <div className="text-center mb-14">
         <h1 className="text-4xl font-extrabold tracking-tight text-black uppercase">
@@ -30,7 +30,7 @@ export default function Shipping() {
           </div>
           <div className="flex items-start gap-3 bg-gray-50 border border-gray-100 rounded-sm px-5 py-4">
             <Clock className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
-            <p className="text-sm text-gray-700">Tiempo de entrega: <span className="font-semibold text-black">3 a 10 días hábiles</span>, dependiendo de tu ubicación y el stock del producto.</p>
+            <p className="text-sm text-gray-700">Tiempo de entrega: <span className="font-semibold text-black">{DELIVERY.main}</span> para ciudades principales y <span className="font-semibold text-black">{DELIVERY.special}</span> para trayectos especiales o extendidos, contados desde la confirmación del pago.</p>
           </div>
           <div className="flex items-start gap-3 bg-gray-50 border border-gray-100 rounded-sm px-5 py-4">
             <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />

@@ -8,6 +8,7 @@ import { customerFetch } from '../lib/customerFetch';
 import { COLOMBIA_DATA } from '../data/colombia';
 
 import { API } from '../config/api';
+import { DELIVERY } from '../config/site';
 import { trackBeginCheckout, trackPurchase, savePendingPurchase, type AnalyticsItem } from '../lib/analytics';
 
 interface PlacedOrder {
@@ -676,7 +677,8 @@ export default function Checkout() {
 
           <div className="bg-brand-sand px-4 py-3.5 flex flex-col gap-1">
             <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-brand-muted">Tiempo de entrega</span>
-            <span className="font-display font-bold text-[14.5px] text-brand-charcoal-dark">5 a 10 días hábiles</span>
+            <span className="font-display font-bold text-[14.5px] text-brand-charcoal-dark">{DELIVERY.main}</span>
+            <span className="text-[12px] text-brand-muted">{DELIVERY.special} en trayectos especiales o extendidos</span>
           </div>
 
           <div className="flex flex-col gap-1.5">

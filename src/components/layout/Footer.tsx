@@ -70,7 +70,7 @@ export default function Footer() {
           <div className="flex flex-col gap-3">
             <h4 className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-brand-muted">Cómo compramos</h4>
             <p className="text-sm leading-relaxed text-brand-sand-dark/85">
-              Traemos productos originales. Los pedidos internacionales llegan en 10 a 15 días con seguimiento.
+              Traemos productos originales. Los pedidos internacionales llegan en 10 a 15 días hábiles con seguimiento.
             </p>
             <Link to="/shipping" className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-brand-copper-light hover:text-brand-copper transition-colors">
               Ver el paso a paso

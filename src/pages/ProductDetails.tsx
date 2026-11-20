@@ -1,6 +1,6 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { trackViewItem, trackAddToCart } from '../lib/analytics';
-import { whatsappLink } from '../config/site';
+import { DELIVERY, whatsappLink } from '../config/site';
 import { productIdFromParam, productPath } from '../lib/productUrl';
 import ProductSeo from '../features/catalog/ProductSeo';
 import { formatWeight } from '../features/productMeta/productMeta';
@@ -441,7 +441,7 @@ export default function ProductDetails() {
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-brand-muted">3 · Llega</span>
-                  <span className="text-[13px] text-brand-charcoal-light leading-snug">10 a 15 días, con seguimiento.</span>
+                  <span className="text-[13px] text-brand-charcoal-light leading-snug">{DELIVERY.special}, con seguimiento.</span>
                 </div>
               </div>
             </div>

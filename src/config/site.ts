@@ -22,3 +22,14 @@ export function whatsappLink(message?: string): string {
   const base = `https://wa.me/${SITE.whatsapp.number}`;
   return message ? `${base}?text=${encodeURIComponent(message)}` : base;
 }
+
+/**
+ * Tiempos de entrega oficiales (los mismos de los Términos y condiciones).
+ * Cámbialos solo aquí: los usan Envíos, FAQ, carrito, checkout, fichas y términos.
+ */
+export const DELIVERY = {
+  main:     '8 a 10 días hábiles',
+  special:  '10 a 15 días hábiles',
+  mainShort:    '8-10 días hábiles',
+  specialShort: '10-15 días hábiles',
+} as const;

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import LegalLayout from '../components/LegalLayout';
-import { SITE, whatsappLink } from '../config/site';
+import { SITE, DELIVERY, whatsappLink } from '../config/site';
 import { TERMS_UPDATED } from '../config/legal';
 
 const Mail = () => (
@@ -112,7 +112,7 @@ export default function Terms() {
           body: (
             <>
               <p>Los envíos se realizan desde Armenia, Quindío, a todo el territorio nacional colombiano donde exista cobertura por parte de nuestras transportadoras aliadas.</p>
-              <p>Los tiempos de entrega estimados son de 8 a 10 días hábiles para ciudades principales y de 10 a 15 días hábiles para trayectos especiales o extendidos, contados a partir de la confirmación del pago.</p>
+              <p>Los tiempos de entrega estimados son de {DELIVERY.main} para ciudades principales y de {DELIVERY.special} para trayectos especiales o extendidos, contados a partir de la confirmación del pago.</p>
               <p>Origin AXM no se hace responsable por retrasos derivados de causas de fuerza mayor, alteraciones de orden público o desastres naturales. Consulta también <Link to="/shipping" className="underline">Envíos y devoluciones</Link>.</p>
             </>
           ),
