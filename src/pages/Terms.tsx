@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import LegalLayout from '../components/LegalLayout';
 import { SITE, DELIVERY, whatsappLink } from '../config/site';
-import { TERMS_UPDATED } from '../config/legal';
+import { TERMS_UPDATED, LEGAL_OWNER } from '../config/legal';
 
 const Mail = () => (
   <a href={`mailto:${SITE.email}`} className="underline">{SITE.email}</a>
@@ -20,7 +20,7 @@ export default function Terms() {
           title: 'Información de la empresa',
           body: (
             <p>
-              El sitio web originaxm.com es operado por Origin AXM, con domicilio principal en la ciudad de Armenia, Quindío, Colombia. Para cualquier solicitud, queja o reclamo, los usuarios pueden comunicarse al correo electrónico <Mail /> o al teléfono{' '}
+              El sitio web originaxm.com es operado por Origin AXM y administrado por {LEGAL_OWNER.fullName}, persona natural identificada con {LEGAL_OWNER.documentType} No. {LEGAL_OWNER.documentNumber}, con domicilio principal en la ciudad de Armenia, Quindío, Colombia. Para cualquier solicitud, queja o reclamo, los usuarios pueden comunicarse al correo electrónico <Mail /> o al teléfono{' '}
               <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className="underline">{SITE.whatsapp.display}</a>.
             </p>
           ),
@@ -42,7 +42,7 @@ export default function Terms() {
           body: (
             <>
               <p>Todos los precios publicados en el sitio web están en pesos colombianos (COP) e incluyen los impuestos aplicables conforme a la ley colombiana, salvo que se indique lo contrario. Los costos de envío se calcularán y detallarán en la pantalla de pago antes de finalizar la compra.</p>
-              <p>Las transacciones se procesan de manera segura a través de pasarelas de pago aliadas, incluyendo Wompi y Sistecrédito. Origin AXM no almacena datos de tarjetas de crédito o débito; dicha información es manejada exclusivamente por las pasarelas de pago bajo sus propios estándares de seguridad y encriptación.</p>
+              <p>Las transacciones se procesan de manera segura a través de pasarelas de pago aliadas, incluyendo dLocal Go y Sistecrédito. Origin AXM no almacena datos de tarjetas de crédito o débito; dicha información es manejada exclusivamente por las pasarelas de pago bajo sus propios estándares de seguridad y encriptación.</p>
             </>
           ),
         },
@@ -148,7 +148,7 @@ export default function Terms() {
               <p><strong>¿Qué son las cookies?</strong> Son pequeños archivos de texto o fragmentos de información que se descargan y almacenan en el navegador o dispositivo del usuario (computadora, smartphone, tablet) al acceder a nuestra página web.</p>
               <p><strong>Tipos de cookies que utilizamos en Origin AXM:</strong></p>
               <ul>
-                <li><strong>Cookies técnicas y estrictamente necesarias:</strong> son indispensables para el correcto funcionamiento de la plataforma. Permiten la navegación fluida, mantener los artículos seleccionados en el carrito de compras a lo largo de la sesión y garantizar un entorno seguro durante la transición hacia nuestras pasarelas de pago (Wompi y Sistecrédito). Sin estas cookies, la compra online no se podría concretar.</li>
+                <li><strong>Cookies técnicas y estrictamente necesarias:</strong> son indispensables para el correcto funcionamiento de la plataforma. Permiten la navegación fluida, mantener los artículos seleccionados en el carrito de compras a lo largo de la sesión y garantizar un entorno seguro durante la transición hacia nuestras pasarelas de pago (dLocal Go y Sistecrédito). Sin estas cookies, la compra online no se podría concretar.</li>
                 <li><strong>Cookies de rendimiento y análisis:</strong> nos ayudan a entender cómo los visitantes interactúan con nuestro sitio web, recopilando información anónima sobre las páginas más visitadas, el tiempo de permanencia y los posibles errores de carga. Esto nos permite mejorar continuamente la estructura y el contenido de la tienda.</li>
                 <li><strong>Cookies de marketing o publicidad corporativa:</strong> se utilizan para rastrear a los visitantes en las páginas web con el fin de mostrar anuncios que sean relevantes y atractivos para el usuario individual, basándose en sus intereses y hábitos de búsqueda de nuestros productos.</li>
               </ul>
