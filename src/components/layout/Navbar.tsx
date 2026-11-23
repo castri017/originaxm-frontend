@@ -62,7 +62,7 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <img src="/logo.png" alt="OrigenAXM" className="h-9 w-auto object-contain rounded-sm p-0.5 bg-brand-sand" />
+              <img src="/logo-horizontal.png" alt="OriginAXM" className="h-8 w-auto object-contain rounded-sm px-1.5 py-1 bg-brand-sand" />
               <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-brand-muted">Panel Admin</span>
             </div>
             {isAuthenticated && (
@@ -163,7 +163,7 @@ export default function Navbar() {
           <div className="anim-fade absolute inset-0 bg-brand-charcoal-dark/50" onClick={() => setDrawerOpen(false)} />
           <div className="anim-drawer relative w-80 max-w-[90vw] bg-brand-sand h-full flex flex-col shadow-2xl overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-brand-line">
-              <img src="/logo.png" alt="OrigenAXM" className="h-10 w-auto object-contain" />
+              <img src="/logo-horizontal.png" alt="OriginAXM" className="h-9 w-auto object-contain" />
               <button onClick={() => setDrawerOpen(false)} className="p-2 hover:bg-brand-sand-dark transition-colors">
                 <X className="w-5 h-5" />
               </button>
@@ -234,7 +234,7 @@ export default function Navbar() {
             {/* Logo + Nav grouped left */}
             <div className="flex items-center gap-8">
               <Link to="/" className="flex-shrink-0">
-                <img src="/logo.png" alt="OrigenAXM" className="h-9 sm:h-11 lg:h-14 w-auto object-contain" />
+                <img src="/logo-horizontal.png" alt="OriginAXM" className="h-8 sm:h-10 lg:h-12 w-auto object-contain" />
               </Link>
 
             {/* Desktop nav */}
