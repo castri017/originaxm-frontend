@@ -8,6 +8,7 @@ import { customerFetch } from '../lib/customerFetch';
 import { COLOMBIA_DATA } from '../data/colombia';
 
 import { API } from '../config/api';
+import { SHIPPING_CARRIERS } from '../config/carriers';
 import { DELIVERY } from '../config/site';
 import { trackBeginCheckout, trackPurchase, savePendingPurchase, type AnalyticsItem } from '../lib/analytics';
 
@@ -19,6 +20,7 @@ interface PlacedOrder {
   customerAddress: string;
   customerCity: string;
   customerDepartment: string;
+  carrier: string;
   notes: string;
   subtotal: number;
   shipping: number;
@@ -87,6 +89,7 @@ export default function Checkout() {
   const [department, setDepartment] = useState(prefill.department);
   const [city,       setCity]       = useState(prefill.city);
   const [notes,      setNotes]      = useState('');
+  const [carrier,    setCarrier]    = useState('');
   const [payment,    setPayment]    = useState('sistecredito');
   const [acceptTerms, setAcceptTerms] = useState(false);
 
@@ -142,6 +145,7 @@ export default function Checkout() {
     if (!direccion.trim())                       e.direccion = 'La dirección es requerida.';
     if (!department)                             e.department = 'Selecciona un departamento.';
     if (!city)                                   e.city      = 'Selecciona una ciudad.';
+    if (!carrier)                                e.carrier   = 'Elige con qué transportadora quieres tu envío.';
     if (!acceptTerms)                            e.terms     = 'Debes aceptar los Términos y condiciones para continuar.';
 
     if (payment === 'sistecredito') {
@@ -196,6 +200,7 @@ export default function Checkout() {
         customerAddress:    direccion.trim(),
         customerCity:       city,
         customerDepartment: department,
+        carrier,
         notes:              notes.trim(),
         shipping,
         paymentMethod:      payment,
@@ -270,6 +275,7 @@ export default function Checkout() {
         customerAddress:    body.customerAddress,
         customerCity:       body.customerCity,
         customerDepartment: body.customerDepartment,
+        carrier:            body.carrier,
         notes:              body.notes,
         subtotal,
         shipping,
@@ -361,6 +367,11 @@ export default function Checkout() {
                 <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-brand-muted mb-1">Dirección de envío</span>
                 <span className="text-[13.5px] text-brand-charcoal-dark">{placedOrder.customerAddress}</span>
                 <span className="text-[13.5px] text-brand-charcoal-light">{placedOrder.customerCity}, {placedOrder.customerDepartment}</span>
+                {placedOrder.carrier && (
+                  <span className="flex items-center gap-1.5 text-[13.5px] text-brand-charcoal-dark">
+                    <Truck className="w-3.5 h-3.5 text-brand-charcoal-light" /> Envío por <b>{placedOrder.carrier}</b>
+                  </span>
+                )}
                 {placedOrder.notes && <span className="text-[12.5px] text-brand-muted italic">{placedOrder.notes}</span>}
               </div>
             </div>
@@ -542,6 +553,30 @@ export default function Checkout() {
                   </select>
                   {errors.city && <p className="text-brand-copper-dark text-[12.5px] mt-1.5">{errors.city}</p>}
                 </div>
+                <fieldset className="md:col-span-2" aria-describedby={errors.carrier ? 'carrier-error' : undefined}>
+                  <legend className={labelCls}>¿Con qué transportadora quieres tu envío?</legend>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {SHIPPING_CARRIERS.map(value => (
+                      <label key={value} className={`flex items-center gap-3 p-4 border cursor-pointer transition-colors ${carrier === value ? 'border-brand-charcoal-dark border-2 bg-white' : errors.carrier ? 'border-brand-copper-dark hover:bg-white' : 'border-brand-line hover:bg-white'}`}>
+                        <input
+                          type="radio"
+                          name="carrier"
+                          value={value}
+                          checked={carrier === value}
+                          onChange={() => {
+                            setCarrier(value);
+                            if (errors.carrier) setErrors(prev => { const next = { ...prev }; delete next.carrier; return next; });
+                          }}
+                          className="w-4 h-4 accent-[#1c1a16]"
+                        />
+                        <span className="flex items-center gap-2 font-display font-bold text-[14.5px] text-brand-charcoal-dark">
+                          <Truck className="w-4 h-4 text-brand-charcoal-light" /> {value}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  {errors.carrier && <p id="carrier-error" className="text-brand-copper-dark text-[12.5px] mt-1.5">{errors.carrier}</p>}
+                </fieldset>
                 <div className="md:col-span-2">
                   <label className={labelCls}>Notas del pedido (opcional)</label>
                   <textarea
