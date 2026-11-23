@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import { useRef, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight, Package } from 'lucide-react';
 import { useBanners, useCategories, useFeatured, useProducts, useRecommended } from '../features/catalog/queries';
-import { flattenSections, groupProductsByCategory } from '../features/catalog/grouping';
+import { groupProductsByCategory } from '../features/catalog/grouping';
+import CatalogSections from '../features/catalog/CatalogSections';
 import FloatingCartButton from '../components/layout/FloatingCartButton';
 import ProductCard from '../components/ProductCard';
 import Reveal from '../components/Reveal';
@@ -34,8 +35,8 @@ export default function Home() {
 
   // Mismo orden que "Todo el catálogo" (categoría → tipo → nombre), para que Inicio
   // muestre los productos tal como están organizados en el admin.
-  const catalogOrdered = useMemo(
-    () => (products ? flattenSections(groupProductsByCategory(products, categories ?? [])) : []),
+  const catalogSections = useMemo(
+    () => (products ? groupProductsByCategory(products, categories ?? []) : []),
     [products, categories],
   );
 
@@ -254,36 +255,19 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Grid del catálogo ── */}
-      {!loading && catalogOrdered.length > 0 && (
-        <section className="py-16 lg:py-20">
+      {/* ── Todo el catálogo: igual que en /catalog, por categoría y tipo ── */}
+      {!loading && catalogSections.length > 0 && (
+        <section id="catalogo" className="scroll-mt-20 py-16 lg:py-20">
           <div className="max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
             <Reveal className="flex items-end justify-between gap-4 mb-10">
               <h2 className="font-display font-extrabold text-[28px] sm:text-[34px] tracking-[-0.03em] text-brand-charcoal-dark">
-                A los clientes les encanta
+                Todo el catálogo
               </h2>
               <Link to="/catalog" className="hidden sm:flex items-center gap-2 text-[14px] font-semibold text-brand-charcoal-dark border-b border-brand-line hover:border-brand-charcoal-dark pb-0.5 transition-colors">
-                Ver todos <ArrowRight className="w-4 h-4" />
+                Filtrar y ordenar <ArrowRight className="w-4 h-4" />
               </Link>
             </Reveal>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-x-6 gap-y-10">
-              {catalogOrdered.slice(0, 8).map((product, index) => (
-                <Reveal key={product.id} index={index % 4}>
-                  <ProductCard
-                    product={product}
-                    imgFailed={imgErrors.has(`grid-${product.id}`)}
-                    onImgError={() => onImgError(`grid-${product.id}`)}
-                  />
-                </Reveal>
-              ))}
-            </div>
-
-            <div className="mt-12 sm:hidden text-center">
-              <Link to="/catalog" className="inline-flex items-center gap-2 text-[14px] font-semibold text-brand-charcoal-dark border-b border-brand-line pb-0.5">
-                Ver todos los productos <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
+            <CatalogSections sections={catalogSections} />
           </div>
         </section>
       )}
