@@ -9,6 +9,7 @@ import { COLOMBIA_DATA } from '../data/colombia';
 
 import { API } from '../config/api';
 import { SHIPPING_CARRIERS } from '../config/carriers';
+import CarrierLogo from '../components/CarrierLogo';
 import { DELIVERY } from '../config/site';
 import { trackBeginCheckout, trackPurchase, savePendingPurchase, type AnalyticsItem } from '../lib/analytics';
 
@@ -556,7 +557,7 @@ export default function Checkout() {
                 <fieldset className="md:col-span-2" aria-describedby={errors.carrier ? 'carrier-error' : undefined}>
                   <legend className={labelCls}>¿Con qué transportadora quieres tu envío?</legend>
                   <div className="grid sm:grid-cols-2 gap-4">
-                    {SHIPPING_CARRIERS.map(value => (
+                    {SHIPPING_CARRIERS.map(({ name: value, logo }) => (
                       <label key={value} className={`flex items-center gap-3 p-4 border cursor-pointer transition-colors ${carrier === value ? 'border-brand-charcoal-dark border-2 bg-white' : errors.carrier ? 'border-brand-copper-dark hover:bg-white' : 'border-brand-line hover:bg-white'}`}>
                         <input
                           type="radio"
@@ -569,8 +570,8 @@ export default function Checkout() {
                           }}
                           className="w-4 h-4 accent-[#1c1a16]"
                         />
-                        <span className="flex items-center gap-2 font-display font-bold text-[14.5px] text-brand-charcoal-dark">
-                          <Truck className="w-4 h-4 text-brand-charcoal-light" /> {value}
+                        <span className="flex items-center gap-3 font-display font-bold text-[14.5px] text-brand-charcoal-dark">
+                          <CarrierLogo src={logo} name={value} /> {value}
                         </span>
                       </label>
                     ))}
