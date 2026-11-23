@@ -365,6 +365,10 @@ function AdminLogin() {
 }
 
 // ─── Admin Panel ─────────────────────────────────────────────────────────────
+/** Compara nombres de transportadora sin importar mayúsculas, tildes ni espacios */
+const carrierKey = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '').toLowerCase();
+const sameCarrier = (a: string, b: string) => carrierKey(a) === carrierKey(b);
+
 export default function Admin() {
   const { isAuthenticated, role } = useAdminAuthStore();
 
@@ -1464,7 +1468,11 @@ function AdminPanel() {
     if (newStatus === 'Enviado') {
       setPendingShipOrderId(orderId);
       setTrackingInput('');
-      setCarrierInput(carriers.find(c => c.isActive)?.name ?? '');
+      // Arranca con la transportadora que eligió el cliente al comprar, si está entre las activas
+      const chosen = orders.find(o => o.id === orderId)?.carrier ?? selectedOrder?.carrier ?? null;
+      const active = carriers.filter(c => c.isActive);
+      const match = chosen ? active.find(c => sameCarrier(c.name, chosen)) : undefined;
+      setCarrierInput(match?.name ?? chosen ?? active[0]?.name ?? '');
       setShowShippingModal(true);
       return;
     }
@@ -1954,6 +1962,11 @@ function AdminPanel() {
                         </div>
                       ) : (selectedOrder.status !== 'Cancelado' && (
                         <div className="bg-gray-50 p-4 rounded-sm border border-dashed border-gray-200 text-center">
+                          {selectedOrder.carrier && (
+                            <p className="text-sm text-gray-700 mb-2">
+                              El cliente eligió enviar por <span className="font-bold text-black">{selectedOrder.carrier}</span>
+                            </p>
+                          )}
                           <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Sin guía asignada</p>
                           <p className="text-xs text-gray-400 mt-1">Se generará al cambiar el estado a <span className="font-bold text-sky-600">Enviado</span></p>
                         </div>
@@ -3553,7 +3566,8 @@ function AdminPanel() {
 
               {/* ── ENVÍOS ── */}
               {reportTab === 'shipping' && (() => {
-                const sentOrders = reportAllOrders.filter(o => o.carrier);
+                // Enviados = con guía; la transportadora ya viene desde la compra
+                const sentOrders = reportAllOrders.filter(o => o.carrier && o.trackingNumber);
                 const byCarrier: Record<string, { count: number; total: number; delivered: number }> = {};
                 sentOrders.forEach(o => {
                   const key = o.carrier!;
@@ -4477,6 +4491,10 @@ function AdminPanel() {
                   {carriers.filter(c => c.isActive).map((c: ApiCarrier) => (
                     <option key={c.id} value={c.name}>{c.name}</option>
                   ))}
+                  {/* La que eligió el cliente, aunque no esté creada en Transportadoras */}
+                  {carrierInput && !carriers.some(c => c.isActive && c.name === carrierInput) && (
+                    <option value={carrierInput}>{carrierInput} (elegida por el cliente)</option>
+                  )}
                   {carriers.filter(c => c.isActive).length === 0 && (
                     <option value="">— Sin transportadoras activas —</option>
                   )}
