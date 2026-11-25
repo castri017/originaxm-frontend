@@ -33,3 +33,19 @@ export const DELIVERY = {
   mainShort:    '8-10 días hábiles',
   specialShort: '10-15 días hábiles',
 } as const;
+
+/**
+ * Condiciones de envío y devolución publicadas en los datos estructurados de Google
+ * (deben coincidir con el carrito, el checkout, Envíos y devoluciones y los Términos).
+ */
+export const SHIPPING = {
+  cost: 15000,            // COP, tarifa nacional
+  freeFrom: 300000,       // COP, envío gratis desde este valor
+  handlingDays: { min: 0, max: 1 },
+  transitDays:  { min: 8, max: 15 }, // días hábiles: 8-10 principales, 10-15 especiales
+} as const;
+
+export const RETURNS = {
+  /** Derecho de retracto: 5 días hábiles tras la entrega (Ley 1480, art. 47). */
+  days: 5,
+} as const;

@@ -1,5 +1,5 @@
 import Seo from '../../components/Seo';
-import { SITE } from '../../config/site';
+import { RETURNS, SHIPPING, SITE } from '../../config/site';
 import { imageUrl } from '../../lib/imageUrl';
 import { productPath } from '../../lib/productUrl';
 import { getFinalPrice } from '../promotions/pricing';
@@ -61,6 +61,37 @@ export default function ProductSeo({ product, brandName, categoryName }: Props) 
       itemCondition: 'https://schema.org/NewCondition',
       availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       seller: { '@type': 'Organization', name: SITE.name },
+      shippingDetails: {
+        '@type': 'OfferShippingDetails',
+        shippingRate: {
+          '@type': 'MonetaryAmount',
+          value: price >= SHIPPING.freeFrom ? 0 : SHIPPING.cost,
+          currency: 'COP',
+        },
+        shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'CO' },
+        deliveryTime: {
+          '@type': 'ShippingDeliveryTime',
+          handlingTime: {
+            '@type': 'QuantitativeValue', minValue: SHIPPING.handlingDays.min, maxValue: SHIPPING.handlingDays.max, unitCode: 'DAY',
+          },
+          transitTime: {
+            '@type': 'QuantitativeValue', minValue: SHIPPING.transitDays.min, maxValue: SHIPPING.transitDays.max, unitCode: 'DAY',
+          },
+          businessDays: {
+            '@type': 'OpeningHoursSpecification',
+            dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map(d => `https://schema.org/${d}`),
+          },
+        },
+      },
+      hasMerchantReturnPolicy: {
+        '@type': 'MerchantReturnPolicy',
+        applicableCountry: 'CO',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+        merchantReturnDays: RETURNS.days,
+        returnMethod: 'https://schema.org/ReturnByMail',
+        returnFees: 'https://schema.org/ReturnFeesCustomerResponsibility',
+        merchantReturnLink: `${SITE.url}/shipping`,
+      },
     },
     ...(reviews && reviews.count > 0 && {
       aggregateRating: {
