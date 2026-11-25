@@ -50,7 +50,7 @@ export default function Shipping() {
         <div className="space-y-3">
           <div className="flex items-start gap-3 bg-gray-50 border border-gray-100 rounded-sm px-5 py-4">
             <Clock className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
-            <p className="text-sm text-gray-700">Tienes hasta <span className="font-semibold text-black">3 días calendario</span> después de recibir el producto para solicitar un cambio o devolución.</p>
+            <p className="text-sm text-gray-700">Tienes hasta <span className="font-semibold text-black">5 días hábiles</span> después de recibir el producto para solicitar un cambio o devolución.</p>
           </div>
           <div className="flex items-start gap-3 bg-gray-50 border border-gray-100 rounded-sm px-5 py-4">
             <Package className="w-5 h-5 text-gray-500 mt-0.5 shrink-0" />
