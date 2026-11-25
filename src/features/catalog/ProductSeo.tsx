@@ -67,7 +67,24 @@ export default function ProductSeo({ product, brandName, categoryName }: Props) 
         '@type': 'AggregateRating',
         ratingValue: Number(reviews.average.toFixed(1)),
         reviewCount: reviews.count,
+        bestRating: 5,
+        worstRating: 1,
       },
+    }),
+    // Google pide `review` junto con `aggregateRating`: se publican las reseñas aprobadas más recientes.
+    ...(reviews && reviews.items.length > 0 && {
+      review: reviews.items.slice(0, 5).map(r => ({
+        '@type': 'Review',
+        author: { '@type': 'Person', name: r.authorName },
+        datePublished: r.createdAt.slice(0, 10),
+        ...(r.comment?.trim() && { reviewBody: clip(r.comment, 500) }),
+        reviewRating: {
+          '@type': 'Rating',
+          ratingValue: r.rating,
+          bestRating: 5,
+          worstRating: 1,
+        },
+      })),
     }),
   };
 
