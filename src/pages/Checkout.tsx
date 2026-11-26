@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CheckCircle, Truck, Wallet, ArrowRight, X, UserCheck, Loader2, UserPlus, LogIn } from 'lucide-react';
+import { CheckCircle, Truck, Wallet, CreditCard, ArrowRight, X, UserCheck, Loader2, UserPlus, LogIn } from 'lucide-react';
 import { useCartStore } from '../store/useCartStore';
 import { useCatalogStore } from '../store/useCatalogStore';
 import { useCustomerAuthStore, type CustomerSession } from '../store/useCustomerAuthStore';
@@ -91,7 +91,7 @@ export default function Checkout() {
   const [city,       setCity]       = useState(prefill.city);
   const [notes,      setNotes]      = useState('');
   const [carrier,    setCarrier]    = useState('');
-  const [payment,    setPayment]    = useState('sistecredito');
+  const [payment,    setPayment]    = useState('dlocal');
   const [acceptTerms, setAcceptTerms] = useState(false);
 
   // Sistecredito: datos adicionales
@@ -106,7 +106,7 @@ export default function Checkout() {
   const [apiError,     setApiError]     = useState('');
   const [placedOrder,  setPlacedOrder]  = useState<PlacedOrder | null>(null);
   const [autoFilled,   setAutoFilled]   = useState(prefill.filled);
-  const [paymentMsg,   setPaymentMsg]   = useState('');   // mensaje durante el flujo Sistecredito
+  const [paymentMsg,   setPaymentMsg]   = useState('');   // mensaje durante el flujo de pago (Sistecredito / dLocal Go)
 
   const shippingThreshold   = 300000;
   const isLocalFreeShipping = department === 'Quindío' && city === 'Armenia';
@@ -229,7 +229,30 @@ export default function Checkout() {
 
       const created = await res.json();
 
-      // 2. Flujo Sistecredito: crear transacción y redirigir
+      // 2a. Pago en línea (dLocal Go): crear el pago y redirigir a su checkout.
+      //     El pedido queda en "Pendiente Pago" hasta que dLocal confirme por el webhook.
+      if (payment === 'dlocal') {
+        setPaymentMsg('Abriendo el pago seguro…');
+
+        const payRes  = await fetch(`${API}/api/payments/dlocal/create`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ orderId: created.id }),
+        });
+        const payData = await payRes.json().catch(() => ({}));
+
+        if (!payRes.ok || !payData.redirectUrl) {
+          throw new Error(payData.message ?? 'No se pudo iniciar el pago en línea. Intenta de nuevo.');
+        }
+
+        savePendingPurchase({ transaction_id: String(created.orderNumber ?? created.id), value: total, shipping, items: gaItems() });
+        clearCart();
+        invalidateCatalog();
+        window.location.href = payData.redirectUrl;
+        return;
+      }
+
+      // 2b. Flujo Sistecredito: crear transacción y redirigir
       if (payment === 'sistecredito') {
         setPaymentMsg('Iniciando pago con Sistecredito…');
 
@@ -597,6 +620,7 @@ export default function Checkout() {
               </h2>
               <div className="grid sm:grid-cols-2 gap-4">
                 {[
+                  { value: 'dlocal',       Icon: CreditCard, label: 'Pago en línea', sub: 'Tarjeta débito o crédito, PSE y otros medios, con dLocal Go' },
                   { value: 'sistecredito', Icon: Wallet, label: 'Sistecredito', sub: 'Paga a cuotas sin interés (sujeto a aprobación)' },
                   { value: 'cod',          Icon: Truck,  label: 'Pago contra entrega', sub: 'Paga en efectivo al recibir tu pedido' },
                 ].map(({ value, Icon, label, sub }) => (
@@ -748,7 +772,7 @@ export default function Checkout() {
           >
             {loading
               ? <><Loader2 className="w-4 h-4 animate-spin" /> Procesando…</>
-              : <>{payment === 'sistecredito' ? 'Pagar con Sistecredito' : payment === 'cod' ? 'Confirmar pedido' : 'Completar pedido'} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></>
+              : <>{payment === 'dlocal' ? 'Ir a pagar' : payment === 'sistecredito' ? 'Pagar con Sistecredito' : payment === 'cod' ? 'Confirmar pedido' : 'Completar pedido'} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></>
             }
           </button>
           <span className="text-center font-mono text-[10px] uppercase tracking-[0.12em] text-brand-muted">

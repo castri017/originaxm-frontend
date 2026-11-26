@@ -12,10 +12,30 @@ export default function PaymentResult() {
   const [state, setState] = useState<ResultState>('loading');
   const [status, setStatus] = useState<string>('');
 
+  const provider      = params.get('provider') ?? '';
+  const orderGuid     = params.get('order') ?? '';
   const transactionId = params.get('transactionId') ?? params.get('paymentRef') ?? '';
   const orderNumber   = params.get('orderId') ?? '';
 
   useEffect(() => {
+    // Pago en línea (dLocal Go): la API consulta a dLocal el estado real del pago del pedido.
+    // Lo que diga la URL no cuenta; dLocal devuelve al cliente aquí tanto si pagó como si canceló.
+    if (provider === 'dlocal') {
+      if (!orderGuid) { setState('pending'); return; }
+
+      fetch(`${API}/api/payments/dlocal/status/${encodeURIComponent(orderGuid)}`)
+        .then(r => r.json())
+        .then(data => {
+          const s: string = data.status ?? '';
+          setStatus(s);
+          if (s === 'PAID') { setState('approved'); flushPendingPurchase(data.orderNumber ?? orderNumber); }
+          else if (s === 'REJECTED' || s === 'CANCELLED' || s === 'EXPIRED') setState('rejected');
+          else setState('pending');
+        })
+        .catch(() => setState('pending'));
+      return;
+    }
+
     if (!transactionId) {
       setState('pending');
       return;
@@ -31,7 +51,7 @@ export default function PaymentResult() {
         else setState('pending');
       })
       .catch(() => setState('pending'));
-  }, [transactionId, orderNumber]);
+  }, [provider, orderGuid, transactionId, orderNumber]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
