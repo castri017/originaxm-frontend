@@ -15,6 +15,15 @@ export const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
   { value: 'Otro', label: 'Otro' },
 ];
 
+/** Nombre para mostrar de cualquier medio de abono, incluido el de la tienda. */
+export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
+  Nequi: 'Nequi',
+  Efectivo: 'Efectivo',
+  Transferencia: 'Transferencia',
+  Otro: 'Otro',
+  DLocalGo: 'dLocal Go',
+};
+
 export const SALE_TYPE_LABEL: Record<SaleType, string> = {
   Normal: 'Normal',
   Bono: 'Bono Amazon',

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { AlertCircle, Edit, Loader2, ShoppingBag, Trash2 } from 'lucide-react';
 import { carteraApi } from './api';
 import { formatDay, money, todayInColombia } from './format';
-import { inputClass, labelClass, parseMoney, PAYMENT_METHODS, primaryButton, SALE_TYPE_LABEL, secondaryButton } from './styles';
+import { inputClass, labelClass, parseMoney, PAYMENT_METHOD_LABEL, PAYMENT_METHODS, primaryButton, SALE_TYPE_LABEL, secondaryButton } from './styles';
 import { Modal, ProductThumb, StatusBadge } from './ui';
 import VerifyDeleteModal from './VerifyDeleteModal';
 import type { CreditPayment, CreditSaleDetail, PaymentMethod } from './types';
@@ -101,8 +101,11 @@ export default function SaleDetailModal({ sale, onClose, onEdit, onSell, onChang
                 <li key={p.id} className="flex items-center gap-3 px-3 py-2 text-sm">
                   <span className="w-28 text-gray-500">{formatDay(p.paymentDate)}</span>
                   <span className="font-semibold w-28">{money(p.amount)}</span>
-                  <span className="text-xs text-gray-500 w-24">{p.method}</span>
-                  <span className="flex-1 text-xs text-gray-400 truncate">{p.notes}</span>
+                  <span className="text-xs text-gray-500 w-24">{PAYMENT_METHOD_LABEL[p.method] ?? p.method}</span>
+                  <span className="flex-1 text-xs text-gray-400 truncate">
+                    {p.fee ? <span className="text-red-500 mr-2">Comisión {money(p.fee)}</span> : null}
+                    {p.notes}
+                  </span>
                   <button onClick={() => setPendingDelete({ kind: 'payment', payment: p })} disabled={busy} aria-label="Eliminar abono"
                     className="p-1.5 text-gray-400 hover:text-red-600 rounded-sm hover:bg-red-50">
                     <Trash2 className="w-4 h-4" />

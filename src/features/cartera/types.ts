@@ -1,7 +1,8 @@
 export type SaleType = 'Normal' | 'Bono' | 'Devolucion';
 export type CollectionMethod = 'Abonos' | 'Sistecredito';
 export type VoucherStatus = 'Pendiente' | 'Recibido' | 'Usado';
-export type PaymentMethod = 'Nequi' | 'Efectivo' | 'Transferencia' | 'Otro';
+/** DLocalGo lo pone la tienda al confirmarse un pago en línea; no se elige a mano. */
+export type PaymentMethod = 'Nequi' | 'Efectivo' | 'Transferencia' | 'Otro' | 'DLocalGo';
 export type SaleStatus = 'AlDia' | 'Vencida' | 'Pagado' | 'Devolucion' | 'SinVender';
 export type CustomerStatus = 'AlDia' | 'Vencida' | 'Pagado';
 
@@ -13,6 +14,8 @@ export interface CreditPayment {
   paymentDate: string;
   notes: string | null;
   createdAt: string;
+  /** Comisión de la pasarela descontada de este pago (dLocal Go). */
+  fee?: number;
 }
 
 export interface CreditSale {
@@ -102,6 +105,28 @@ export interface CashAccount {
   interestIn: number;
   expectedBalance: number;
   movements: CashMovement[];
+}
+
+export interface GatewayMovement {
+  date: string;
+  kind: 'Pago' | 'Comision';
+  description: string;
+  amount: number;
+}
+
+/** Cuenta dLocal Go: cobrado en la tienda menos comisiones. Porcentajes como fracción (0.0349 = 3,49 %). */
+export interface GatewayAccount {
+  name: string;
+  initialBalance: number;
+  startDate: string;
+  feePercent: number;
+  feeFixed: number;
+  feeTaxRate: number;
+  ordersCount: number;
+  chargedIn: number;
+  feesOut: number;
+  expectedBalance: number;
+  movements: GatewayMovement[];
 }
 
 /** Lo que se envía para crear o editar una venta. Fechas como "YYYY-MM-DD". */

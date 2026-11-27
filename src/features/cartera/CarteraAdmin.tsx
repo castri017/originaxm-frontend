@@ -8,17 +8,18 @@ import SellModal from './SellModal';
 import { formatDay, money } from './format';
 import ImportPanel from './ImportPanel';
 import NequiPanel from './NequiPanel';
+import DLocalPanel from './DLocalPanel';
 import SaleDetailModal from './SaleDetailModal';
 import SaleFormModal from './SaleFormModal';
 import { inputClass, primaryButton, SALE_TYPE_LABEL, secondaryButton } from './styles';
 import { ProductThumb, StatCard, StatusBadge } from './ui';
 import VerifyDeleteModal from './VerifyDeleteModal';
 import type {
-  CashAccount, CatalogProductOption, CreditCustomer, CreditExpense, CreditSale, CreditSaleDetail, CreditStats, Loan,
+  CashAccount, CatalogProductOption, GatewayAccount, CreditCustomer, CreditExpense, CreditSale, CreditSaleDetail, CreditStats, Loan,
   LoansSummary, RegisteredCustomer, SaleStatus,
 } from './types';
 
-type Tab = 'ventas' | 'clientes' | 'prestamos' | 'gastos' | 'nequi' | 'importar';
+type Tab = 'ventas' | 'clientes' | 'prestamos' | 'gastos' | 'nequi' | 'dlocal' | 'importar';
 type SaleFilter = 'pendientes' | 'vencidas' | 'sistecredito' | 'sinvender' | 'pagadas' | 'devoluciones' | 'todas';
 
 const SALE_FILTERS: { value: SaleFilter; label: string; test: (s: CreditSale) => boolean }[] = [
@@ -58,6 +59,7 @@ export default function CarteraAdmin() {
   const [sales, setSales] = useState<CreditSale[]>([]);
   const [customers, setCustomers] = useState<CreditCustomer[]>([]);
   const [nequi, setNequi] = useState<CashAccount | null>(null);
+  const [dlocal, setDlocal] = useState<GatewayAccount | null>(null);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [loansSummary, setLoansSummary] = useState<LoansSummary | null>(null);
   const [expenses, setExpenses] = useState<CreditExpense[]>([]);
@@ -82,11 +84,11 @@ export default function CarteraAdmin() {
   const reload = useCallback(async () => {
     setError('');
     try {
-      const [s, list, c, n, l, ls, ex] = await Promise.all([
-        carteraApi.stats(), carteraApi.sales(), carteraApi.customers(), carteraApi.nequi(),
+      const [s, list, c, n, d, l, ls, ex] = await Promise.all([
+        carteraApi.stats(), carteraApi.sales(), carteraApi.customers(), carteraApi.nequi(), carteraApi.dlocal(),
         carteraApi.loans(), carteraApi.loansSummary(), carteraApi.expenses(),
       ]);
-      setStats(s); setSales(list); setCustomers(c); setNequi(n);
+      setStats(s); setSales(list); setCustomers(c); setNequi(n); setDlocal(d);
       setLoans(l); setLoansSummary(ls); setExpenses(ex);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo cargar la cartera.');
@@ -130,13 +132,14 @@ export default function CarteraAdmin() {
   const visibleCustomers = customers.filter(c => !clientQuery.trim() || normalize(c.customerName).includes(normalize(clientQuery.trim())));
   const expensesTotal = expenses.reduce((sum, e) => sum + e.amount, 0);
   const interestCollected = loansSummary?.interestCollected ?? 0;
-  // Capital total: prestado + saldo Nequi + lo que deben los clientes + lo que debe Sistecrédito
+  // Capital total: prestado + saldo Nequi + saldo dLocal Go + lo que deben los clientes + lo que debe Sistecrédito
   // + termos sin vender, a su precio de venta previsto.
   // "Cartera por cobrar" ya incluye Sistecrédito, así que se separa para no contarlo dos veces.
   const sistecredito = stats?.sistecreditoPending ?? 0;
   const clientsReceivable = (stats?.totalBalance ?? 0) - sistecredito;
   const inventoryValue = stats?.inventoryExpectedSale ?? 0;
-  const totalCapital = (loansSummary?.totalLent ?? 0) + (nequi?.expectedBalance ?? 0) + clientsReceivable + sistecredito + inventoryValue;
+  const dlocalBalance = dlocal?.expectedBalance ?? 0;
+  const totalCapital = (loansSummary?.totalLent ?? 0) + (nequi?.expectedBalance ?? 0) + dlocalBalance + clientsReceivable + sistecredito + inventoryValue;
   const knownNames = useMemo(() => [...new Set(sales.map(s => s.customerName).filter(Boolean))].sort(), [sales]);
   const filterCount = (f: SaleFilter) => sales.filter(SALE_FILTERS.find(x => x.value === f)!.test).length;
 
@@ -166,6 +169,8 @@ export default function CarteraAdmin() {
             hint={`${stats.customersOverdue} cliente${stats.customersOverdue !== 1 ? 's' : ''} · ${stats.overdueCount} venta${stats.overdueCount !== 1 ? 's' : ''}`} tone={stats.overdueBalance > 0 ? 'danger' : 'default'} />
           <StatCard label="Sistecrédito por recibir" value={money(stats.sistecreditoPending)} hint="Desembolsa a 60 días" />
           <StatCard label="Saldo Nequi esperado" value={money(nequi?.expectedBalance ?? 0)} hint="Con compras, 4×1000, abonos e intereses" />
+          <StatCard label="Saldo dLocal Go" value={money(dlocalBalance)}
+            hint={`Ventas en línea ${money(dlocal?.chargedIn ?? 0)} − comisiones ${money(dlocal?.feesOut ?? 0)}`} />
           <StatCard label="Ganancia de lo vendido" value={money(stats.expectedProfit)} hint={`Cobrado: ${money(stats.totalCollected)}`} tone="success" />
           <StatCard label="Sin vender" value={`${stats.inventoryCount} termo${stats.inventoryCount !== 1 ? 's' : ''}`}
             hint={`Costo ${money(stats.inventoryCost)} · venta ${money(stats.inventoryExpectedSale)}`} />
@@ -177,13 +182,13 @@ export default function CarteraAdmin() {
             hint={loansSummary?.interestPending ? `Pendiente por recaudar: ${money(loansSummary.interestPending)}` : 'Sin intereses pendientes'} tone="success" />
           <StatCard label="Gastos" value={money(expensesTotal)} hint={`${expenses.length} gasto${expenses.length !== 1 ? 's' : ''}`} tone={expensesTotal > 0 ? 'danger' : 'default'} />
           <StatCard label="Capital total" value={money(totalCapital)} tone="success"
-            hint={`Prestado ${money(loansSummary?.totalLent ?? 0)} + Nequi ${money(nequi?.expectedBalance ?? 0)} + clientes ${money(clientsReceivable)} + Sistecrédito ${money(sistecredito)} + sin vender ${money(inventoryValue)}`} />
+            hint={`Prestado ${money(loansSummary?.totalLent ?? 0)} + Nequi ${money(nequi?.expectedBalance ?? 0)} + dLocal Go ${money(dlocalBalance)} + clientes ${money(clientsReceivable)} + Sistecrédito ${money(sistecredito)} + sin vender ${money(inventoryValue)}`} />
         </div>
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100">
         <div className="flex gap-1 overflow-x-auto">
-          {([['ventas', 'Ventas'], ['clientes', 'Clientes'], ['prestamos', 'Préstamos'], ['gastos', 'Gastos'], ['nequi', 'Nequi'], ['importar', 'Importar Excel']] as [Tab, string][]).map(([value, label]) => (
+          {([['ventas', 'Ventas'], ['clientes', 'Clientes'], ['prestamos', 'Préstamos'], ['gastos', 'Gastos'], ['nequi', 'Nequi'], ['dlocal', 'dLocal Go'], ['importar', 'Importar Excel']] as [Tab, string][]).map(([value, label]) => (
             <button key={value} onClick={() => setTab(value)}
               className={`px-4 py-2.5 text-sm font-bold border-b-2 -mb-px transition-colors ${tab === value ? 'border-black text-black' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
               {label}
@@ -356,6 +361,8 @@ export default function CarteraAdmin() {
       {tab === 'prestamos' && <LoansPanel loans={loans} onChanged={message => { if (message) flash(message); reload(); }} />}
 
       {tab === 'gastos' && <ExpensesPanel expenses={expenses} onChanged={message => { if (message) flash(message); reload(); }} />}
+
+      {tab === 'dlocal' && <DLocalPanel key={dlocal ? 'loaded' : 'loading'} account={dlocal} onSaved={a => { setDlocal(a); flash('Cuenta dLocal Go actualizada.'); }} />}
 
       {tab === 'nequi' && <NequiPanel key={nequi ? 'loaded' : 'loading'} account={nequi} onSaved={a => { setNequi(a); flash('Cuenta Nequi actualizada.'); }} />}
 

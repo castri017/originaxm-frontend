@@ -2,7 +2,7 @@ import { API } from '../../config/api';
 import { adminFetch } from '../../lib/adminFetch';
 import type {
   CashAccount, CatalogProductOption, CreditCustomer, CreditExpense, CreditSale, CreditSaleDetail, CreditStats,
-  ExpenseInput, ImportResult, ImportRow, Loan, LoanInput, LoansSummary, PaymentInput, PaymentMethod,
+  ExpenseInput, GatewayAccount, ImportResult, ImportRow, Loan, LoanInput, LoansSummary, PaymentInput, PaymentMethod,
   RegisteredCustomer, SaleInput,
 } from './types';
 
@@ -37,6 +37,7 @@ export const carteraApi = {
   stats: () => getJson<CreditStats>(`${BASE}/summary`, 'No se pudo cargar el resumen.'),
   customers: () => getJson<CreditCustomer[]>(`${BASE}/customers`, 'No se pudo cargar la cartera por cliente.'),
   nequi: () => getJson<CashAccount>(`${BASE}/nequi`, 'No se pudo cargar la cuenta Nequi.'),
+  dlocal: () => getJson<GatewayAccount>(`${BASE}/dlocal`, 'No se pudo cargar la cuenta dLocal Go.'),
 
   createSale: (input: SaleInput) => sendJson<CreditSaleDetail>(BASE, 'POST', input, 'No se pudo registrar la venta.'),
   updateSale: (id: string, input: SaleInput) => sendJson<CreditSaleDetail>(`${BASE}/${id}`, 'PUT', input, 'No se pudo guardar la venta.'),
@@ -54,6 +55,9 @@ export const carteraApi = {
 
   updateNequi: (initialBalance: number, startDate: string) =>
     sendJson<CashAccount>(`${BASE}/nequi`, 'PUT', { initialBalance, startDate }, 'No se pudo guardar la cuenta Nequi.'),
+
+  updateDLocal: (input: { initialBalance: number; startDate: string; feePercent: number; feeFixed: number; feeTaxRate: number }) =>
+    sendJson<GatewayAccount>(`${BASE}/dlocal`, 'PUT', input, 'No se pudo guardar la cuenta dLocal Go.'),
 
   importRows: (rows: ImportRow[]) =>
     sendJson<ImportResult>(`${BASE}/import`, 'POST', { rows }, 'No se pudo importar el archivo.'),
