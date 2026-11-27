@@ -16,7 +16,11 @@ import { formatWeight, parseWeight, textOrNull, weightToInput, type ProductMeta 
 
 const ORDER_STATUSES = ['Procesando', 'Picking', 'Enviado', 'En Tránsito', 'Entregado', 'Cancelado'];
 
+/** Lo pone la API mientras la pasarela no confirma el pago; no se elige a mano en el admin. */
+const PENDING_PAYMENT = 'Pendiente Pago';
+
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
+  'Pendiente Pago': { label: 'Pendiente Pago', color: 'bg-orange-100 text-orange-800 border-orange-200', dot: 'bg-orange-400' },
   'Procesando':  { label: 'Procesando',  color: 'bg-yellow-100 text-yellow-800 border-yellow-200',  dot: 'bg-yellow-400' },
   'Picking':     { label: 'Picking',     color: 'bg-purple-100 text-purple-800 border-purple-200',  dot: 'bg-purple-400' },
   'Enviado':     { label: 'Enviado',     color: 'bg-sky-100 text-sky-800 border-sky-200',           dot: 'bg-sky-400' },
@@ -68,7 +72,38 @@ interface ApiOrder {
   notes: string;
   referenceCode?: string;
   paymentMethod?: string;
+  paymentStatus?: string;
+  sistecreditoTransactionId?: string;
+  dLocalPaymentId?: string;
+  paidAt?: string;
+  shippingCost?: number;
   items: ApiOrderItem[];
+}
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  dlocal:       'Pago en línea (dLocal Go)',
+  sistecredito: 'Sistecredito',
+  cod:          'Contra entrega',
+  webpay:       'Webpay',
+  transfer:     'Transferencia bancaria',
+};
+
+const paymentMethodLabel = (method?: string) =>
+  method ? (PAYMENT_METHOD_LABELS[method] ?? method) : 'Sin especificar';
+
+/** Id de la transacción en la pasarela (dLocal Go o Sistecredito), si lo hay. */
+const paymentTransactionId = (o: ApiOrder) => o.dLocalPaymentId || o.sistecreditoTransactionId || null;
+
+/** Estado del pago para mostrar, a partir de lo que confirmó la pasarela. */
+function paymentBadge(o: ApiOrder): { label: string; color: string } | null {
+  if (!o.paymentMethod) return null;
+  if (o.paymentMethod === 'cod') return { label: 'Paga al recibir', color: 'bg-gray-100 text-gray-700 border-gray-200' };
+  const s = (o.paymentStatus ?? '').toUpperCase();
+  if (o.paidAt || s === 'PAID' || s === 'APPROVED')
+    return { label: 'Pagado', color: 'bg-green-100 text-green-800 border-green-200' };
+  if (['REJECTED', 'CANCELLED', 'EXPIRED', 'FAILED'].includes(s))
+    return { label: 'Pago fallido', color: 'bg-red-100 text-red-800 border-red-200' };
+  return { label: 'Pago pendiente', color: 'bg-orange-100 text-orange-800 border-orange-200' };
 }
 
 
@@ -1788,6 +1823,9 @@ function AdminPanel() {
                         onChange={(e) => handleStatusChange(selectedOrder.id, e.target.value)}
                         className={`text-sm font-bold px-4 py-2 rounded-sm border focus:outline-none focus:ring-2 focus:ring-black cursor-pointer ${getStatusColor(selectedOrder.status)}`}
                       >
+                        {selectedOrder.status === PENDING_PAYMENT && (
+                          <option value={PENDING_PAYMENT} disabled className="bg-white text-black">{PENDING_PAYMENT}</option>
+                        )}
                         {ORDER_STATUSES.map(status => (
                           <option key={status} value={status} className="bg-white text-black">{status}</option>
                         ))}
@@ -1838,14 +1876,14 @@ function AdminPanel() {
                           </div>
                           <div className="flex justify-between text-sm text-gray-600">
                             <span>Envío</span>
-                            {selectedOrder.totalAmount - selectedOrder.items.reduce((s: number, i: ApiOrderItem) => s + i.subtotal, 0) === 0
+                            {!selectedOrder.shippingCost
                               ? <span className="text-green-600 font-bold">Gratis</span>
-                              : <span>${(selectedOrder.totalAmount - selectedOrder.items.reduce((s: number, i: ApiOrderItem) => s + i.subtotal, 0)).toLocaleString('es-CL')}</span>
+                              : <span>${selectedOrder.shippingCost.toLocaleString('es-CL')}</span>
                             }
                           </div>
                           <div className="flex justify-between font-extrabold text-lg text-black pt-2 border-t border-gray-200">
                             <span>Total</span>
-                            <span>${selectedOrder.totalAmount.toLocaleString('es-CL')}</span>
+                            <span>${(selectedOrder.totalAmount + (selectedOrder.shippingCost ?? 0)).toLocaleString('es-CL')}</span>
                           </div>
                         </div>
                       </div>
@@ -1926,24 +1964,65 @@ function AdminPanel() {
                         </div>
                       </div>
 
-                      {/* Card Referencia de Pago — visible si existe */}
-                      {selectedOrder.referenceCode && (
-                        <div className="bg-amber-50 p-6 rounded-sm shadow-sm border border-amber-200">
-                          <h3 className="text-lg font-bold text-amber-900 border-b border-amber-200 pb-3 mb-4">Referencia de Pago</h3>
-                          <div className="space-y-4">
-                            {selectedOrder.paymentMethod && (
+                      {/* Card Pago — medio, estado y transacción en la pasarela */}
+                      {(selectedOrder.paymentMethod || selectedOrder.referenceCode) && (() => {
+                        const badge = paymentBadge(selectedOrder);
+                        const txId  = paymentTransactionId(selectedOrder);
+                        return (
+                          <div className="bg-white p-6 rounded-sm shadow-sm border border-gray-200">
+                            <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+                              <h3 className="text-lg font-bold text-black">Pago</h3>
+                              {badge && <span className={`text-xs font-bold px-2.5 py-1 rounded-sm border ${badge.color}`}>{badge.label}</span>}
+                            </div>
+                            <div className="space-y-4">
                               <div>
-                                <p className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-1">Método de Pago</p>
-                                <p className="font-bold text-amber-900">{selectedOrder.paymentMethod}</p>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Medio de pago</p>
+                                <p className="font-bold text-black">{paymentMethodLabel(selectedOrder.paymentMethod)}</p>
                               </div>
-                            )}
-                            <div>
-                              <p className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-1">Código de Referencia</p>
-                              <p className="font-mono font-bold text-amber-900 text-lg tracking-widest">{selectedOrder.referenceCode}</p>
+                              {selectedOrder.paymentStatus && (
+                                <div>
+                                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Estado en la pasarela</p>
+                                  <p className="font-mono text-sm text-black">{selectedOrder.paymentStatus}</p>
+                                </div>
+                              )}
+                              {txId && (
+                                <div>
+                                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Código de transacción</p>
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-mono font-bold text-black text-sm break-all">{txId}</p>
+                                    <button
+                                      type="button"
+                                      onClick={() => navigator.clipboard?.writeText(txId)}
+                                      className="text-[10px] font-bold uppercase tracking-wider text-gray-400 hover:text-black shrink-0"
+                                      title="Copiar"
+                                    >
+                                      Copiar
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                              {selectedOrder.referenceCode && (
+                                <div>
+                                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Código de referencia</p>
+                                  <p className="font-mono font-bold text-black text-lg tracking-widest">{selectedOrder.referenceCode}</p>
+                                </div>
+                              )}
+                              {selectedOrder.paidAt && (
+                                <div>
+                                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Fecha del pago</p>
+                                  <p className="font-medium text-black">
+                                    {new Date(selectedOrder.paidAt).toLocaleString('es-CO', { dateStyle: 'long', timeStyle: 'short' })}
+                                  </p>
+                                </div>
+                              )}
+                              <div className="pt-3 border-t border-gray-100 flex justify-between items-baseline">
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total cobrado</p>
+                                <p className="font-extrabold text-black">${(selectedOrder.totalAmount + (selectedOrder.shippingCost ?? 0)).toLocaleString('es-CL')}</p>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )}
+                        );
+                      })()}
 
                       {/* Card Guía de Envío — visible si tiene tracking */}
                       {selectedOrder.trackingNumber ? (
@@ -1998,7 +2077,7 @@ function AdminPanel() {
                       className="text-sm border border-gray-200 rounded-sm px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-black"
                     >
                       <option value="">Todos los estados</option>
-                      {ORDER_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                      {[PENDING_PAYMENT, ...ORDER_STATUSES].map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
 
@@ -2100,6 +2179,9 @@ function AdminPanel() {
                                   onChange={(e) => handleStatusChange(order.id, e.target.value)}
                                   className={`appearance-none px-3 py-1 pr-8 text-xs font-bold rounded-sm border cursor-pointer focus:outline-none focus:ring-1 focus:ring-black ${getStatusColor(order.status)}`}
                                 >
+                                  {order.status === PENDING_PAYMENT && (
+                                    <option value={PENDING_PAYMENT} disabled className="bg-white text-black">{PENDING_PAYMENT}</option>
+                                  )}
                                   {ORDER_STATUSES.map(status => (
                                     <option key={status} value={status} className="bg-white text-black">{status}</option>
                                   ))}
@@ -2109,7 +2191,18 @@ function AdminPanel() {
                                 </div>
                               </div>
                             </td>
-                            <td className="p-4 font-bold text-black whitespace-nowrap">${order.totalAmount.toLocaleString('es-CL')}</td>
+                            <td className="p-4 whitespace-nowrap">
+                              <p className="font-bold text-black">${(order.totalAmount + (order.shippingCost ?? 0)).toLocaleString('es-CL')}</p>
+                              {(() => {
+                                const badge = paymentBadge(order);
+                                return badge && (
+                                  <p className="mt-1 flex items-center gap-1.5">
+                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm border ${badge.color}`}>{badge.label}</span>
+                                    <span className="text-[10px] text-gray-400">{paymentMethodLabel(order.paymentMethod)}</span>
+                                  </p>
+                                );
+                              })()}
+                            </td>
                             <td className="p-4">
                               <div className="flex justify-end gap-2">
                                 <button
@@ -3302,7 +3395,7 @@ function AdminPanel() {
               {/* ── GANANCIAS ── */}
               {reportTab === 'earnings' && (() => {
                 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-                const PM_LABELS: Record<string, string> = { webpay: 'Webpay', sistecredito: 'Sistecredito', transfer: 'Transferencia bancaria' };
+                const PM_LABELS = PAYMENT_METHOD_LABELS;
 
                 const availYears = [...new Set(reportAllOrders.map(o => new Date(o.orderDate).getFullYear()))].sort((a, b) => b - a);
                 if (availYears.length === 0) availYears.push(new Date().getFullYear());
